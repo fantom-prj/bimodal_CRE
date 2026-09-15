@@ -1,0 +1,1 @@
+cmd = ONECUT_2c_output_p005.bed hg38 /analysisdata/fantom6/Interactome/ChIP_seq/BAM/2nd_seq/macs2/idr/homer_ONECUT_idr -size given

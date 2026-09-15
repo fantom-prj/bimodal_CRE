@@ -1,0 +1,236 @@
+---
+title: "F6 interactome project: scRNA-seq processing and filtering"
+author: "Jen-Chien Chang"
+date: "`r format(Sys.time(), '%Y/%m/%d')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, cache=FALSE, fig.show='hold', fig.align="center")
+```
+
+---
+
+# Note
+
+* 
+
+---
+
+# Basic setup
+
+<span style="color:red">template code</span> <a href="#top">Back to top</a>
+```{r}
+
+```
+
+
+Load R library
+```{r warning=FALSE, results='hide'}
+# Data manipulation
+library(dplyr)
+library(magrittr)
+library(reshape2)
+
+# Plot
+library(ggplot2)
+library(patchwork)
+library(ggpubr)
+library(rstatix)
+library(pheatmap)
+#library(ggfortify)    # for plot PCA with ggplot2 autoplot 
+
+# File I/O
+#library(readxl)
+
+# Seurat
+library(Seurat)
+#library(SeuratDisk)
+
+# Signac
+#set.seed(2021)
+#library(Signac)
+#library(GenomeInfoDb)
+#library(EnsDb.Mmusculus.v79)
+#library(GenomicRanges)
+
+# Multiprocessing
+#library(future)
+#plan("multiprocess", workers = 12)
+#plan("sequential")
+
+# Math
+#library(usedist)
+
+# For AUCell
+#library(AUCell)
+#library(GSEABase)
+
+# sceasy (seurat <-> annData )
+#library(sceasy)
+#library(anndata) #directly deal with annData in R
+
+```
+
+
+Global variables
+```{r}
+# data directory
+osc_fs_home_base <- "../../../../../osc-fs_home"
+home_base <- "../../../../../home"
+
+# color setting 
+sampleID_color <- c("#e31a1c","#fb9a99","#33a02c","#b2df8a","#1f78b4","#a6cee3")
+sampleType_color <- c("#e31a1c","#33a02c","#1f78b4")
+
+# ggplot2 theme setting
+theme_set(theme_bw()) 
+```
+
+
+
+---
+
+# scRNA-seq analysis
+
+---
+
+## Read cellranger output
+
+Read Cellranger output for 6 samples 
+```{r eval=FALSE}
+seu.list <- list()
+
+for(i in c("iPS1","iPS2","Neuron1","Neuron2","NSC1","NSC2")){
+
+tmp <- Read10X(data.dir = paste0("../F6_Interactome_20220128/scRNA/",i,"/outs/filtered_feature_bc_matrix/"))
+tmp <- CreateSeuratObject(counts = tmp, project = i, min.cells = 0, min.features = 0)
+seu.list[[i]] <- tmp
+
+}
+
+```
+
+Concatenate all samples. 
+```{r eval=FALSE}
+tmp<-c()
+for(i in 2:length(seu.list)){
+  tmp <- c(tmp, seu.list[[i]])
+}
+seu.all <- merge(seu.list[[1]], y = tmp) # "_1" ~ "_6" added to the end of original cellbarcodes
+rm(tmp)
+```
+
+
+```{r eval=FALSE}
+seu.all$sampleID <- factor(seu.all$orig.ident, c("iPS1","iPS2","NSC1","NSC2","Neuron1","Neuron2"))
+```
+
+
+convert to h5ad for scanpy
+```{r eval=FALSE}
+sceasy::convertFormat(seu.all, from="seurat", to="anndata", outFile='data/20220317_raw_merged.h5ad')
+```
+
+
+---
+
+## Run Scrublet to identify potential doublet
+
+
+```{r}
+# Run python in Rmd
+library(reticulate)
+reticulate::use_condaenv("r-reticulate")
+```
+
+Import python package
+```{python, error=TRUE, eval=FALSE}
+import matplotlib.pyplot as pl
+import seaborn as sns
+import numpy as np
+import pandas as pd
+import scanpy as sc
+sc.settings.verbosity = 3
+
+from matplotlib.pyplot import rc_context
+import scrublet as scr
+import anndata as ad
+from datetime import datetime
+
+import skimage
+```
+
+Read raw h5ad and split 
+```{python, error=TRUE, eval=FALSE}
+adata = sc.read('data/20220317_raw_merged.h5ad')
+
+# split by sampleID
+groups = adata.obs.groupby("sampleID").indices
+adataList = [adata[inds] for inds in groups.values()]
+```
+
+Run scrublet individually
+```{python, error=TRUE, eval=FALSE)}
+print(datetime.now().time())
+
+# Run Scrublet on 145 individual adata
+for i in range(len(adataList)):
+  
+  tmp_adata = adataList[i]
+  print('\n ###### No.', i, ': sampleID =', adataList[i].obs['sampleID'][0])
+  # Run scrublet with expected doublet rate set to 5% (6000 cells)
+  scrub = scr.Scrublet(tmp_adata.X, expected_doublet_rate=0.05)
+  tmp_adata.obs['doublet_scores'], tmp_adata.obs['predicted_doublets_min'] = scrub.scrub_doublets()
+  # Find the new threshold by using threshold_otsu
+  th_orig = scrub.threshold_
+  print("  => Original threshold by Minimum Method at doublet score = {:.2f}".format(th_orig))
+  th_otsu = skimage.filters.threshold_otsu(image=scrub.doublet_scores_sim_)
+  print("  => New threshold by Otsu Method at doublet score = {:.2f}".format(th_otsu))
+  # Call doublet again using new threshold
+  tmp_adata.obs['predicted_doublets'] = scrub.call_doublets(threshold=th_otsu)
+  # Plot the histogram to check
+  hist = scrub.plot_histogram()
+  hist[0].suptitle(adataList[i].obs['sampleID'][0], x=0.1, y=0.98)
+  ax = hist[1][0]
+  yl = ax.get_ylim()
+  ax.plot(th_orig * np.ones(2), yl, c = 'blue', linewidth = 1)  
+  ax = hist[1][1]
+  yl = ax.get_ylim()
+  ax.plot(th_orig * np.ones(2), yl, c = 'blue', linewidth = 1)  
+  pl.show()
+  # Save data back
+  adataList[i] = tmp_adata
+
+print(datetime.now().time())
+
+```
+
+
+Concat all adata
+```{python, error=TRUE, eval=FALSE}
+adata_concat = ad.concat(adataList, merge="same")
+adata_concat.write('data/20220317_raw_merged_scrublet.h5ad')
+print(datetime.now().time())
+```
+
+
+Convert h5ad to rds
+```{r eval=FALSE}
+sceasy::convertFormat('data/20220317_raw_merged_scrublet.h5ad', from="anndata", to="seurat",
+                      outFile='data/20220317_raw_merged_scrublet.rds')
+```
+
+
+
+---
+
+# Session Info
+```{r}
+sessionInfo()
+```
+

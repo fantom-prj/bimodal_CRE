@@ -1,0 +1,14 @@
+#!/bin/sh
+
+cd /analysisdata/fantom6/Interactome/single_cell_wallace/ATAC/subset_BAM
+
+samtools merge out_OPC_like_CB.bam NSC_OPC_like_CB.csv.bam NRN_OPC_like_CB.csv.bam
+samtools merge out_iPS_0_undifferentiaed_CB.bam iPS_iPS_0_undifferentiaed_CB.csv.bam NRN_iPS_0_undifferentiaed_CB.csv.bam NSC_iPS_0_undifferentiaed_CB.csv.bam
+samtools merge out_iPS_1_neuroepithelial_CB.bam iPS_iPS_1_neuroepithelial_CB.csv.bam NRN_iPS_1_neuroepithelial_CB.csv.bam NSC_iPS_1_neuroepithelial_CB.csv.bam
+samtools merge out_NSC_0_iPS_like_CB.bam iPS_NSC_0_iPS_like_CB.csv.bam NRN_NSC_0_iPS_like_CB.csv.bam NSC_NSC_0_iPS_like_CB.csv.bam
+samtools merge out_NSC_1_differentiating_CB.bam iPS_NSC_1_differentiating_CB.csv.bam NRN_NSC_1_differentiating_CB.csv.bam NSC_NSC_1_differentiating_CB.csv.bam
+samtools merge out_NSC_2_astrocyte_like_CB.bam iPS_NSC_2_astrocyte_like_CB.csv.bam NRN_NSC_2_astrocyte_like_CB.csv.bam NSC_NSC_2_astrocyte_like_CB.csv.bam
+samtools merge out_neuron_progenitor_n_schwann_CB.bam iPS_neuron_progenitor_n_schwann_CB.csv.bam NRN_neuron_progenitor_n_schwann_CB.csv.bam NSC_neuron_progenitor_n_schwann_CB.csv.bam
+samtools merge out_neuron_immature_CB.bam iPS_neuron_immature_CB.csv.bam NRN_neuron_immature_CB.csv.bam NSC_neuron_immature_CB.csv.bam
+samtools merge out_neuron_mature_CB.bam iPS_neuron_mature_CB.csv.bam NRN_neuron_mature_CB.csv.bam NSC_neuron_mature_CB.csv.bam
+samtools merge out_neuron_mature_2_CB.bam iPS_neuron_mature_2_CB.csv.bam NRN_neuron_mature_2_CB.csv.bam NSC_neuron_mature_2_CB.csv.bam

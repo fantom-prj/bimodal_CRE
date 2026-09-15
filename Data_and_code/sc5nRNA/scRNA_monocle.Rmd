@@ -1,0 +1,447 @@
+---
+title: "F6 interactome project: Monocle3 trajectory analysis"
+author: "Jen-Chien Chang"
+date: "`r format(Sys.time(), '%Y/%m/%d')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, cache=FALSE, fig.show='hold', fig.align="center")
+```
+
+---
+
+# Note
+
+* 
+
+---
+
+# Basic setup
+
+<span style="color:red">template code</span> <a href="#top">Back to top</a>
+```{r}
+
+```
+
+
+Load R library
+```{r warning=FALSE, results='hide'}
+# Data manipulation
+library(dplyr)
+library(magrittr)
+library(reshape2)
+
+# Plot
+library(ggplot2)
+library(patchwork)
+library(ggpubr)
+library(rstatix)
+library(pheatmap)
+#library(ggfortify)    # for plot PCA with ggplot2 autoplot 
+
+# File I/O
+#library(readxl)
+
+# Seurat
+library(Seurat)
+#library(SeuratDisk)
+
+# monocle
+library(monocle3)
+library(SeuratWrappers)
+
+# Signac
+#set.seed(2021)
+#library(Signac)
+#library(GenomeInfoDb)
+#library(EnsDb.Mmusculus.v79)
+#library(GenomicRanges)
+
+# Multiprocessing
+#library(future)
+#plan("multiprocess", workers = 12)
+#plan("sequential")
+
+# Math
+#library(usedist)
+
+# For AUCell
+#library(AUCell)
+#library(GSEABase)
+
+# sceasy (seurat <-> annData )
+#library(sceasy)
+#library(anndata) #directly deal with annData in R
+
+```
+
+
+Global variables
+```{r}
+# data directory
+osc_fs_home_base <- "../../../../../osc-fs_home"
+home_base <- "../../../../../home"
+
+# color setting 
+sampleID_color <- c("#e31a1c","#fb9a99","#33a02c","#b2df8a","#1f78b4","#a6cee3")
+sampleType_color <- c("#e31a1c","#33a02c","#1f78b4")
+
+# ggplot2 theme setting
+theme_set(theme_bw()) 
+```
+
+
+---
+
+# Trajectory analysis using scRNA-seq data
+
+Load processed scRNA-seq data
+```{r}
+All.rna.flt <- readRDS("data/20220331_All.rna.flt.rds")
+  
+```
+
+
+```{r}
+cds <- as.cell_data_set(All.rna.flt)
+cds <- cluster_cells(cds)
+```
+
+
+```{r}
+plot_cells(cds, show_trajectory_graph = FALSE)
+plot_cells(cds, color_cells_by = "partition", show_trajectory_graph = FALSE)
+```
+
+Learn trajectories
+```{r}
+cds <- learn_graph(cds)
+```
+
+
+```{r}
+plot_cells(cds, label_groups_by_cluster = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+plot_cells(cds, label_groups_by_cluster = FALSE, label_leaves = TRUE, label_branch_points = FALSE)
+plot_cells(cds, label_groups_by_cluster = FALSE, label_leaves = FALSE, label_branch_points = TRUE)
+plot_cells(cds, label_groups_by_cluster = FALSE, label_leaves = TRUE, label_branch_points = TRUE)
+```
+
+
+Calculate pseudotime along the trajectory
+
+---
+
+## Use harmony-integrated latent space
+
+```{r}
+All.rna.flt.dup <- All.rna.flt
+
+All.rna.flt.dup@reductions[["umap"]] <- All.rna.flt.dup@reductions[["umap_harmony"]]
+All.rna.flt.dup@reductions[["pca"]] <- All.rna.flt.dup@reductions[["harmony"]]
+
+cds2 <- as.cell_data_set(All.rna.flt.dup)
+cds2 <- cluster_cells(cds2)
+plot_cells(cds2, color_cells_by = "partition", show_trajectory_graph = FALSE)
+
+# Learn graph but don't use partition
+cds2 <- learn_graph(cds2, use_partition = FALSE)
+plot_cells(cds2, label_groups_by_cluster = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+
+# Deault use partition
+#cds2 <- learn_graph(cds2)
+#plot_cells(cds2, label_groups_by_cluster = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+
+```
+
+
+Don't use partition
+```{r}
+cds2 <- learn_graph(cds2, use_partition = FALSE)
+plot_cells(cds2, label_groups_by_cluster = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+```
+
+
+
+
+
+
+```{r}
+cds2 <- order_cells(cds2)
+```
+
+
+```{r}
+plot_cells(cds2, color_cells_by = "pseudotime", label_cell_groups = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+```
+
+Extract pseudotime for each cell
+```{r}
+principal_graph_aux(cds2)$UMAP$pseudotime %>% head
+```
+
+
+
+Find DE along pseudotime
+```{r}
+# cannot parallel on windows, 1 cores takes ~ 2h for all genes
+cds_pr_test_res <- graph_test(cds2, neighbor_graph="principal_graph", cores = 1)
+cds_pr_test_res$symbol <- row.names(cds_pr_test_res)
+
+# Note:  https://github.com/cole-trapnell-lab/monocle3/issues/509
+# Need monocle3 dev version (use rbind instead of rBind in master branch)
+# After installing dev version, seurat-wrapper converting seurat to cds doesn't work
+# Have to install temp patch from: https://github.com/satijalab/seurat-wrappers/issues/119
+
+```
+
+```{r}
+pr_deg_ids <- row.names(subset(cds_pr_test_res, q_value < 0.05))
+```
+
+
+Save DE result
+```{r}
+saveRDS(cds_pr_test_res, "data/20220404_graph_test_res.rds")
+write.table(cds_pr_test_res, file = "data/20220404_graph_test_res.csv", quote = FALSE, sep = ",", row.names = F, col.names = T)
+```
+
+
+
+---
+
+## Use harmony_SCT-integrated latent space
+
+```{r}
+All.rna.flt.dup <- All.rna.flt
+
+All.rna.flt.dup@reductions[["umap"]] <- All.rna.flt.dup@reductions[["umap_harmony_SCT"]]
+All.rna.flt.dup@reductions[["pca"]] <- All.rna.flt.dup@reductions[["harmony_SCT"]]
+
+cds3 <- as.cell_data_set(All.rna.flt.dup)
+cds3 <- cluster_cells(cds3)
+plot_cells(cds3, color_cells_by = "partition", show_trajectory_graph = FALSE)
+
+cds3 <- learn_graph(cds3, use_partition = TRUE)
+plot_cells(cds3, label_groups_by_cluster = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+
+
+```
+
+
+```{r}
+cds3 <- learn_graph(cds3, use_partition = FALSE)
+plot_cells(cds3, label_groups_by_cluster = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+```
+
+
+
+
+
+```{r}
+cds3 <- order_cells(cds3)
+plot_cells(cds3, color_cells_by = "pseudotime", label_cell_groups = FALSE, label_leaves = FALSE, label_branch_points = FALSE)
+```
+
+
+```{r}
+tmp <- as.Seurat(cds3, data = NULL, assay = "data")
+
+principal_graph_aux(cds3)$UMAP$pseudotime
+```
+
+
+
+
+
+
+
+---
+
+# Other dimension reduction method for emphasizing continuous trajectories
+
+---
+
+## Force directed graph
+
+
+Load reticulate and python env
+```{r}
+
+library(reticulate)
+reticulate::use_condaenv("r-reticulate")
+
+anndata = import("anndata", convert=FALSE)
+#bbknn = import("bbknn", convert=FALSE)
+sc = import("scanpy", convert=FALSE)
+sc$settings$verbosity = 'debug' # ['error', 1:'warning', 2:'info', 3:'hint', 4:'debug']
+sce = import("scanpy.external", convert=FALSE)
+
+```
+
+
+
+
+```{r}
+
+count.raw <- Matrix::t(All.rna.flt@assays$RNA@counts) # transpose count for scanpy
+varname <- data.frame(name=colnames(count.raw))
+row.names(varname) <- varname$name
+
+adata = anndata$AnnData(X=count.raw, obs=All.rna.flt@meta.data, var = varname)
+
+sc$pp$normalize_total(adata, target_sum=1e4, exclude_highly_expressed='True')
+sc$pp$log1p(adata)
+sc$pp$highly_variable_genes(adata, n_top_genes=as.integer(2000), batch_key='sampleID')
+
+
+hvg = py_to_r(adata$var$highly_variable)
+adata.mat = py_to_r(adata$X)
+
+
+```
+
+
+```{r}
+bdata = anndata$AnnData(X=adata.mat[,as.vector(hvg)], obs=All.rna.flt@meta.data)
+sc$pp$regress_out(bdata, c('nCount_RNA', 'percent.mt'))
+sc$pp$scale(bdata, max_value=as.integer(10))
+sc$pp$pca(bdata, n_comps=as.integer(50), svd_solver='arpack')
+
+sc$pp$neighbors(bdata)
+sc$tl$draw_graph(bdata, layout='fa')
+```
+
+
+
+```{r}
+sc$pl$draw_graph(bdata, color='sampleID')
+```
+
+```{r}
+bdata
+```
+
+### Use bbknn integrated graph
+
+```{r}
+sce$pp$bbknn(bdata, batch_key="sampleID") 
+```
+
+
+```{r}
+bdata
+```
+
+
+```{r}
+sc$tl$draw_graph(bdata)
+```
+
+```{r}
+sc$pl$draw_graph(bdata, color='sampleID')
+```
+
+
+
+---
+
+
+
+
+```{r}
+sc$tl$umap(bdata) 
+
+```
+
+
+
+```{r}
+sc$pl$umap(bdata, color='sampleID') 
+
+```
+
+
+
+
+
+
+
+---
+
+## Phate
+
+---
+
+
+
+```{r fig.height=5, fig.width=5}
+Sys.time()
+
+count.raw <- Matrix::t(seu@assays$RNA@counts) # transpose count for scanpy
+varname <- data.frame(name=colnames(count.raw))
+row.names(varname) <- varname$name
+
+adata = anndata$AnnData(X=count.raw, obs=seu@meta.data, var = varname)
+sc$pp$normalize_total(adata, target_sum=1e4, exclude_highly_expressed='True')
+sc$pp$log1p(adata)
+sc$pp$highly_variable_genes(adata, n_top_genes=as.integer(2000), batch_key='sampleID')
+
+# Subset hvg for scaling & pca
+hvg = py_to_r(adata$var$highly_variable)
+adata.mat = py_to_r(adata$X)
+bdata = anndata$AnnData(X=adata.mat[,as.vector(hvg)], obs=seu@meta.data)
+sc$pp$regress_out(bdata, c('nCount_RNA', 'percent.mt'))
+sc$pp$scale(bdata, max_value=as.integer(10))
+sc$pp$pca(bdata, n_comps=as.integer(50), svd_solver='arpack')
+sce$pp$bbknn(bdata, batch_key="sampleID") 
+sc$tl$umap(bdata) 
+sc$tl$tsne(bdata)
+
+sc$tl$leiden(bdata, resolution=0.8, key_added='leiden_res_0_8')
+sc$tl$leiden(bdata, resolution=0.5, key_added='leiden_res_0_5')
+sc$tl$leiden(bdata, resolution=0.3, key_added='leiden_res_0_3')
+sc$tl$leiden(bdata, resolution=0.1, key_added='leiden_res_0_1')
+
+
+# Save umap coordinate and clustering back to seurat obj
+umap = py_to_r(bdata$obsm[["X_umap"]])
+row.names(umap) <- seu@reductions[["umap"]]@cell.embeddings %>% row.names
+colnames(umap) <- c("umap_1", "umap_2")
+seu@reductions[["umap_bbknn"]] <- seu@reductions[["umap"]]
+seu@reductions[["umap_bbknn"]]@cell.embeddings <- umap
+seu@reductions[["umap_bbknn"]]@key <- "umap_"
+seu$bbknn_leiden_res_0_8 <- py_to_r(bdata$obs) %>% .$leiden_res_0_8
+seu$bbknn_leiden_res_0_5 <- py_to_r(bdata$obs) %>% .$leiden_res_0_5
+seu$bbknn_leiden_res_0_3 <- py_to_r(bdata$obs) %>% .$leiden_res_0_3
+seu$bbknn_leiden_res_0_1 <- py_to_r(bdata$obs) %>% .$leiden_res_0_1
+
+
+DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap_bbknn") + ggtitle("Scanpy log1p + BBKNN") + NoAxes() 
+
+Sys.time()
+
+# Save tsne coordinate and clustering back to seurat obj
+tsne = py_to_r(bdata$obsm[["X_tsne"]])
+row.names(tsne) <- seu@reductions[["umap"]]@cell.embeddings %>% row.names
+colnames(tsne) <- c("tsne_1", "tsne_2")
+seu@reductions[["tsne_bbknn"]] <- seu@reductions[["umap"]]
+seu@reductions[["tsne_bbknn"]]@cell.embeddings <- tsne
+seu@reductions[["tsne_bbknn"]]@key <- "tsne_"
+
+DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "tsne_bbknn") + ggtitle("Scanpy standard + BBKNN") + NoAxes() 
+
+```
+
+
+---
+
+# Session Info
+```{r}
+sessionInfo()
+```
+

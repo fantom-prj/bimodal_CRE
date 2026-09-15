@@ -1,0 +1,793 @@
+---
+title: "F6 interactome project: scRNA-seq analysis"
+author: "Jen-Chien Chang"
+date: "`r format(Sys.time(), '%Y/%m/%d')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, cache=FALSE, fig.show='hold', fig.align="center")
+```
+
+---
+
+# Note
+
+* 
+
+---
+
+# Basic setup
+
+<span style="color:red">template code</span> <a href="#top">Back to top</a>
+```{r}
+
+```
+
+
+Load R library
+```{r warning=FALSE, results='hide'}
+# Data manipulation
+library(dplyr)
+library(magrittr)
+library(reshape2)
+
+# Plot
+library(ggplot2)
+library(patchwork)
+library(ggpubr)
+library(rstatix)
+library(pheatmap)
+#library(ggfortify)    # for plot PCA with ggplot2 autoplot 
+
+# File I/O
+#library(readxl)
+
+# Seurat
+library(Seurat)
+#library(SeuratDisk)
+
+# Signac
+#set.seed(2021)
+#library(Signac)
+#library(GenomeInfoDb)
+#library(EnsDb.Mmusculus.v79)
+#library(GenomicRanges)
+
+# Multiprocessing
+#library(future)
+#plan("multiprocess", workers = 12)
+#plan("sequential")
+
+# Math
+#library(usedist)
+
+# For AUCell
+#library(AUCell)
+#library(GSEABase)
+
+# sceasy (seurat <-> annData )
+#library(sceasy)
+#library(anndata) #directly deal with annData in R
+
+```
+
+
+Global variables
+```{r}
+# data directory
+osc_fs_home_base <- "../../../../../osc-fs_home"
+home_base <- "../../../../../home"
+
+# color setting 
+sampleID_color <- c("#e31a1c","#fb9a99","#33a02c","#b2df8a","#1f78b4","#a6cee3")
+sampleType_color <- c("#e31a1c","#33a02c","#1f78b4")
+
+# ggplot2 theme setting
+theme_set(theme_bw()) 
+```
+
+
+
+---
+
+# scRNA normalization, dimensional reduction, integration & clustering
+
+---
+
+Read filtered object
+```{r}
+seu <- readRDS("data/20220317_19535x26581_scRNA.rds")
+```
+
+---
+
+## Standard Seurat workflow (log1p normalization to 1e4) without integration
+
+```{r}
+
+DefaultAssay(seu) <- "RNA"
+  
+Sys.time()
+
+seu <- NormalizeData(seu)
+seu <- FindVariableFeatures(seu)
+seu <- ScaleData(seu)
+seu <- RunPCA(seu)
+seu <- RunUMAP(seu, dims = 1:30)
+seu <- FindNeighbors(seu, dims = 1:30)
+seu <- FindClusters(seu,  algorithm = 1 )
+seu$log1p_Louvain_res.0.8 <-  seu$seurat_clusters
+seu$RNA_snn_res.0.8 <- NULL
+seu <- FindClusters(seu, algorithm = 4)
+seu$log1p_Leiden_res.0.8 <-  seu$seurat_clusters
+seu$RNA_snn_res.0.8 <- NULL
+Sys.time() 
+
+
+
+```
+
+Perform CellCycleScoring
+```{r}
+s.genes <- cc.genes$s.genes
+g2m.genes <- cc.genes$g2m.genes
+
+seu <- CellCycleScoring(seu, g2m.features = g2m.genes, s.features = s.genes)
+seu$Phase <- factor(seu$Phase)
+```
+
+
+```{r fig.height=4, fig.width=12}
+
+p1 <- DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap") + ggtitle("sampleID") + NoAxes()  
+p2 <- DimPlot(seu, group.by = "log1p_Louvain_res.0.8", label = FALSE, raster=FALSE, reduction = "umap") + ggtitle("Louvain clustering") + NoAxes() + NoLegend()
+p3 <- DimPlot(seu, group.by = "log1p_Leiden_res.0.8", label = FALSE, raster=FALSE, reduction = "umap") + ggtitle("Leiden clustering") + NoAxes() + NoLegend()
+p1|p2|p3
+
+#(FeaturePlot(seu, slot = "counts",features = c("Ttr"), pt.size=0.02) & NoAxes()) & scale_color_viridis_c(direction = 1)
+
+```
+
+
+
+---
+
+## SCTransform workflow without integration
+
+---
+
+```{r}
+Sys.time()
+seu <- SCTransform(seu, method = "glmGamPoi")
+
+Sys.time()
+seu <- RunPCA(seu, reduction.name = "pca_SCT")
+seu <- RunUMAP(seu, dims = 1:30, reduction = "pca_SCT", reduction.name = "umap_SCT")
+seu <- FindNeighbors(seu, dims = 1:30, reduction = "pca_SCT")
+seu <- FindClusters(seu)
+Sys.time()
+
+```
+
+
+
+```{r fig.height=6, fig.width=12}
+
+p1 <- DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap_SCT") + ggtitle("tissue") + NoAxes()  
+p2 <- DimPlot(seu, group.by = "SCT_snn_res.0.8", label = FALSE, raster=FALSE, reduction = "umap_SCT") + ggtitle("clusters") + NoAxes() + NoLegend()
+
+p1|p2
+
+```
+
+
+
+---
+
+## log1p normalization + RPCA integration
+
+```{r}
+
+Sys.time()
+seu.list <- SplitObject(seu, split.by = "sampleID")
+
+# normalize and identify variable features for each dataset independently
+seu.list <- lapply(X = seu.list, FUN = function(x) {
+    x <- NormalizeData(x)
+    x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
+})
+
+# select features that are repeatedly variable across datasets for integration run PCA on each
+# dataset using these features
+features <- SelectIntegrationFeatures(object.list = seu.list)
+seu.list <- lapply(X = seu.list, FUN = function(x) {
+    x <- ScaleData(x, features = features)
+    x <- RunPCA(x, features = features)
+})
+
+# Find anchor
+Sys.time()
+seu.anchors <- FindIntegrationAnchors(object.list = seu.list, anchor.features = features, dims = 1:30, reduction = "rpca")
+
+Sys.time()
+seu.combined <- IntegrateData(anchorset = seu.anchors, dims = 1:30)
+
+Sys.time()
+```
+
+
+```{r}
+# specify that we will perform downstream analysis on the corrected data note that the
+# original unmodified data still resides in the 'RNA' assay
+DefaultAssay(seu.combined) <- "integrated"
+
+# Run the standard workflow for visualization and clustering
+seu.combined <- ScaleData(seu.combined)
+
+seu.combined <- RunPCA(seu.combined, npcs = 30)
+seu.combined <- RunUMAP(seu.combined, reduction = "pca", dims = 1:30)
+
+seu.combined <- FindNeighbors(seu.combined, dims = 1:30)
+seu.combined <- FindClusters(seu.combined)
+```
+
+
+Plot on integrated umap
+```{r fig.height=6, fig.width=12}
+
+p1 <- DimPlot(seu.combined, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap") + ggtitle("sampleID") + NoAxes()  
+p2 <- DimPlot(seu.combined, group.by = "integrated_snn_res.0.8", label = FALSE, raster=FALSE, reduction = "umap") + ggtitle("clusters") + NoAxes() + NoLegend()
+
+p1|p2
+
+```
+
+
+Save umap in the original object 
+```{r}
+seu@reductions[["umap_rpca"]] <- seu@reductions[["umap"]]
+seu@reductions[["umap_rpca"]]@cell.embeddings <- seu.combined@reductions[["umap"]]@cell.embeddings
+seu@reductions[["umap_rpca"]]@key <- "umap_"
+
+seu$log1p_rpca_Louvain_res.0.8 <-  seu.combined$integrated_snn_res.0.8
+```
+
+
+save rpca combined object
+```{r eval=FALSE}
+saveRDS(seu.combined, "data/20220317_2000x26581_seu.combined.Rds")
+
+rm(seu.list)
+rm(seu.anchors)
+rm(seu.combined)
+```
+
+
+
+
+---
+
+## Integration using SCT & RPCA
+
+```{r}
+
+Sys.time()
+seu.list <- SplitObject(seu, split.by = "sampleID")
+seu.list <- lapply(X = seu.list, FUN = SCTransform, method = "glmGamPoi")
+
+Sys.time()
+features <- SelectIntegrationFeatures(object.list = seu.list, nfeatures = 3000)
+seu.list <- PrepSCTIntegration(object.list = seu.list, anchor.features = features)
+seu.list <- lapply(X = seu.list, FUN = RunPCA, features = features)
+
+Sys.time()
+seu.anchors <- FindIntegrationAnchors(object.list = seu.list, normalization.method = "SCT", anchor.features = features, dims = 1:30, reduction = "rpca")
+
+Sys.time()
+seu.combined.sct <- IntegrateData(anchorset = seu.anchors, normalization.method = "SCT", dims = 1:30)
+
+Sys.time()
+seu.combined.sct <- RunPCA(seu.combined.sct, verbose = FALSE)
+seu.combined.sct <- RunUMAP(seu.combined.sct, reduction = "pca", dims = 1:30)
+
+Sys.time()
+seu.combined.sct <- FindNeighbors(seu.combined.sct, dims = 1:30)
+seu.combined.sct <- FindClusters(seu.combined.sct)
+
+Sys.time()
+```
+
+
+Plot
+```{r fig.height=6, fig.width=12}
+
+p1 <- DimPlot(seu.combined.sct, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap") + ggtitle("sampleID") + NoAxes()  
+p2 <- DimPlot(seu.combined.sct, group.by = "integrated_snn_res.0.8", label = FALSE, raster=FALSE, reduction = "umap") + ggtitle("clusters") + NoAxes() + NoLegend()
+
+p1|p2
+
+```
+
+
+Save umap in the original object 
+```{r}
+seu@reductions[["umap_rpca_SCT"]] <- seu@reductions[["umap"]]
+seu@reductions[["umap_rpca_SCT"]]@cell.embeddings <- seu.combined.sct@reductions[["umap"]]@cell.embeddings
+seu@reductions[["umap_rpca_SCT"]]@key <- "umap_"
+
+seu$SCT_rpca_Louvain_res.0.8 <-  seu.combined.sct$integrated_snn_res.0.8
+```
+
+
+save rpca combined object
+```{r eval=FALSE}
+saveRDS(seu.combined.sct, "data/20220317_3000x26581_seu.combined.sct.Rds")
+rm(seu.list)
+rm(seu.anchors)
+rm(seu.combined.sct)
+```
+
+
+
+---
+
+## log1p normalization + Harmony
+
+Run Harmony 
+```{r}
+library(harmony)
+DefaultAssay(seu) <- "RNA"
+
+Sys.time()
+seu <- RunHarmony(object = seu, group.by.vars = "sampleID" , plot_convergence = TRUE)
+Sys.time()
+DimPlot(object = seu, reduction = "harmony", pt.size = .1, group.by = "sampleID")
+Sys.time()
+seu <- RunUMAP(seu, reduction = "harmony", dims = 1:30, reduction.name = "umap_harmony" )
+Sys.time()
+
+seu <- FindNeighbors(seu, reduction = "harmony", dims = 1:30, graph.name = c("harmony_nn", "harmony_snn"))
+seu <- FindClusters(seu, graph.name = "harmony_snn")
+
+seu$harmony_Louvain_res.0.8 <- seu$harmony_snn_res.0.8
+seu$harmony_snn_res.0.8 <- NULL
+```
+
+
+Plot
+```{r fig.height=6, fig.width=12}
+
+p1 <- DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap_harmony") + ggtitle("sampleID") + NoAxes()  
+p2 <- DimPlot(seu, group.by = "seurat_clusters", label = FALSE, raster=FALSE, reduction = "umap_harmony") + ggtitle("clusters") + NoAxes() + NoLegend()
+
+p1|p2
+
+```
+
+
+---
+
+## SCT + Harmony
+
+```{r}
+DefaultAssay(seu) <- "SCT"
+
+Sys.time()
+seu <- RunHarmony(object = seu, reduction = "pca_SCT", group.by.vars = "sampleID", plot_convergence = TRUE, reduction.save = "harmony_SCT", assay.use = "SCT")
+Sys.time()
+DimPlot(object = seu, reduction = "harmony_SCT", pt.size = .1, group.by = "sampleID")
+Sys.time()
+seu <- RunUMAP(seu, reduction = "harmony_SCT", dims = 1:30, reduction.name = "umap_harmony_SCT" )
+Sys.time()
+seu <- FindNeighbors(seu, reduction = "harmony_SCT", dims = 1:30, graph.name = c("harmony_SCT_nn", "harmony_SCT_snn"))
+Sys.time()
+seu <- FindClusters(seu, graph.name = "harmony_SCT_snn")
+Sys.time()
+
+seu$SCT_harmony_Louvain_res.0.8 <- seu$harmony_SCT_snn_res.0.8
+seu$harmony_SCT_snn_res.0.8 <- NULL
+```
+
+
+```{r fig.height=6, fig.width=12}
+
+p1 <- DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap_harmony_SCT") + ggtitle("sampleID") + NoAxes()  
+p2 <- DimPlot(seu, group.by = "seurat_clusters", label = FALSE, raster=FALSE, reduction = "umap_harmony_SCT") + ggtitle("clusters") + NoAxes() + NoLegend()
+
+p1|p2
+
+```
+
+
+---
+
+# Scanpy log1p normalization + BBKNN 
+
+
+Load reticulate and python env
+```{r}
+
+library(reticulate)
+reticulate::use_condaenv("r-reticulate")
+
+anndata = import("anndata", convert=FALSE)
+#bbknn = import("bbknn", convert=FALSE)
+sc = import("scanpy", convert=FALSE)
+sc$settings$verbosity = 'debug' # ['error', 1:'warning', 2:'info', 3:'hint', 4:'debug']
+sce = import("scanpy.external", convert=FALSE)
+
+```
+
+## BBKNN integration
+normalize to 1e4 (exclude highly expressed), HVG 2000 (batch = sampleID, flavor=1)
+```{r fig.height=5, fig.width=5}
+Sys.time()
+
+count.raw <- Matrix::t(seu@assays$RNA@counts) # transpose count for scanpy
+varname <- data.frame(name=colnames(count.raw))
+row.names(varname) <- varname$name
+
+adata = anndata$AnnData(X=count.raw, obs=seu@meta.data, var = varname)
+sc$pp$normalize_total(adata, target_sum=1e4, exclude_highly_expressed='True')
+sc$pp$log1p(adata)
+sc$pp$highly_variable_genes(adata, n_top_genes=as.integer(2000), batch_key='sampleID')
+
+# Subset hvg for scaling & pca
+hvg = py_to_r(adata$var$highly_variable)
+adata.mat = py_to_r(adata$X)
+bdata = anndata$AnnData(X=adata.mat[,as.vector(hvg)], obs=seu@meta.data)
+sc$pp$regress_out(bdata, c('nCount_RNA', 'percent.mt'))
+sc$pp$scale(bdata, max_value=as.integer(10))
+sc$pp$pca(bdata, n_comps=as.integer(50), svd_solver='arpack')
+sce$pp$bbknn(bdata, batch_key="sampleID") 
+sc$tl$umap(bdata) 
+sc$tl$tsne(bdata)
+
+sc$tl$leiden(bdata, resolution=0.8, key_added='leiden_res_0_8')
+sc$tl$leiden(bdata, resolution=0.5, key_added='leiden_res_0_5')
+sc$tl$leiden(bdata, resolution=0.3, key_added='leiden_res_0_3')
+sc$tl$leiden(bdata, resolution=0.1, key_added='leiden_res_0_1')
+
+
+# Save umap coordinate and clustering back to seurat obj
+umap = py_to_r(bdata$obsm[["X_umap"]])
+row.names(umap) <- seu@reductions[["umap"]]@cell.embeddings %>% row.names
+colnames(umap) <- c("umap_1", "umap_2")
+seu@reductions[["umap_bbknn"]] <- seu@reductions[["umap"]]
+seu@reductions[["umap_bbknn"]]@cell.embeddings <- umap
+seu@reductions[["umap_bbknn"]]@key <- "umap_"
+seu$bbknn_leiden_res_0_8 <- py_to_r(bdata$obs) %>% .$leiden_res_0_8
+seu$bbknn_leiden_res_0_5 <- py_to_r(bdata$obs) %>% .$leiden_res_0_5
+seu$bbknn_leiden_res_0_3 <- py_to_r(bdata$obs) %>% .$leiden_res_0_3
+seu$bbknn_leiden_res_0_1 <- py_to_r(bdata$obs) %>% .$leiden_res_0_1
+
+
+DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "umap_bbknn") + ggtitle("Scanpy log1p + BBKNN") + NoAxes() 
+
+Sys.time()
+
+# Save tsne coordinate and clustering back to seurat obj
+tsne = py_to_r(bdata$obsm[["X_tsne"]])
+row.names(tsne) <- seu@reductions[["umap"]]@cell.embeddings %>% row.names
+colnames(tsne) <- c("tsne_1", "tsne_2")
+seu@reductions[["tsne_bbknn"]] <- seu@reductions[["umap"]]
+seu@reductions[["tsne_bbknn"]]@cell.embeddings <- tsne
+seu@reductions[["tsne_bbknn"]]@key <- "tsne_"
+
+DimPlot(seu, group.by = "sampleID", cols = sampleID_color, raster=FALSE, shuffle=TRUE, reduction = "tsne_bbknn") + ggtitle("Scanpy standard + BBKNN") + NoAxes() 
+
+```
+
+
+
+---
+
+Save as h5ad for cellxgene (20220317)
+```{r}
+sceasy::convertFormat(seu, from="seurat", to="anndata", outFile='data/20220317_19535x26581_workInProgess.h5ad')
+```
+
+Save rds
+```{r}
+saveRDS(seu, "data/20220317_19535x26581_scRNA_processed.rds")
+```
+
+
+
+---
+
+## Label transfer from Azimuth reference
+
+
+### Human Fetus
+
+Read ref rds
+```{r}
+seu.ref <- readRDS("../RefData/Azimuth/Human_Fetus/ref.Rds")
+seu.ref$dataType <- "ref"
+
+# 3000x377456
+```
+
+Plot ref data
+```{r}
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "annotation.l1", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "annotation.l2", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+
+```
+
+
+Find anchors 
+```{r}
+common.genes <- row.names(seu)[(row.names(seu) %in% row.names(seu.ref))]
+
+anchors <- FindTransferAnchors(
+  reference = seu.ref,
+  features = common.genes, 
+  query = seu,
+  query.assay = "SCT",
+  normalization.method = "SCT",
+  reference.reduction = "refDR",
+  dims = 1:50 
+)
+```
+
+
+MapQuery
+```{r}
+seu.MQ <- MapQuery(
+  anchorset = anchors,
+  query = seu, 
+  reference = seu.ref,
+  refdata = list(
+    annotation.l1 = "annotation.l1",
+    annotation.l2 = "annotation.l2"
+  ),
+  reference.reduction = "refDR"
+)
+```
+
+Seems ProjectUMAP is not run, run it
+```{r}
+seu.MQ <- ProjectUMAP(
+  query = seu.MQ, 
+  query.reduction = "ref.refDR", 
+  reference = seu.ref, 
+  reference.reduction = "refDR",
+  reduction.model = "refUMAP"
+)
+```
+
+Plot on ref umap
+```{r fig.width=10}
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "annotation.l1") + NoLegend()
+DimPlot(object = seu.MQ, reduction = "ref.umap", group.by = "predicted.annotation.l1", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+```
+
+Save predicted annotation back
+```{r}
+seu$LT_Azimuth_Fetus_l1 <- factor(seu.MQ$predicted.annotation.l1)
+seu$LT_Azimuth_Fetus_l2 <- factor(seu.MQ$predicted.annotation.l2)
+```
+
+Plot on original umap
+```{r}
+DimPlot(object = seu, reduction = "umap_harmony", group.by = "LT_Azimuth_Fetus_l1", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+DimPlot(object = seu, reduction = "umap_harmony", group.by = "LT_Azimuth_Fetus_l2", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+
+```
+
+save full LT result   
+```{r}
+saveRDS(seu.MQ, "data/20220318_seu.MQ_Fetus.Rds")
+rm(seu.MQ)
+rm(seu.ref)
+```
+
+
+
+---
+
+### Human Motor Cortex
+
+Read ref TMS rds
+```{r}
+seu.ref <- readRDS("../RefData/Azimuth/Human_MotorCortex/ref.Rds")
+seu.ref$dataType <- "ref"
+
+# 3000x24526
+```
+
+Plot ref data
+```{r fig.width=10}
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "class", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "subclass", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "cross_species_cluster", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "cluster", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+```
+
+
+Find anchors 
+```{r}
+common.genes <- row.names(seu)[(row.names(seu) %in% row.names(seu.ref))]
+
+anchors <- FindTransferAnchors(
+  reference = seu.ref,
+  features = common.genes, 
+  query = seu,
+  query.assay = "SCT",
+  normalization.method = "SCT",
+  reference.reduction = "refDR",
+  dims = 1:50 
+)
+```
+
+MapQuery
+```{r}
+seu.MQ <- MapQuery(
+  anchorset = anchors,
+  query = seu, 
+  reference = seu.ref,
+  refdata = list(
+    class = "class",
+    subclass = "subclass"
+  ),
+  reference.reduction = "refDR"
+)
+```
+
+
+Seems ProjectUMAP is not run, run it
+```{r}
+seu.MQ <- ProjectUMAP(
+  query = seu.MQ, 
+  query.reduction = "ref.refDR", 
+  reference = seu.ref, 
+  reference.reduction = "refDR",
+  reduction.model = "refUMAP"
+)
+```
+
+Plot on ref umap
+```{r fig.width=10}
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "class") + NoLegend()
+DimPlot(object = seu.MQ, reduction = "ref.umap", group.by = "predicted.class", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+
+DimPlot(object = seu.ref, reduction = "refUMAP", group.by = "subclass") + NoLegend()
+DimPlot(object = seu.MQ, reduction = "ref.umap", group.by = "predicted.subclass", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+```
+
+Save predicted annotation back
+```{r}
+seu$LT_Azimuth_MotorCortex_class <- factor(seu.MQ$predicted.class)
+seu$LT_Azimuth_MotorCortex_subclass <- factor(seu.MQ$predicted.subclass)
+```
+
+Plot on original umap
+```{r}
+DimPlot(object = seu, reduction = "umap_harmony", group.by = "LT_Azimuth_MotorCortex_class", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+DimPlot(object = seu, reduction = "umap_harmony", group.by = "LT_Azimuth_MotorCortex_subclass", label = TRUE, label.size = 3, repel = TRUE) + NoLegend()
+
+```
+
+save full LT result   
+```{r}
+saveRDS(seu.MQ, "data/20220318_seu.MQ_MotorCortex.Rds")
+rm(seu.MQ)
+rm(seu.ref)
+```
+
+
+---
+
+# Annotation using sc-type
+
+Follow the [Github example](https://github.com/IanevskiAleksandr/sc-type)
+
+Source the code
+```{r}
+# load gene set preparation function
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
+# load cell type annotation function
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
+```
+
+Prepare db
+```{r}
+# DB file
+db_ = "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_full.xlsx";
+tissue = "Brain" # e.g. Immune system, Liver, Pancreas, Kidney, Eye, Brain
+
+# prepare gene sets
+library(HGNChelper)
+gs_list = gene_sets_prepare(db_, tissue)
+```
+
+Example data
+```{r}
+gs_list.ex = gene_sets_prepare("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_short.xlsx", "Immune system") # e.g. Immune system, Liver, Pancreas, Kidney, Eye, Brain
+
+# assign cell types
+scRNAseqData = readRDS(gzcon(url('https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/exampleData.RDS'))); #load example scRNA-seq matrix
+es.max = sctype_score(scRNAseqData = scRNAseqData, scaled = TRUE, gs = gs_list.ex$gs_positive, gs2 = gs_list.ex$gs_negative)
+
+# View results, cell-type by cell matrix. See the complete example below
+View(es.max)
+```
+
+Apply to our data
+```{r}
+# Use brain geneset in scType database
+gs_list = gene_sets_prepare(db_, "Brain")
+
+# get cell-type by cell matrix
+es.max = sctype_score(scRNAseqData = seu[["RNA"]]@scale.data, scaled = TRUE, 
+                      gs = gs_list$gs_positive, gs2 = gs_list$gs_negative)
+
+# merge by cluster: harmony_Louvain_res.0.8
+cL_resutls = do.call("rbind", lapply(unique(seu@meta.data$harmony_Louvain_res.0.8), function(cl){
+    es.max.cl = sort(rowSums(es.max[ ,rownames(seu@meta.data[seu@meta.data$harmony_Louvain_res.0.8==cl, ])]), decreasing = !0)
+    head(data.frame(cluster = cl, type = names(es.max.cl), scores = es.max.cl, ncells = sum(seu@meta.data$harmony_Louvain_res.0.8==cl)), 10)
+}))
+sctype_scores = cL_resutls %>% group_by(cluster) %>% top_n(n = 1, wt = scores)  
+
+# set low-confident (low ScType score) clusters to "unknown"
+sctype_scores$type[as.numeric(as.character(sctype_scores$scores)) < sctype_scores$ncells/4] = "Unknown"
+DT::datatable(sctype_scores)
+```
+
+Plot scType assigned annotation on harmony_umap
+```{r}
+seu@meta.data$scType_assigned_harmony_Louvain_res.0.8 = ""
+for(j in unique(sctype_scores$cluster)){
+  cl_type = sctype_scores[sctype_scores$cluster==j,]; 
+  seu@meta.data$scType_assigned_harmony_Louvain_res.0.8[seu@meta.data$harmony_Louvain_res.0.8 == j] = as.character(cl_type$type[1])
+}
+seu$scType_assigned_harmony_Louvain_res.0.8 <- factor(seu$scType_assigned_harmony_Louvain_res.0.8)
+
+DimPlot(seu, reduction = "umap_harmony", label = TRUE, repel = TRUE, group.by = 'scType_assigned_harmony_Louvain_res.0.8') 
+
+```
+
+
+Save scType raw 
+```{r}
+
+seu$scType_raw <- factor(colnames(t(es.max))[max.col(t(es.max), ties.method="first")])
+
+DimPlot(seu, reduction = "umap_harmony", group.by = 'scType_raw', label = T, label.size = 3, repel = TRUE) + NoLegend()
+
+```
+
+
+
+
+
+---
+
+
+Save as h5ad for cellxgene (20220318)
+```{r}
+sceasy::convertFormat(seu, from="seurat", to="anndata", outFile='data/20220317_19535x26581_workInProgess.h5ad')
+```
+
+Save rds
+
+```{r}
+saveRDS(seu, "data/20220317_19535x26581_scRNA_processed.rds")
+```
+
+
+
+---
+
+# Session Info
+```{r}
+sessionInfo()
+```
+

@@ -1,0 +1,555 @@
+---
+title: "F6 interactome project: scRNA-seq QC and filtering"
+author: "Jen-Chien Chang"
+date: "`r format(Sys.time(), '%Y/%m/%d')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, cache=FALSE, fig.show='hold', fig.align="center")
+```
+
+---
+
+# Note
+
+* 
+
+---
+
+# Basic setup
+
+<span style="color:red">template code</span> <a href="#top">Back to top</a>
+```{r}
+
+```
+
+
+Load R library
+```{r warning=FALSE, results='hide'}
+# Data manipulation
+library(dplyr)
+library(magrittr)
+library(reshape2)
+
+# Plot
+library(ggplot2)
+library(patchwork)
+library(ggpubr)
+library(rstatix)
+library(pheatmap)
+#library(ggfortify)    # for plot PCA with ggplot2 autoplot 
+
+# File I/O
+#library(readxl)
+
+# Seurat
+library(Seurat)
+#library(SeuratDisk)
+
+# Signac
+#set.seed(2021)
+#library(Signac)
+#library(GenomeInfoDb)
+#library(EnsDb.Mmusculus.v79)
+#library(GenomicRanges)
+
+# Multiprocessing
+#library(future)
+#plan("multiprocess", workers = 12)
+#plan("sequential")
+
+# Math
+#library(usedist)
+
+# For AUCell
+#library(AUCell)
+#library(GSEABase)
+
+# sceasy (seurat <-> annData )
+#library(sceasy)
+#library(anndata) #directly deal with annData in R
+
+```
+
+
+Global variables
+```{r}
+# data directory
+osc_fs_home_base <- "../../../../../osc-fs_home"
+home_base <- "../../../../../home"
+
+# color setting 
+sampleID_color <- c("#e31a1c","#fb9a99","#33a02c","#b2df8a","#1f78b4","#a6cee3")
+sampleType_color <- c("#e31a1c","#33a02c","#1f78b4")
+
+# ggplot2 theme setting
+theme_set(theme_bw()) 
+```
+
+
+
+---
+
+# scRNA-seq analysis
+
+---
+
+
+## Cell QC & filtering
+
+
+Read data with scrublet output back in R
+```{r}
+seu.raw <- readRDS('data/20220317_raw_merged_scrublet.rds')
+seu.raw
+seu.raw@meta.data %>% colnames
+seu.raw$sampleID <- factor(seu.raw$sampleID, c("iPS1","iPS2","NSC1","NSC2","Neuron1","Neuron2"))
+seu.raw$sampleType <- seu.raw$sampleID %>% as.character() %>% strsplit(., "[0-9]") %>% unlist
+seu.raw$sampleType <- factor(seu.raw$sampleType, c("iPS","NSC","Neuron"))
+```
+
+
+### doublet removal
+
+Plot doublet score
+```{r}
+seu.raw@meta.data %>%
+  ggplot(., aes(x=nCount_RNA, y=doublet_scores))+
+  geom_point(size = 0.5, stroke = 0, shape = 16)
+
+seu.raw@meta.data %>%
+  ggplot(., aes(x=doublet_scores, y=predicted_doublets))+
+  geom_point(size = 0.5, stroke = 0, shape = 16)
+
+seu.raw@meta.data %>%
+  ggplot(., aes(x=nCount_RNA, y=predicted_doublets))+
+  geom_point(size = 0.5, stroke = 0, shape = 16)
+```
+
+Remove cells labelled as doublet
+```{r}
+
+nDoublet <- nrow(filter(seu.raw@meta.data, predicted_doublets == TRUE))
+print(paste0("Num. cells before all filtering: ", nrow(seu.raw@meta.data)))
+print(paste0("Num. doublets predicted by scrublet: ", nDoublet, " (", round(nDoublet/nrow(seu.raw@meta.data)*100, 2),"%)"))
+print(paste0("Num. cells after doublet removal: ", nrow(seu.raw@meta.data)-nDoublet))
+```
+
+### Calculate percentage of reads for various gene category 
+```{r}
+
+seu.raw[["percent.mt"]] <- PercentageFeatureSet(seu.raw, pattern = "^MT-")
+seu.raw[["percent.ribo"]] <- PercentageFeatureSet(seu.raw, pattern = "^(RPL|RPL)")
+seu.raw[["percent.hb"]] <- PercentageFeatureSet(seu.raw, pattern = "^HB")
+seu.raw[["percent.hist"]] <- PercentageFeatureSet(seu.raw, pattern = "^(HIST|H1F|H2A|H2B|H3|H4)")
+
+
+print(paste0("Mitochondrial genes: ", length(grep("^MT-", rownames(seu.raw@assays$RNA@counts), value = TRUE)) ))
+grep("^MT-", rownames(seu.raw@assays$RNA@counts), value = TRUE)
+
+print(paste0("Ribosomal genes: ", length(grep("^(RPL|RPL)", rownames(seu.raw@assays$RNA@counts), value = TRUE))))
+grep("^(RPL|RPL)", rownames(seu.raw@assays$RNA@counts), value = TRUE)
+
+print(paste0("Hemoglobin genes: ", length(grep("^HB", rownames(seu.raw@assays$RNA@counts), value = TRUE))))
+grep("^HB", rownames(seu.raw@assays$RNA@counts), value = TRUE)
+
+print(paste0("Histone genes: ", length(grep("^(HIST|H1F|H2A|H2B|H3|H4)", rownames(seu.raw@assays$RNA@counts), value = TRUE))))
+grep("^(HIST|H1F|H2A|H2B|H3|H4)", rownames(seu.raw@assays$RNA@counts), value = TRUE)
+
+```
+
+
+
+### Plot quality metrics
+
+```{r fig.}
+VlnPlot(seu.raw, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3, group.by = "sampleID", pt.size = 0)
+```
+
+
+```{r}
+seu.raw@meta.data %>%
+  ggplot(., aes(x=log2(nCount_RNA), y=log2(nFeature_RNA), color=percent.mt))+
+  geom_point(size = 0.1, stroke = 0, shape = 16)+
+  scale_color_viridis_c(direction = 1, limits = c(0, 100))+
+  ylim(c(6,14))+ xlim(c(8,17))+
+  geom_vline(aes(xintercept=log2(500)), color="black", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=log2(1000)), color="red", linetype="dashed", size=1)+  
+  geom_hline(aes(yintercept=log2(250)), color="black", linetype="dashed", size=1)+
+  geom_hline(aes(yintercept=log2(500)), color="red", linetype="dashed", size=1)+
+  ggtitle("All cells")
+```
+
+
+
+```{r}
+df <- seu.raw@meta.data
+
+p0 <- df %>% group_by(sampleID) %>% mutate(., nCells=n()) %>% distinct(sampleID, .keep_all = T) %>% 
+  ggplot(., aes(x=nCells, y=sampleID, color=sampleID))+
+  geom_point(position = position_dodge(width = 0.5))+
+  scale_color_manual(values=sampleID_color)+
+  theme(legend.position = "none", axis.title.y=element_blank(), axis.text.y=element_blank())
+
+
+## nCount_RNA (nUMI)
+
+print(paste0("nCount_RNA (nUMI): "))
+quantile(df$nCount_RNA, c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=nCount_RNA)) +
+    geom_histogram(binwidth=100, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(nCount_RNA, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(nCount_RNA, na.rm=T)), color="black", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=100), color="blue", size=1)+
+  geom_vline(aes(xintercept=25000), color="blue", size=1)+
+  xlim(c(0,50000))+
+  ggtitle("nCount_RNA (nUMI)")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=nCount_RNA, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,50000))+
+  theme(axis.title.y=element_blank())
+p3 <- ggplot(df, aes(x=nCount_RNA, y=all))+
+  geom_boxplot()+
+  xlim(c(0,50000))+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+#p1+p3+p2+plot_layout(heights = c(1,0.3,2))
+
+
+## nFeature_RNA (nGenes)
+
+print(paste0("nFeature_RNA (nGenes): "))
+df$nFeature_RNA %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=nFeature_RNA)) +
+    geom_histogram(binwidth=50, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(nFeature_RNA, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(nFeature_RNA, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,10000))+
+  ggtitle("nFeature_RNA (nGenes)")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=nFeature_RNA, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,10000))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+## Percentage of Mitochondrial Reads
+
+print(paste0("Percentage of Mitochondrial Reads: "))
+df$percent.mt %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.mt)) +
+    geom_histogram(binwidth=0.5, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.mt, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.mt, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,30))+
+  ggtitle("Percentage of Mitochondrial Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.mt, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,30))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+## Percentage of Ribosomal Reads
+
+print(paste0("Percentage of Ribosomal Reads: "))
+df$percent.ribo %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.ribo)) +
+    geom_histogram(binwidth=0.5, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.ribo, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.ribo, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,30))+
+  ggtitle("Percentage of Ribosomal Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.ribo, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,30))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+
+
+## Percentage of Hb Reads
+
+print(paste0("Percentage of Hemoglobin Reads: "))
+df$percent.hb %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.hb)) +
+    geom_histogram(binwidth=0.05, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.hb, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.hb, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,5))+
+  ggtitle("Percentage of Hemoglobin Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.hb, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,5))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+
+
+## Percentage of Histone Reads
+
+print(paste0("Percentage of Histone Reads: "))
+df$percent.hist %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.hist)) +
+    geom_histogram(binwidth=0.05, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.hist, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.hist, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,3))+
+  ggtitle("Percentage of Histone Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.hist, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,3))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+
+## doublet score distribution
+df %>%
+  ggplot(., aes(x=doublet_scores)) +
+    geom_histogram(binwidth=0.01, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(doublet_scores, na.rm=T)), color="red", linetype="dashed", size=1)+
+    geom_vline(aes(xintercept=(mean(doublet_scores, na.rm=T)+3*sd(doublet_scores, na.rm=T))), color="red", linetype="dashed", size=1)+
+    geom_vline(aes(xintercept=median(doublet_scores, na.rm=T)), color="blue", linetype="dashed", size=1)+
+  ggtitle("Doublet score distribution")
+
+
+## pct.mt vs pct.ribo
+ggplot(df, aes(x=percent.ribo, y=percent.mt))+
+  geom_point()+
+  ggtitle("pct.mt vs pct.ribo")
+
+```
+
+---
+
+### Apply filtering 
+
+Set filtering criteria
+```{r}
+minUMI <- 2000
+minGenes <- 1000
+maxPctMt <- 20
+
+seu <- subset(seu.raw, subset = (nCount_RNA > minUMI & nFeature_RNA > minGenes & percent.mt < maxPctMt & predicted_doublets == FALSE))
+
+df <- seu@meta.data
+
+nFlt <- nrow(seu.raw@meta.data) - nrow(df)
+print(paste0("Num. cells before all filtering: ", nrow(seu.raw@meta.data)))
+print(paste0("Num. filtered: ", nFlt, " (", round(nFlt/nrow(seu.raw@meta.data)*100, 2),"%)"))
+print(paste0("Num. cells after all filtering: ", nrow(df)))
+
+```
+
+Stats after all filtering
+```{r}
+  
+p0 <- df %>% group_by(sampleID) %>% mutate(., nCells=n()) %>% distinct(sampleID, .keep_all = T) %>% 
+  ggplot(., aes(x=nCells, y=sampleID, color=sampleID))+
+  geom_point(position = position_dodge(width = 0.5))+
+  scale_color_manual(values=sampleID_color)+
+  theme(legend.position = "none", axis.title.y=element_blank(), axis.text.y=element_blank())
+
+## log2(nUMI) vs log2(nGenes)
+
+ggplot(df, aes(x=log2(nCount_RNA), y=log2(nFeature_RNA), color=percent.mt))+
+            geom_point(data = filter(seu.raw@meta.data, !(row.names(seu.raw@meta.data) %in% row.names(df))), size = 0.1, stroke = 0, shape = 16, color="grey")+ 
+            geom_point(size = 0.1, stroke = 0, shape = 16)+ 
+            scale_color_viridis_c(direction = 1, limits = c(0, 50))+
+            ylim(c(6,13))+ xlim(c(8,17))+
+            geom_vline(aes(xintercept=log2(500)), color="black", linetype="dashed", size=1)+
+            geom_vline(aes(xintercept=log2(1000)), color="red", linetype="dashed", size=1)+  
+            geom_hline(aes(yintercept=log2(250)), color="black", linetype="dashed", size=1)+
+            geom_hline(aes(yintercept=log2(500)), color="red", linetype="dashed", size=1)+
+            #geom_abline(slope = fit()[2] , intercept = fit()[4]  , color="blue", linetype="dashed", size=1)+
+            #geom_abline(slope = fit()[2] , intercept = fit()[3]  , color="blue", linetype="dashed", size=1)+
+            #geom_abline(slope = fit()[2] , intercept = fit()[1] , color="blue", linetype="dashed", size=1)+
+            ggtitle(paste0("nCells=", nrow(df), " (", nrow(seu.raw@meta.data)-nrow(df), " removed, ", round((nrow(seu.raw@meta.data)-nrow(df))/nrow(seu.raw@meta.data)*100, 1), "%)"))+ 
+            theme(plot.title = element_text(size = 12, face = "bold"))
+
+
+## nCount_RNA (nUMI)
+
+print(paste0("nCount_RNA (nUMI): "))
+quantile(df$nCount_RNA, c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=nCount_RNA)) +
+    geom_histogram(binwidth=100, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(nCount_RNA, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(nCount_RNA, na.rm=T)), color="black", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=100), color="blue", size=1)+
+  geom_vline(aes(xintercept=25000), color="blue", size=1)+
+  xlim(c(0,50000))+
+  ggtitle("nCount_RNA (nUMI)")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=nCount_RNA, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,50000))+
+  theme(axis.title.y=element_blank())
+p3 <- ggplot(df, aes(x=nCount_RNA, y=all))+
+  geom_boxplot()+
+  xlim(c(0,50000))+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+#p1+p3+p2+plot_layout(heights = c(1,0.3,2))
+
+
+## nFeature_RNA (nGenes)
+
+print(paste0("nFeature_RNA (nGenes): "))
+df$nFeature_RNA %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=nFeature_RNA)) +
+    geom_histogram(binwidth=50, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(nFeature_RNA, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(nFeature_RNA, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,10000))+
+  ggtitle("nFeature_RNA (nGenes)")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=nFeature_RNA, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,10000))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+## Percentage of Mitochondrial Reads
+
+print(paste0("Percentage of Mitochondrial Reads: "))
+df$percent.mt %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.mt)) +
+    geom_histogram(binwidth=0.5, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.mt, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.mt, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,25))+
+  ggtitle("Percentage of Mitochondrial Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.mt, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,25))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+## Percentage of Ribosomal Reads
+
+print(paste0("Percentage of Ribosomal Reads: "))
+df$percent.ribo %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.ribo)) +
+    geom_histogram(binwidth=0.5, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.ribo, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.ribo, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,30))+
+  ggtitle("Percentage of Ribosomal Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.ribo, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,30))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+
+
+## Percentage of Hb Reads
+
+print(paste0("Percentage of Hemoglobin Reads: "))
+df$percent.hb %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.hb)) +
+    geom_histogram(binwidth=0.05, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.hb, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.hb, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,5))+
+  ggtitle("Percentage of Hemoglobin Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.hb, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,5))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+
+
+## Percentage of Histone Reads
+
+print(paste0("Percentage of Histone Reads: "))
+df$percent.hist %>% quantile(., c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1))
+
+p1 <- ggplot(df, aes(x=percent.hist)) +
+    geom_histogram(binwidth=0.05, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(percent.hist, na.rm=T)), color="red", linetype="dashed", size=1)+
+  geom_vline(aes(xintercept=median(percent.hist, na.rm=T)), color="black", linetype="dashed", size=1)+
+  xlim(c(0,3))+
+  ggtitle("Percentage of Histone Reads")+
+  theme(axis.title=element_blank(), axis.text.x=element_blank())
+p2 <- ggplot(df, aes(x=percent.hist, y=sampleID))+
+  geom_boxplot()+
+  xlim(c(0,3))+
+  theme(axis.title.y=element_blank())
+p1+plot_spacer()+p2+p0 + plot_layout(widths = c(2, 1), heights = c(1,2))
+
+
+## doublet score distribution
+df %>%
+  ggplot(., aes(x=doublet_scores)) +
+    geom_histogram(binwidth=0.01, colour="black", fill="white") +
+    geom_vline(aes(xintercept=mean(doublet_scores, na.rm=T)), color="red", linetype="dashed", size=1)+
+    geom_vline(aes(xintercept=(mean(doublet_scores, na.rm=T)+3*sd(doublet_scores, na.rm=T))), color="red", linetype="dashed", size=1)+
+    geom_vline(aes(xintercept=median(doublet_scores, na.rm=T)), color="blue", linetype="dashed", size=1)+
+  ggtitle("Doublet score distribution")
+
+
+## pct.mt vs pct.ribo
+ggplot(df, aes(x=percent.ribo, y=percent.mt))+
+  geom_point()+
+  ggtitle("pct.mt vs pct.ribo")
+
+```
+
+
+
+
+## Further filter genes  
+
+Keep only genes expressing in >50 cells
+```{r}
+min.cell <- 50
+nCellsExpr <- Matrix::rowSums(seu@assays$RNA@counts > 0)
+ 
+seu <- seu[names(nCellsExpr[nCellsExpr > min.cell]),]
+seu
+
+rm(seu.raw)
+```
+
+save rds
+```{r eval=FALSE}
+
+saveRDS(seu, "data/20220317_19535x26581_scRNA.rds")
+
+```
+
+
+
+---
+
+# Session Info
+```{r}
+sessionInfo()
+```
+

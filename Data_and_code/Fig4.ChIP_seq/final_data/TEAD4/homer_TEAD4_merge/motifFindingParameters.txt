@@ -1,0 +1,1 @@
+cmd = TEAD4_2c_output_merge.bed hg38 /analysisdata/fantom6/Interactome/ChIP_seq/BAM/macs2/homer_TEAD4_merge -size given

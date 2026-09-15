@@ -1,0 +1,1 @@
+cmd = ONECUT_2c_output_merge.bed hg38 /analysisdata/fantom6/Interactome/ChIP_seq/BAM/2nd_seq/macs2/homer_ONECUT_merge -size given
