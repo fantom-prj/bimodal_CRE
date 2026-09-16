@@ -1,0 +1,5 @@
+"analysis","axis","gene_set","set_size","NES","pval","meaningful","fdr"
+"all_edges","triplet_pairs","expressed_TRUE",9268,1.03760144863564,1e-50,TRUE,1e-50
+"all_edges","cum_abs_estimate_total","expressed_TRUE",9268,1.49050180946368,1e-50,TRUE,1e-50
+"all_edges","cum_abs_estimate_total","mediating_TRUE",10813,2.23755601672753,1e-50,TRUE,1e-50
+"all_edges","triplet_pairs","mediating_TRUE",10813,NA,NA,FALSE,NA

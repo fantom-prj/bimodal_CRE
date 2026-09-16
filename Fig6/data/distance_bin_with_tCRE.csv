@@ -1,0 +1,21 @@
+"source_class","dist_bin","n_enhancers","y_mean"
+"non-expressed enhancers","[0,5e+04)",19972,0.0874724614460244
+"expressed enhancers","[0,5e+04)",1165,0.52618025751073
+"non-expressed enhancers","[5e+04,1e+05)",42936,0.142956959195081
+"expressed enhancers","[5e+04,1e+05)",2764,0.791606367583213
+"non-expressed enhancers","[1e+05,1.5e+05)",61830,0.177421963448164
+"expressed enhancers","[1e+05,1.5e+05)",4279,1.06800654358495
+"non-expressed enhancers","[1.5e+05,2e+05)",57354,0.169648150085434
+"expressed enhancers","[1.5e+05,2e+05)",3810,0.946456692913386
+"non-expressed enhancers","[2e+05,2.5e+05)",42811,0.137885122982411
+"expressed enhancers","[2e+05,2.5e+05)",2532,0.842022116903633
+"non-expressed enhancers","[2.5e+05,3e+05)",29985,0.116224779056195
+"expressed enhancers","[2.5e+05,3e+05)",1794,0.642140468227425
+"non-expressed enhancers","[3e+05,3.5e+05)",19763,0.0900672974750797
+"expressed enhancers","[3e+05,3.5e+05)",1086,0.523941068139963
+"non-expressed enhancers","[3.5e+05,4e+05)",13334,0.080245987700615
+"expressed enhancers","[3.5e+05,4e+05)",705,0.425531914893617
+"non-expressed enhancers","[4e+05,4.5e+05)",9022,0.0786965196187098
+"expressed enhancers","[4e+05,4.5e+05)",464,0.247844827586207
+"non-expressed enhancers","[4.5e+05,5e+05]",6106,0.0571568948575172
+"expressed enhancers","[4.5e+05,5e+05]",301,0.259136212624585

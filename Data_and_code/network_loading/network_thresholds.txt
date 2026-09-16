@@ -1,0 +1,51 @@
+# Network edge filtering thresholds
+# ============================================================
+# These values are applied consistently across all analysis scripts
+# (6.1_validation/, 6.2_biological_interpretation/, 7–12).
+#
+# To load in R:
+#   source('../code_2026_04_27/network_thresholds.txt')
+#   — or —
+#   thresholds <- yaml::read_yaml('../code_2026_04_27/network_thresholds.txt')
+#
+# Derivation (performed on the full lasso network,
+# file: results_2026_04_27/5_lasso_models/lasso_network_with_randomization.rds):
+#
+#   adjpvalue_threshold  — permutation-test adjusted p-value from lasso randomisation
+#   dev_ratio_threshold  — proportion of deviance explained by the edge in the lasso model
+#   abs_estimate_thresholds — 90th percentile of |estimate| within each edge-type stratum,
+#                             computed AFTER applying adjpvalue and dev_ratio filters.
+#                             Retains the top 10% of edges by effect size per category.
+#                             Stratum keys: <source_measurement_type>_<target_measurement_type>
+#                             for Enhancer_promoter edges, and
+#                             TF_<target_type>_<target_measurement_type> for TF_peak edges.
+# ============================================================
+
+# ── Global filters (applied to all lasso network edges) ──────────────────────
+adjpvalue_threshold = 0.05
+dev_ratio_threshold = 0.3
+
+# ── Per-stratum |estimate| thresholds (p90, Enhancer_promoter edges) ─────────
+# Stratum: enhancer_source_modality → promoter_target_modality
+abs_estimate_Enhancer_promoter_aCRE_aCRE = 0.114
+abs_estimate_Enhancer_promoter_aCRE_tCRE = 0.106
+abs_estimate_Enhancer_promoter_tCRE_aCRE = 0.102
+abs_estimate_Enhancer_promoter_tCRE_tCRE = 0.155
+
+# ── Per-stratum |estimate| thresholds (p90, TF_peak edges) ───────────────────
+# Stratum: TF → target_type (Enhancer/Promoter) × target_measurement_type
+abs_estimate_TF_peak_Enhancer_aCRE = 0.242
+abs_estimate_TF_peak_Enhancer_tCRE = 0.236
+abs_estimate_TF_peak_Promoter_aCRE = 0.173
+abs_estimate_TF_peak_Promoter_tCRE = 0.158
+
+# ── Notes ─────────────────────────────────────────────────────────────────────
+# - Scripts 2 (ChIP-seq) and 3 (eQTL) sweep dev_ratio from 0 to 0.8 to draw
+#   performance curves; dev_ratio_threshold above marks the operating point
+#   highlighted in their summary figures.
+# - Script 7 (TF effects) uses adjpvalue <= 0.05 (hardcoded) and
+#   dev_ratio >= 0.3; its own significance_threshold = 0.1 refers to a
+#   downstream q-value test on TF-level aggregated statistics, not edge filtering.
+# - The abs_estimate thresholds were cross-validated against a collaborator's
+#   independent elbow-point analysis on a previous network version; the p90
+#   criterion reproduces their values within ±0.05 for all strata.
