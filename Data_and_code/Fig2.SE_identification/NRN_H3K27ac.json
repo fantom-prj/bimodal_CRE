@@ -1,0 +1,23 @@
+{
+  "atac.title": "NRN_H3K27ac_CUTTag",
+  "atac.description": "H3K27ac CUT&Tag in Neuron",
+  "atac.pipeline_type": "atac",
+
+  "atac.genome_tsv": "./hg38.tsv",
+
+  "atac.paired_end": true,
+
+  "atac.fastqs_rep1_R1": [
+    "/analysisdata/fantom6/Interactome/CUTnTag/rawdata/NRN-K27ac-r1_1.fastq.gz"
+  ],
+  "atac.fastqs_rep1_R2": [
+    "/analysisdata/fantom6/Interactome/CUTnTag/rawdata/NRN-K27ac-r1_2.fastq.gz"
+  ],
+
+  "atac.fastqs_rep2_R1": [
+    "/analysisdata/fantom6/Interactome/CUTnTag/rawdata/NRN-K27ac-r2_1.fastq.gz"
+  ],
+  "atac.fastqs_rep2_R2": [
+    "/analysisdata/fantom6/Interactome/CUTnTag/rawdata/NRN-K27ac-r2_2.fastq.gz"
+  ]
+}
