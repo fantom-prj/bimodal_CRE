@@ -5,8 +5,9 @@ Figures 5-6 and Extended Data Figure 7: `grn_reconstruction_pipeline/`,
 `tf_effects_clustering/`, `threshold_sensitivity_sweep/`,
 `chipseq_eqtl_validation/`, `network_basic_stats/`, `tCRE_topology/`,
 `enhancer_centrality_stats/`, `screen_correlation/`, `ep_enrichment/`,
-`tf_tf_umap/`, and `network_loading/` — plus `config.R` at the top of this
-folder. None of these subfolders hold any figure panels themselves:
+`tf_tf_umap/`, `abc_validation/`, and `network_loading/` — plus `config.R`
+at the top of this folder. None of these subfolders hold any figure panels
+themselves:
 
 - `grn_reconstruction_pipeline/` — the pipeline that builds the gene
   regulatory network (GRN) itself, from raw data through to the final
@@ -42,9 +43,10 @@ consumers.
 |---|---|---|
 | `grn_reconstruction_pipeline/` | The gene regulatory network itself: TF-to-peak calls, the candidate base network, the expression/accessibility dataset, and the final lasso-pruned network(s) | (all subfolders below, which read its output as `primary_data_folder`) |
 | `tf_effects_clustering/` | TF cumulative-effect matrix + heatmap clustering (`tf_effects_clustering.rds`) | Fig5b, Fig5c |
-| `threshold_sensitivity_sweep/` | 13-grid-point threshold sweep, both themes (`sweep_category_table.csv`) + shared plotting function | Fig5d, Ext5d, Ext5e, Fig6a, Ext6a, Ext6b |
+| `threshold_sensitivity_sweep/` | 13-grid-point threshold sweep, both themes (`sweep_category_table.csv`) + shared plotting function | Fig5d, Ext5e, Ext5f, Fig6a, Ext6a, Ext6b |
 | `chipseq_eqtl_validation/` | ChIP-seq F1 curve data + eQTL F1 curve data | Ext5a, Ext5b |
 | `network_basic_stats/` | Node/edge counts across all 8 network variants | Ext5c (both node and edge panels) |
+| `abc_validation/` | Network-tier vs ABC concordance F1 table (`tier_comparison.csv`) | Ext5d |
 | `tCRE_topology/` | New-route triplet table + distance-binning tables (with/without tCRE) | Fig6b, Fig6c, Ext6c, Ext6d |
 | `enhancer_centrality_stats/` | Copy of the pipeline's `all_enhancers_stats.csv` + screen overlap tables | Fig6d, Fig6e, Ext6e, Ext6f |
 | `screen_correlation/` | Screen hit-score correlation, GSEA, and hit-score-sign test tables | Fig6e, Ext6e, Ext6f |
@@ -65,3 +67,11 @@ reusable summary table, so splitting counting from drawing would have been a
 leaky abstraction. It still sources `Data_and_code/config.R` for the data-root
 path and `Data_and_code/network_loading/plot_theme_and_save.R` for the save
 helpers.
+
+## Composing the final figures
+
+Each figure's panels are saved as standalone PNG/PDF files in that figure's
+own `out/` folder, styled consistently via the shared `bimodal_theme`
+(Arial, 5-7pt). There is no in-repo assembly script that composites a
+figure's panels into one page — multi-panel figures are hand-composed later
+outside R, from these individually-polished panel files.

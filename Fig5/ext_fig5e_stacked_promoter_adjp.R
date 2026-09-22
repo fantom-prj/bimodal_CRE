@@ -1,11 +1,11 @@
-#### Extended Figure 5e — TF-set coupling per promoter vs dev_ratio threshold ####
+#### Extended Figure 5e — TF-set coupling per promoter vs adjpvalue threshold ####
 #
 # Panel:   Extended Figure 5e. For each promoter with both a chromatin
 #          (aCRE) and an expression (tCRE) measurement reachable by a TF,
 #          the two TF sets are compared with the Jaccard index and bucketed
 #          into fully uncoupled (Jaccard=0, disjoint TF sets) / intermediate
 #          / fully coupled (Jaccard=1, identical TF sets). Stacked bar shows
-#          how this 3-way split shifts as the dev_ratio (model fit quality)
+#          how this 3-way split shifts as the adjpvalue significance
 #          threshold is swept, with total bar height tracking the shrinking
 #          number of promoters that remain eligible for the comparison at
 #          each threshold.
@@ -14,7 +14,7 @@
 #           ../Data_and_code/threshold_sensitivity_sweep/build_sweep_data.R;
 #           the shared plotting logic lives in
 #           ../Data_and_code/threshold_sensitivity_sweep/plot_stacked_bar_height.R)
-# Writes:  Fig5/out/ext_f5e.stacked_TF_promoter_devratio.{png,pdf}
+# Writes:  Fig5/out/ext_f5e.stacked_TF_promoter_adjpvalue.{png,pdf}
 
 primary_folder <- '[primary_folder]'
 path_fig5_data <- paste0(primary_folder, 'Fig5/data/')
@@ -27,8 +27,8 @@ source(paste0(path_code, 'threshold_sensitivity_sweep/plot_stacked_bar_height.R'
 category_table <- read.csv(paste0(path_fig5_data, 'sweep_category_table.csv'))
 
 p <- make_stacked_bar_linheight(category_table,
-                                theme_name = 'TF_promoter',
-                                sweep_name = 'dev_ratio_threshold')
+                                 theme_name = 'TF_promoter',
+                                 sweep_name = 'adjpvalue_threshold')
 
-save_panel_png_pdf(p, path_fig5, 'ext_f5e.stacked_TF_promoter_devratio',
+save_panel_png_pdf(p, path_fig5, 'ext_f5e.stacked_TF_promoter_adjpvalue',
                    width_in = 3.2, height_in = 3.0)
