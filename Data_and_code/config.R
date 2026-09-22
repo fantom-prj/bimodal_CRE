@@ -44,5 +44,37 @@ raw_data_folder <- '[raw_data_folder]'
 #     high-confidence GRN (127,938 edges): lasso_network_with_randomization.rds
 #     after adjpvalue <= 0.05, dev_ratio >= 0.3, and the per-stratum
 #     |estimate| p90 filter (see network_loading/load_and_filter_network.R).
-this_config_dir     <- dirname(sys.frames()[[1]]$ofile)
+#
+# this_config_dir is resolved by walking the call stack for the nearest
+# source()/sys.source() frame that names this file, rather than the simpler
+# `dirname(sys.frames()[[1]]$ofile)` -- that simpler form only works when
+# THIS file is reached via a chain rooted at a top-level source() call; it
+# returns NULL (and errors) when a caller further up the chain used
+# sys.source() instead (e.g. a script sourced into its own isolated
+# environment). Walking the stack for either function's own 'file'/'ofile'
+# argument works under both.
+find_sourced_file <- function(target_basename) {
+  for (i in rev(seq_len(sys.nframe()))) {
+    call_i <- sys.call(i)
+    if (is.null(call_i)) next
+    fn_name <- tryCatch(as.character(call_i[[1]]), error = function(e) '')
+    if (length(fn_name) != 1 || !(fn_name %in% c('source', 'sys.source'))) next
+    env_i <- sys.frame(i)
+    for (arg_name in c('ofile', 'file')) {
+      if (exists(arg_name, envir = env_i, inherits = FALSE)) {
+        val <- get(arg_name, envir = env_i)
+        if (is.character(val) && length(val) == 1 &&
+            basename(val) == target_basename) return(val)
+      }
+    }
+  }
+  NULL
+}
+this_config_file <- find_sourced_file('config.R')
+if (is.null(this_config_file)) {
+  stop('config.R: could not resolve its own path from the call stack -- ',
+      'source it with source(...) or sys.source(...), not by pasting its ',
+      'contents inline.')
+}
+this_config_dir     <- dirname(this_config_file)
 primary_data_folder <- file.path(this_config_dir, 'grn_reconstruction_pipeline/output')

@@ -42,10 +42,10 @@ tf_bar_df <- data.frame(
 p_tf <- ggplot(tf_bar_df, aes(x = TF, y = count)) +
   geom_bar(stat = 'identity', fill = 'steelblue') +
   coord_flip() +
-  scale_y_continuous(name = 'Number of new-route tCRE triplets',
+  scale_y_continuous(name = 'Number of new-route TSS triplets',
                      expand = expansion(mult = c(0, 0.08))) +
   scale_x_discrete(name = '') +
-  ggtitle('Top 20 TFs by number of entirely new tCRE routes') +
+  ggtitle('Top 20 TFs by number of entirely new TSS routes') +
   bimodal_theme +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_line(colour = 'grey92'))
@@ -63,10 +63,10 @@ gene_bar_df <- data.frame(
 p_gene <- ggplot(gene_bar_df, aes(x = gene, y = count)) +
   geom_bar(stat = 'identity', fill = 'darkorange') +
   coord_flip() +
-  scale_y_continuous(name = 'Number of new-route tCRE triplets',
+  scale_y_continuous(name = 'Number of new-route TSS triplets',
                      expand = expansion(mult = c(0, 0.08))) +
   scale_x_discrete(name = '') +
-  ggtitle('Top 20 target genes gaining the most new tCRE routes') +
+  ggtitle('Top 20 target genes gaining the most new TSS routes') +
   bimodal_theme +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_line(colour = 'grey92'))

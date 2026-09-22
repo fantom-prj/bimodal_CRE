@@ -107,12 +107,12 @@ message('Significant (FDR <= ', significance_threshold, '): ',
 #### Dot plot ####
 
 x_labels <- c(
-  mediating_enhancer_aCRE = 'Mediating enh. (aCRE)',
-  mediating_enhancer_tCRE = 'Mediating enh. (tCRE)',
-  promoter_aCRE           = 'Promoter (aCRE)',
-  promoter_tCRE           = 'Promoter (tCRE)',
-  all_peaks_aCRE          = 'All peaks (aCRE)',
-  all_peaks_tCRE          = 'All peaks (tCRE)'
+  mediating_enhancer_aCRE = 'Mediating enh. (ATAC)',
+  mediating_enhancer_tCRE = 'Mediating enh. (TSS)',
+  promoter_aCRE           = 'Promoter (ATAC)',
+  promoter_tCRE           = 'Promoter (TSS)',
+  all_peaks_aCRE          = 'All peaks (ATAC)',
+  all_peaks_tCRE          = 'All peaks (TSS)'
 )
 y_labels <- c(
   TF_activator = 'Activator',

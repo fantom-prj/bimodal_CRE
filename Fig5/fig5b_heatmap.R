@@ -50,15 +50,15 @@ col_fun <- colorRamp2(
   c('blue', 'white', 'red')
 )
 
-# column annotation: measurement type (aCRE/tCRE) nested under target class
+# column annotation: measurement type (ATAC/TSS) nested under target class
 col_anno_df <- data.frame(
   target      = c('Mediating Enhancer', 'Mediating Enhancer', 'Promoter', 'Promoter'),
-  measurement = c('aCRE', 'tCRE', 'aCRE', 'tCRE'),
+  measurement = c('ATAC', 'TSS', 'ATAC', 'TSS'),
   row.names   = col_order
 )
 col_anno_colors <- list(
   target      = c('Promoter' = '#4DAF4A', 'Mediating Enhancer' = '#984EA3'),
-  measurement = c(aCRE = '#377EB8', tCRE = '#E41A1C')
+  measurement = c(ATAC = '#377EB8', TSS = '#E41A1C')
 )
 ha_col <- HeatmapAnnotation(
   measurement = col_anno_df$measurement,
@@ -100,13 +100,26 @@ ht <- Heatmap(sh,
   row_title_gp             = gpar(fontfamily = 'Arial', fontsize = 6),
   column_title_gp          = gpar(fontfamily = 'Arial', fontsize = 7),
   heatmap_legend_param     = list(
-    title_gp      = gpar(fontfamily = 'Arial', fontsize = 6),
-    labels_gp     = gpar(fontfamily = 'Arial', fontsize = 5),
-    grid_width    = unit(3, 'mm'),
-    legend_height = unit(15, 'mm')
+    title_gp     = gpar(fontfamily = 'Arial', fontsize = 6),
+    labels_gp    = gpar(fontfamily = 'Arial', fontsize = 5),
+    direction    = 'horizontal',
+    grid_height  = unit(2.5, 'mm'),
+    legend_width = unit(25, 'mm'),
+    title_position = 'topcenter'
   )
 )
 
-save_grid_png_pdf(function() draw(ht),
+# draw()'s default legend placement (heatmap_legend_side/annotation_legend_side
+# = 'right') reserves a fixed-width legend column sized for a wider heatmap
+# than this one actually is (only 4 columns): on this panel's narrow, tall
+# canvas that left the heatmap itself squeezed into roughly the left third of
+# the frame, with the legends -- never taller than a few cm -- floating in a
+# lot of empty vertical space to their right. Moving both legend sets to the
+# bottom reclaims that width for the heatmap and uses the canvas's natural
+# excess height (many TF rows) instead, tightening the panel's actual content
+# bounding box to close to its full saved canvas.
+save_grid_png_pdf(function() draw(ht, heatmap_legend_side = 'bottom',
+                                  annotation_legend_side = 'bottom',
+                                  legend_grouping = 'original'),
                   path_fig5, 'f5b.heatmap_TF_effects',
                   width_in = 3.0, height_in = 6.4)

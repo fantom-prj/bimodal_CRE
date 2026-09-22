@@ -193,14 +193,21 @@ expressed_in_base <- expressed_peaks_in_dataset[
   expressed_peaks_in_dataset %in% all_enhancers_in_base]
 
 # Shared denominator: every base-network enhancer, its median EP distance, and
-# whether it is expressed. Distance binned at bin_width up to 500 kb.
+# whether it is expressed. Distance binned at bin_width up to 500 kb. Bin
+# labels are given explicitly in kb (e.g. '0-50') rather than left to cut()'s
+# default, which renders breakpoints >=1e5 in scientific notation (e.g.
+# '[1e+05,1.5e+05)') -- not publication-clean on a figure x-axis.
+dist_breaks <- seq(0, 500000, by = bin_width)
+dist_labels <- paste0(dist_breaks[-length(dist_breaks)] / 1000, '-',
+                      dist_breaks[-1] / 1000)
+
 all_enh_dist_base <- base_network %>%
   filter(link_type == 'Enhancer_promoter') %>%
   group_by(source) %>%
   summarise(median_dist = median(link_score), .groups = 'drop') %>%
   mutate(expressed_source = source %in% expressed_in_base,
          dist_bin = cut(median_dist,
-                        breaks = seq(0, 500000, by = bin_width),
+                        breaks = dist_breaks, labels = dist_labels,
                         include.lowest = TRUE, right = FALSE))
 
 # Data half of the distance-bin summary only (the ggplot half lives in the

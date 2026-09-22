@@ -45,7 +45,7 @@ message('Triplets: ', n_total, '  new route ', round(100 * n_new / n_total, 1),
         '%  shared ', round(100 * n_shared / n_total, 1), '%')
 
 inner_df <- data.frame(
-  label = c('New route\n(tCRE only)', 'Shared with\naCRE network'),
+  label = c('New route\n(TSS only)', 'Shared with\nATAC network'),
   count = c(n_new, n_shared),
   frac  = c(n_new / n_total, n_shared / n_total)
 )
@@ -64,7 +64,7 @@ outer_new_df <- data.frame(
   category = 'new_route'
 )
 outer_shared_df <- data.frame(
-  label    = 'Shared with\naCRE network',
+  label    = 'Shared with\nATAC network',
   count    = n_shared,
   category = 'shared'
 )
@@ -77,9 +77,9 @@ message('  Other TFs: ', round(100 * n_other_new / n_new, 1), '% of new-route')
 
 tf_colours    <- colorRampPalette(c('#08519c', '#6baed6'))(length(top_tfs) + 1)
 outer_colours <- c(tf_colours, 'grey85')
-names(outer_colours) <- c(top_tfs, 'Other TFs', 'Shared with\naCRE network')
-inner_colours <- c('New route\n(tCRE only)'    = '#2171b5',
-                   'Shared with\naCRE network' = 'grey85')
+names(outer_colours) <- c(top_tfs, 'Other TFs', 'Shared with\nATAC network')
+inner_colours <- c('New route\n(TSS only)'     = '#2171b5',
+                   'Shared with\nATAC network' = 'grey85')
 all_colours   <- c(inner_colours, outer_colours)
 
 #### Legend rows ####
@@ -137,7 +137,7 @@ p_donut <- ggplot() +
   coord_fixed() +
   xlim(-(r_outer_out + 1.2), r_outer_out + 1.2) +
   ylim(-(r_outer_out + 1.2), r_outer_out + 1.2) +
-  labs(title = 'tCRE triplets: new routes vs shared with aCRE network',
+  labs(title = 'TSS triplets: new routes vs shared with ATAC network',
        subtitle = paste0('Inner ring: new-route vs shared  |  ',
                          'Outer ring: top ', top_n_tfs,
                          ' TFs in new-route triplets')) +

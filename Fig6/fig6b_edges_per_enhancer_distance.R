@@ -40,7 +40,7 @@ f6b <- ggplot(bin_df %>% filter(n_enhancers >= 10),
                       values = c('expressed enhancers'     = 'darkorange',
                                  'non-expressed enhancers' = 'steelblue')) +
   scale_size_continuous(name = 'N enhancers', range = c(0.5, 2.5)) +
-  scale_x_discrete(name = 'Enhancer-promoter distance bin (bp)') +
+  scale_x_discrete(name = 'Enhancer-promoter distance bin (kb)') +
   scale_y_continuous(name = 'Mean lasso-selected edges per enhancer') +
   ggtitle('Lasso-selected edges per enhancer by distance bin:\nexpressed vs non-expressed') +
   bimodal_theme +
