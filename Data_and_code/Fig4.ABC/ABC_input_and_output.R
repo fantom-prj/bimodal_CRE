@@ -17,7 +17,7 @@ library(ggrastr)
 #===============================================================================
 primary_folder="/analysisdata/fantom6/Interactome/single_cell_wallace/Figure/"
 path_fig4_data=paste0(primary_folder,"fig4/data/")
-ABC_folder=paste0(primary_folder,"Data_and_code/ABC/")
+ABC_folder=paste0(primary_folder,"Data_and_code/Fig4.ABC/")
 
 #===============================================================================
 # incorporate merged CRE region as enhancer/promoter region
@@ -125,7 +125,8 @@ files=list.files(path=path1, pattern="EnhancerPredictionsAllPutative.tsv", recur
 cells=sapply(strsplit(files,"\\/"),"[",1)
 data0=data.frame()
 for (i in 1:3){
-data=fread(paste0(path1,files[i]), header=T, select=c(1,2,3,11,28))
+data=fread(paste0(path1,files[i]), header=T, select=c(1,2,3,5,11,28))
+data=data[which(data$class != "promoter"),] #remove self
 data$celltype=cells[i]
 data0=rbind(data0, data)}
 
@@ -136,9 +137,11 @@ data0a <- dcast(data0[, .(id = pairID, key = celltype, value = ABC.Score)], id ~
 
 data0a$peakID=sapply(strsplit(as.character(data0a$id),"::"),"[",1)
 data0a$TargetGene=sapply(strsplit(as.character(data0a$id),"::"),"[",2)
-data0a=data0a[which(data0a$NSC+data0a$Neuron+data0a$iPSC!=0),]
+#data0a=data0a[which(data0a$NSC+data0a$Neuron+data0a$iPSC!=0),]
 data0a=data0a[,c(5,6,4,2,3)]
 write.table(data0a,gzfile("ABCscore_matrix_3cells.tsv.gz"), row.names=F, col.names=T, sep="\t", quote=F)
+data0b=data0a[which(data0a$NSC+data0a$Neuron+data0a$iPSC!=0),]
+write.table(data0b,gzfile("ABCscore_matrix_3cells_rm0.tsv.gz"), row.names=F, col.names=T, sep="\t", quote=F)
 
 #===============================================================================
 # add target gene expression level
