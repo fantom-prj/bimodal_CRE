@@ -51,13 +51,19 @@ f6e <- ggplot(cor_res, aes(x = contrast_f, y = axis_label, fill = rho)) +
   geom_text(aes(label = paste0('rho=', round(rho, 2), '\n',
                                'FDR=', signif(fdr, 2))),
             size = 1.8, family = 'Arial') +
-  labs(x = NULL, y = NULL,
-       title = paste0('Hit-score vs centrality (Spearman) - ', analysis)) +
+  # No title -- the panel letter + figure caption identify it.
+  labs(x = NULL, y = NULL) +
   bimodal_theme +
   theme(axis.text.x     = element_text(angle = 45, hjust = 1),
         panel.grid      = element_blank(),
         panel.border    = element_blank(),
         legend.key.size = unit(0.3, 'cm'))
 
+# Sized for the Fig6 layout (A|B)/(C|D)/E: E gets its own row below (C|D)
+# but, unlike A-D, does NOT span the full usable A4 width -- its own
+# content (3 columns x 2 rows of tiles) is naturally wide-short and doesn't
+# need the extra width, per explicit user request -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table.
 save_panel_png_pdf(f6e, path_fig6, 'f6e.screen_correlation_heatmap',
-                   width_in = 3.6, height_in = 1.7)
+                   width_in = 4.1, height_in = 2.0)
