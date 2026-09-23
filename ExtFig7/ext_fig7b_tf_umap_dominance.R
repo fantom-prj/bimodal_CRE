@@ -89,6 +89,6 @@ ext_f7b <- (p_panel_direct | p_panel_indirect) +
   plot_layout(guides = 'collect')
 
 # Sized for the Ext Fig 7 layout A/B: both panels span the full usable A4
-# width (~7.47in) on their own row, per explicit user instruction.
+# width (~7.47in) on their own row.
 save_panel_png_pdf(ext_f7b, path_extfig7, 'ext_f7b.tf_umap_dominance',
                    width_in = 7.47, height_in = 3.6)

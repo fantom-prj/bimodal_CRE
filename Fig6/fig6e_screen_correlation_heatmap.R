@@ -62,7 +62,7 @@ f6e <- ggplot(cor_res, aes(x = contrast_f, y = axis_label, fill = rho)) +
 # Sized for the Fig6 layout (A|B)/(C|D)/E: E gets its own row below (C|D)
 # but, unlike A-D, does NOT span the full usable A4 width -- its own
 # content (3 columns x 2 rows of tiles) is naturally wide-short and doesn't
-# need the extra width, per explicit user request -- see
+# need the extra width -- see
 # Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
 # table.
 save_panel_png_pdf(f6e, path_fig6, 'f6e.screen_correlation_heatmap',

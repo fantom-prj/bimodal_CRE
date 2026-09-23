@@ -48,16 +48,15 @@ sweep_x_labels <- c(adjpvalue_threshold = 'adjpvalue threshold (<=)',
 #                 Ext6b) omits them entirely -- those panels sweep a wider,
 #                 less-stringent threshold range where 2+ categories can be
 #                 simultaneously tiny in the same bar, and no per-segment
-#                 label placement (several were tried: fixed float offset,
-#                 per-rank stagger, full sequential bottom-to-top placement
-#                 tracking each label's own text extent) stayed collision-
-#                 free across every such bar without constant re-tuning.
-#                 Decided with the user to drop in-bar labels for these
-#                 extended panels and report the exact percentages in the
-#                 figure caption instead, rather than keep fighting the
-#                 geometry for a data range where it's least informative
-#                 anyway (least-stringent thresholds = least-filtered,
-#                 least-central results).
+#                 label placement (fixed float offset, per-rank stagger,
+#                 full sequential bottom-to-top placement tracking each
+#                 label's own text extent) stayed collision-free across
+#                 every such bar without constant re-tuning. In-bar labels
+#                 are dropped for these extended panels; the exact
+#                 percentages are reported in the figure caption instead,
+#                 rather than fighting the geometry for a data range
+#                 where it's least informative anyway (least-stringent
+#                 thresholds = least-filtered, least-central results).
 make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name,
                                        show_labels = TRUE) {
 

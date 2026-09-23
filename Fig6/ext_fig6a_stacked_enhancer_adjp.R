@@ -41,7 +41,6 @@ p <- make_stacked_bar_linheight(category_table,
 # ext_fig6b_stacked_enhancer_devratio.R for B.
 # All 6 Ext Fig 6 panels scaled by a uniform 0.95 factor (from the sizes
 # noted above) to fit the full figure within the A4 page height including
-# panel letters, per explicit user request -- same relative layout
-# proportions preserved.
+# panel letters -- same relative layout proportions preserved.
 save_panel_png_pdf(p, path_fig6, 'ext_f6a.stacked_TF_enhancer_adjpvalue',
                    width_in = 3.5, height_in = 2.47)

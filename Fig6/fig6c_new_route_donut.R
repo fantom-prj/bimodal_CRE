@@ -124,10 +124,10 @@ callout_df$callout_label   <- paste0(callout_df$label, ' ', callout_df$pct_of_ne
 # rendering isolated single-wedge test cases and reading back their actual
 # (x,y) coordinates via ggplot_build(): angle 0 lands at (0,1) -- STRAIGHT
 # UP -- and increasing angle moves CLOCKWISE, i.e. x = r*sin(angle),
-# y = r*cos(angle) (sin/cos swapped from the naive assumption). Using plain
-# cos(mid)/sin(mid) -- tried first -- silently rotates every label ~90
-# degrees clockwise from its true wedge, which was the "TF names point to
-# the wrong segment" bug: the wedges themselves render correctly (ggforce
+# y = r*cos(angle) (sin/cos swapped from the naive assumption). The naive
+# cos(mid)/sin(mid) formula silently rotates every label ~90 degrees
+# clockwise from its true wedge, producing the "TF names point to the
+# wrong segment" bug: the wedges themselves render correctly (ggforce
 # applies its own convention consistently), but labels computed with the
 # WRONG convention land next to a different wedge than the one they name.
 # 'Remaining' is such a large wedge (72% of new-route triplets) that it
@@ -141,17 +141,20 @@ callout_df$callout_label   <- paste0(callout_df$label, ' ', callout_df$pct_of_ne
 # straight line, matching how the TF ones behave, instead of needing to
 # detour around the whole donut.
 callout_df$anchor_angle <- ifelse(callout_df$label == 'Remaining',
-                                  callout_df$end + 0.2, callout_df$mid) # 0.2: magic number 
+                                  callout_df$end + 0.2, callout_df$mid)
+# 0.2 rad nudge clears the anchor point past ZIC1's own thin wedge, so the
+# leader line starts on 'Remaining''s own arc rather than right at the
+# boundary it shares with ZIC1.
 callout_df$anchor_x <- (r_outer_out + 0.05) * sin(callout_df$anchor_angle)
 callout_df$anchor_y <- (r_outer_out + 0.05) * cos(callout_df$anchor_angle)
 
 # Label text for all 11 wedges (10 TFs + 'Remaining') is placed in a clean
 # VERTICAL STACK on the SAME (right) side, one fixed row per label, evenly
-# spaced -- not at a shared fixed radius along each wedge's own angle
-# (fixed-radius placement was tried first and still collided for the 3-4
-# wedges whose angles are within ~20 degrees of each other: their
-# circumferential gap at any radius stays smaller than the text height
-# needed to tell them apart, no matter how far out the radius goes).
+# spaced -- not at a shared fixed radius along each wedge's own angle. A
+# shared-radius placement still collides for the 3-4 wedges whose angles
+# are within ~20 degrees of each other: their circumferential gap at any
+# radius stays smaller than the text height needed to tell them apart, no
+# matter how far out the radius goes.
 # 'Remaining' is anchored at its END angle (see above, right side, same as
 # the TF wedges) rather than its far-side mid angle, so its leader line is
 # a single straight segment like the others (an earlier version anchored it
@@ -163,10 +166,9 @@ callout_df$anchor_y <- (r_outer_out + 0.05) * cos(callout_df$anchor_angle)
 # last -- forcing it last explicitly here just makes that guaranteed rather
 # than incidental. On top of being last, it also gets an EXTRA gap
 # (gap_before_remaining, on top of the regular row_step) below the 10 TF
-# rows, so it reads as visually separate from the ranked TF list -- pushed
-# further down toward the bottom of the panel per explicit user request,
-# rather than sitting right after NR2F1 with the same spacing as every
-# other consecutive pair.
+# rows, pushing it down toward the bottom of the panel so it reads as
+# visually separate from the ranked TF list, rather than sitting right
+# after NR2F1 with the same spacing as every other consecutive pair.
 callout_df$sort_key <- ifelse(callout_df$label == 'Remaining', -Inf, callout_df$anchor_y)
 callout_df <- callout_df[order(callout_df$sort_key, decreasing = TRUE), ]
 n_callout <- nrow(callout_df)

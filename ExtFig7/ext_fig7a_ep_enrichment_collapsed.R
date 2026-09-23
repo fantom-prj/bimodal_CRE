@@ -82,6 +82,6 @@ ext_f7a <- ggplot(res_plot, aes(x = enhancer, y = promoter)) +
 # No title -- the panel letter + figure caption identify it.
 #
 # Sized for the Ext Fig 7 layout A/B: both panels span the full usable A4
-# width (~7.47in) on their own row, per explicit user instruction.
+# width (~7.47in) on their own row.
 save_panel_png_pdf(ext_f7a, path_extfig7, 'ext_f7a.ep_enrichment_collapsed',
                    width_in = 7.47, height_in = 2.8)

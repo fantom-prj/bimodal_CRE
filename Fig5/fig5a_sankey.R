@@ -857,8 +857,8 @@ message('Saving PNG + PDF...')
 # Sized for the Fig5 layout (A/C/D)|B: C and D share the common column width
 # (3.4in, a bit under half an A4 page) that B's own height (9.5in) is
 # budgeted against; A is sized 10% wider / 5% taller than that shared width
-# (3.74 x 2.73in) per an explicit user request -- it therefore runs
-# slightly past C/D's column edge rather than aligning flush with them, and
+# (3.74 x 2.73in), which better suits its own aspect ratio -- it therefore
+# runs slightly past C/D's column edge rather than aligning flush with them, and
 # the A+C+D height sum against B (see
 # Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
 # table) shifts by the +0.13in this adds to A's own height. The 12x7in
