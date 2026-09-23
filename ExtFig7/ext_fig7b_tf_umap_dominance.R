@@ -74,8 +74,15 @@ make_dom_panel <- function(layout, edge_df_panel, tfs_label, title_str) {
     geom_node_point(aes(size = pr, colour = dominance), alpha = 0.85) +
     geom_node_text(aes(label = name, filter = name %in% tfs_label),
                    size = 1.8, repel = TRUE, family = 'Arial') +
+    # Node size range halved from ggplot2's default c(1, 6) to c(0.5, 3) --
+    # the default made nodes too large relative to the fixed UMAP layout.
+    scale_size_continuous(name = 'Reverse\nPageRank', range = c(0.5, 3)) +
+    # override.aes doubles the colour legend's own key-swatch size (2.5,
+    # up from geom_node_point's own smallest rendered node size) without
+    # touching the halved node sizes actually drawn in the plot above --
+    # the legend swatches were hard to distinguish at the plotted size.
     scale_colour_manual(name = 'Dominance category', values = dom_colours, drop = FALSE) +
-    scale_size_continuous(name = 'Reverse\nPageRank') +
+    guides(colour = guide_legend(override.aes = list(size = 2.5))) +
     theme_graph(background = 'white', base_family = 'Arial', base_size = 6) +
     theme(legend.text  = element_text(family = 'Arial', size = 5),
           legend.title = element_text(family = 'Arial', size = 6),
