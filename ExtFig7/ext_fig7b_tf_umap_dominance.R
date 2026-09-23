@@ -79,18 +79,16 @@ p_panel_direct   <- make_dom_panel(layout_all, edge_direct,   tfs_to_label_all,
 p_panel_indirect <- make_dom_panel(layout_all, edge_indirect, tfs_to_label_all,
                                    'Indirect edges only\n(TF → enhancer → promoter(TF))')
 
+# No overall figure title/subtitle -- the panel letter + figure caption
+# identify it (the caption carries the dominance-category thresholds and
+# labelling rule previously stated in the dropped subtitle). The two
+# per-subplot titles ("Direct edges only"/"Indirect edges only") are kept,
+# since they are the only thing distinguishing the left/right UMAPs, same
+# convention as Fig6d/Ext Fig6e's kept internal sub-titles.
 ext_f7b <- (p_panel_direct | p_panel_indirect) +
-  plot_layout(guides = 'collect') +
-  plot_annotation(
-    title    = 'TF UMAP — direct vs. indirect regulatory edges',
-    subtitle = paste0('Node colour: outgoing-edge dominance  |  ',
-                      'Direct-dominant: frac_direct > 2/3  |  ',
-                      'Indirect-dominant: frac_direct < 1/3  |  ',
-                      'Labels: top ', num_label_per_cat,
-                      ' TFs per category by reverse PageRank'),
-    theme = theme(plot.title    = element_text(family = 'Arial', size = 7, face = 'bold'),
-                  plot.subtitle = element_text(family = 'Arial', size = 5))
-  )
+  plot_layout(guides = 'collect')
 
+# Sized for the Ext Fig 7 layout A/B: both panels span the full usable A4
+# width (~7.47in) on their own row, per explicit user instruction.
 save_panel_png_pdf(ext_f7b, path_extfig7, 'ext_f7b.tf_umap_dominance',
-                   width_in = 7.0, height_in = 3.6)
+                   width_in = 7.47, height_in = 3.6)
