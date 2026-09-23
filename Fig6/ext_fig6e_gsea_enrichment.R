@@ -1,6 +1,7 @@
 #### Extended Figure 6e — GSEA running-enrichment curves (2x2) ####
 #
-# Panel:   Ext Fig 6e. 2x2 grid: rows = centrality axis (triplet_pairs,
+# Panel:   Ext Fig 6e. 2x2 grid (top-right cell dropped as uninformative, so
+#          3 cells in an L-shape): rows = centrality axis (triplet_pairs,
 #          cum_abs_estimate_total), columns = gene set (expressed enhancers,
 #          mediating enhancers). Each panel shows the running enrichment-score
 #          curve -- whether enhancers in that gene set are concentrated near
@@ -88,8 +89,15 @@ make_gsea_cell <- function(axis_name, gs_name) {
 cells <- lapply(axes_names, function(axis_name)
   lapply(plot_sets, function(gs_name) make_gsea_cell(axis_name, gs_name)))
 
-ext_f6e <- (cells[[1]][[1]] | cells[[1]][[2]]) /
+# Top-right cell (triplet_pairs x mediating_TRUE) dropped per explicit user
+# instruction -- uninformative -- leaving an L-shaped 3-cell layout: the
+# top row keeps only its left cell, the bottom row keeps both.
+ext_f6e <- (cells[[1]][[1]] | patchwork::plot_spacer()) /
            (cells[[2]][[1]] | cells[[2]][[2]])
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): E sits above F in a
+# shared column next to D, tuned together with F to match D's 6.0in total
+# height (E 4.0in + a small patchwork gap + F 1.9in ~= 6.0in) -- see
+# ext_fig6d_new_route_triplet_bars.R / ext_fig6f_hitscore_sign_triplet_bar.R.
 save_panel_png_pdf(ext_f6e, path_fig6, 'ext_f6e.gsea_enrichment_plots',
-                   width_in = 4.6, height_in = 4.6)
+                   width_in = 4.0, height_in = 4.0)

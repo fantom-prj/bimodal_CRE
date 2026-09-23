@@ -73,6 +73,12 @@ p_gene <- ggplot(gene_bar_df, aes(x = gene, y = count)) +
 
 ext_f6d <- p_tf / p_gene
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): D pairs with the (E/F)
+# column, whose combined height (E on top, F below) is tuned to match D's
+# 6.0in -- see ext_fig6e_gsea_enrichment.R / ext_fig6f_hitscore_sign_triplet_bar.R.
+# D keeps its two internal panel titles (the only titled panel in Ext Fig 6,
+# per explicit user instruction) since they are what distinguish the TF bar
+# from the target-gene bar within the same combined image.
 save_panel_png_pdf(ext_f6d, path_fig6,
                    'ext_f6d.new_route_triplet_bars_TF_and_target',
                    width_in = 3.4, height_in = 6.0)

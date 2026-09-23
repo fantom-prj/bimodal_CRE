@@ -39,9 +39,7 @@ ext_f6c <- ggplot(bin_df %>% filter(n_enhancers >= 10),
   scale_size_continuous(name = 'N enhancers', range = c(0.5, 2.5)) +
   scale_x_discrete(name = 'Enhancer-promoter distance bin (kb)') +
   scale_y_continuous(name = 'Mean elastic-net-selected edges per enhancer') +
-  ggtitle(paste0('Elastic-net-selected edges per enhancer by distance bin ',
-                 '(without-TSS network):\nexpressed vs non-expressed ',
-                 '(equal-footing control)')) +
+  # No title -- the panel letter + figure caption identify it.
   bimodal_theme +
   theme(axis.text.x      = element_text(angle = 45, hjust = 1),
         legend.position  = 'bottom',
@@ -49,5 +47,9 @@ ext_f6c <- ggplot(bin_df %>% filter(n_enhancers >= 10),
         legend.key.size  = unit(0.25, 'cm'),
         panel.grid.major = element_line(colour = 'grey92'))
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): C has its own row but
+# stays half-width (~3.66in), matching the A-D main-figure panel convention,
+# per explicit user instruction, rather than stretching to the full A4 width
+# that (A|B) uses.
 save_panel_png_pdf(ext_f6c, path_fig6, 'ext_f6c.edges_without_tCRE_distance_bin',
-                   width_in = 3.6, height_in = 3.0)
+                   width_in = 3.66, height_in = 2.6)

@@ -36,5 +36,8 @@ p <- make_stacked_bar_linheight(category_table,
                                 sweep_name = 'dev_ratio_threshold',
                                 show_labels = FALSE)
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): B pairs with A to span
+# the full usable A4 width (~7.47in) on their own shared row -- see
+# ext_fig6a_stacked_enhancer_adjp.R for A.
 save_panel_png_pdf(p, path_fig6, 'ext_f6b.stacked_TF_enhancer_devratio',
-                   width_in = 3.2, height_in = 3.0)
+                   width_in = 3.68, height_in = 2.6)
