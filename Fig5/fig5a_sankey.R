@@ -22,7 +22,10 @@
 #   [primary_data_folder]/4_preparing_dataset/dataset.rds
 #   ../Data_and_code/network_loading/network_thresholds.txt
 #
-# Output (Fig5/out/): f5a.sankey_GRN.png / .pdf
+# Output (Fig5/out/): f5a.sankey_GRN.png / .pdf (compact, no bottom text
+#   block -- the actual panel used in the figure) and, optionally,
+#   f5a.sankey_GRN_with_stats.png / .pdf (full QC/traceability version, see
+#   include_bottom_text below).
 #
 # Cross-check (reported by this script's own messages): 327 TFs, 20,825 sink
 # enhancers, 10,813 mediating enhancers, 20,696 source enhancers, 18,327
@@ -31,10 +34,10 @@
 
 
 # Clear this environment before running, EXCEPT any control-panel override a
-# caller (e.g. assemble_fig5.R) may have pre-set here before sourcing this
-# script -- currently just `include_bottom_text` (see below). A plain
-# `rm(list = ls())` would silently wipe that override too, since it runs
-# before the override is ever read.
+# caller may have pre-set here before sourcing this script -- currently just
+# `include_bottom_text` (see below). A plain `rm(list = ls())` would
+# silently wipe that override too, since it runs before the override is
+# ever read.
 rm(list = setdiff(ls(), 'include_bottom_text'))
 library(tidyverse)
 library(ggplot2)
@@ -60,13 +63,15 @@ show_sink_source                 <- TRUE
 
 # The full statistics block below the diagram duplicates what the compact
 # on-node labels (built further down, e.g. "Sink enhancer\nn=20,825\n
-# ATAC=17,461, TSS=3,364") already show in-panel -- it exists for
-# traceability/QC when running this script standalone. TRUE unless a caller
-# (e.g. an assemble_fig5.R-style figure-assembly script, which lays this
-# panel out at a fraction of its native 12x7in save size, where the block's
-# fixed-point-size text would visually overlap) has already set this
-# variable before sourcing this script.
-if (!exists('include_bottom_text')) include_bottom_text <- TRUE
+# ATAC=17,461, TSS=3,364") already show in-panel -- it exists purely for
+# traceability/QC (every intermediate count visible in one place), not for
+# the published figure. FALSE by default: the compact, on-node-labels-only
+# version (sized for the Fig5 (a/c/d)|b layout, see the save call at the
+# bottom) is the actual panel used in the figure. Set to TRUE (e.g. from an
+# interactive session: `include_bottom_text <- TRUE` before sourcing) to get
+# the full QC dump instead, saved to a separate _with_stats file so it never
+# overwrites the compact default.
+if (!exists('include_bottom_text')) include_bottom_text <- FALSE
 
 node_w      <- 0.15
 box_fn      <- log2
@@ -80,6 +85,13 @@ alpha_sink  <- 0.35
 alpha_src   <- 0.35
 
 text_font      <- 'Arial'
+# text_size is in ggplot's mm units. 2.8mm was tuned for the 12x7in
+# with-stats canvas; the compact default is now saved at 3.4in wide (see
+# the save call at the bottom), where 2.8mm text makes adjacent node
+# labels ("Sink enhancer" / "Source enhancer", both wide multi-line blocks)
+# collide horizontally. Node label font size is set separately, just below
+# node_label_text, so it can shrink for the compact canvas without changing
+# the bottom QC block's own tuned size.
 text_size      <- 2.8
 n_ribbon_pts   <- 1000
 
@@ -481,17 +493,27 @@ node_rects <- data.frame(
 # it. The bottom block stays for traceability/QC while this script is used
 # standalone; it is expected to be cropped out at figure-assembly time, once
 # the compact on-node labels carry the same information in-panel.
+#
+# ATAC=.../TSS=... is split onto its own two lines (was one comma-joined
+# line) because at this panel's compact 3.4in save width, "Sink enhancer"
+# and "Source enhancer" sit close enough together that one long
+# "ATAC=17,461, TSS=3,364" line collided with its horizontal neighbour;
+# node_label_size is also set below independently from text_size (which
+# still governs the bottom QC block, tuned separately for the 12x7in
+# with-stats canvas) so it can shrink for the compact canvas without
+# affecting that block.
+node_label_size <- if (include_bottom_text) text_size else 2.0
 node_label_text <- c(
   paste0(label_tf, '\nn=', formatC(n_unique_tf, format = 'd', big.mark = ',')),
   paste0(label_sink_enhancer, '\nn=', formatC(n_unique_sink, format = 'd', big.mark = ','),
         '\nATAC=', formatC(n_acre_sink, format = 'd', big.mark = ','),
-        ', TSS=',  formatC(n_tcre_sink, format = 'd', big.mark = ',')),
+        '\nTSS=',  formatC(n_tcre_sink, format = 'd', big.mark = ',')),
   paste0(label_mediating_enhancer, '\nn=', formatC(n_unique_mediating, format = 'd', big.mark = ','),
         '\nATAC=', formatC(n_acre_med, format = 'd', big.mark = ','),
-        ', TSS=',  formatC(n_tcre_med, format = 'd', big.mark = ',')),
+        '\nTSS=',  formatC(n_tcre_med, format = 'd', big.mark = ',')),
   paste0(label_source_enhancer, '\nn=', formatC(n_unique_source, format = 'd', big.mark = ','),
         '\nATAC=', formatC(n_acre_src, format = 'd', big.mark = ','),
-        ', TSS=',  formatC(n_tcre_src, format = 'd', big.mark = ',')),
+        '\nTSS=',  formatC(n_tcre_src, format = 'd', big.mark = ',')),
   paste0(label_promoter, '\nn=', formatC(n_unique_promoter, format = 'd', big.mark = ','))
 )
 node_label_df <- data.frame(
@@ -808,7 +830,7 @@ p <- ggplot() +
   geom_text(data = node_label_df,
             aes(x = x, y = y, label = label),
             hjust = 0.5, vjust = 0, lineheight = 0.9,
-            size = text_size, family = text_font, fontface = 'bold') +
+            size = node_label_size, family = text_font, fontface = 'bold') +
   { if (include_bottom_text)
       geom_text(data = bottom_text_df,
                aes(x = x, y = y, label = label),
@@ -818,31 +840,38 @@ p <- ggplot() +
     mult = c(0.3, if (include_bottom_text) 0.1 else 0.22))) +
   theme_void() +
   theme(legend.position = 'none',
-        # Locking to this panel's own saved aspect ratio (12 x 7 in) only
+        # Locking aspect.ratio to this panel's own saved WIDTH:HEIGHT only
         # matters when the bottom text block is present -- its line spacing
-        # is tuned for the 12x7in save size and visually overlaps itself if
-        # the panel is stretched/squished to a different aspect. With that
-        # block dropped (include_bottom_text = FALSE, the composite-script
-        # case), an earlier version left this unconstrained (aspect.ratio =
-        # NULL) so patchwork could freely stretch the panel to fill its
-        # column -- avoiding a top-label clipping bug that a naive
-        # aspect-ratio lock produced at the time. That free stretch is what
-        # then produced a DIFFERENT visible defect: this panel's column in
-        # the (a/c/d)|b layout is much taller than wide, and stretching a
-        # wide, short diagram (few Sankey levels, no vertical content beyond
-        # the node labels) to fill it visibly elongates it "over the
-        # y-axis". Now that the title is dropped and top expansion (above)
-        # is increased instead, a fixed non-NULL ratio close to this
-        # panel's natural content shape (roughly 3:5, wider-than-tall but
-        # not as extreme as the 12:7 standalone save) no longer clips the
-        # top labels, so it is safe to lock again -- patchwork pads with
-        # whitespace on the constrained axis rather than distorting.
-        aspect.ratio = if (include_bottom_text) 7 / 12 else 3 / 5)
+        # is tuned for the 12x7in with-stats save size and visually overlaps
+        # itself if that version is stretched/squished to a different
+        # aspect. The compact (no-text) default has no such fixed-spacing
+        # content to protect, so it is left unconstrained here and simply
+        # saved at its own target canvas size below -- ggsave() renders
+        # directly into that device size, so no separate aspect.ratio lock
+        # is needed to make it fill a 3.4 x 2.60in canvas correctly.
+        aspect.ratio = if (include_bottom_text) 7 / 12 else NULL)
 
 #### Save outputs ####
 
 message('Saving PNG + PDF...')
-save_panel_png_pdf(p, out_dir, 'f5a.sankey_GRN', width_in = 12, height_in = 7)
+# Sized for the Fig5 layout (A/C/D)|B: C and D share the common column width
+# (3.4in, a bit under half an A4 page) that B's own height (9.5in) is
+# budgeted against; A is sized 10% wider / 5% taller than that shared width
+# (3.74 x 2.73in) per an explicit user request -- it therefore runs
+# slightly past C/D's column edge rather than aligning flush with them, and
+# the A+C+D height sum against B (see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table) shifts by the +0.13in this adds to A's own height. The 12x7in
+# full-page size is kept for the optional with-stats QC version only
+# (include_bottom_text = TRUE), which is not meant to sit in the assembled
+# figure.
+if (include_bottom_text) {
+  save_panel_png_pdf(p, out_dir, 'f5a.sankey_GRN_with_stats',
+                     width_in = 12, height_in = 7)
+} else {
+  save_panel_png_pdf(p, out_dir, 'f5a.sankey_GRN',
+                     width_in = 3.74, height_in = 2.73)
+}
 
 message('Done. Results written to: ', out_dir)
 

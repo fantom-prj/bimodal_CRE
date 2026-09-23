@@ -51,11 +51,18 @@ ext_f5d <- ggplot(tier_comparison, aes(x = tier, y = f1, colour = abc_variant, g
   geom_point(size = 1.2) +
   scale_x_discrete(name = 'Network tier') +
   scale_y_continuous(name = 'F1 (ABC positivity vs network edge)') +
-  scale_colour_manual(name = 'ABC variant', values = display_colors) +
-  ggtitle('ABC concordance across network tiers') +
+  # 2-column legend so 'Max across cell types' (the longest label) fits at
+  # this panel's compact 2.39in width (shared with panels E/F).
+  scale_colour_manual(name = 'ABC variant', values = display_colors,
+                      guide = guide_legend(ncol = 2)) +
+  # No title -- the panel letter + figure caption identify it.
   bimodal_theme +
   theme(legend.position = 'bottom',
         legend.key.size = unit(0.25, 'cm'))
 
+# Sized for the Ext Fig 5 layout (A|B)/C/(D|E|F): D, E, F share a common
+# width (2.39in, a third of the usable A4 width) and height -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table.
 save_panel_png_pdf(ext_f5d, path_fig5, 'ext_f5d.abc_tier_comparison_f1',
-                   width_in = 3.2, height_in = 3.0)
+                   width_in = 2.39, height_in = 2.6)

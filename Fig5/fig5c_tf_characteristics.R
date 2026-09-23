@@ -140,11 +140,23 @@ f5c <- ggplot(char_results,
                       values = c('FALSE' = 'grey80', 'TRUE' = 'black')) +
   scale_fill_gradient2(name = 'Average\nDifference',
                        low = 'blue', mid = 'white', high = 'red', midpoint = 0) +
-  scale_size_continuous(name = '-log10(adj. p)', range = c(1, 4.5)) +
+  # range bumped from the original c(1, 4.5) now that this panel has more
+  # vertical room in the Fig5 (A/C/D)|B layout (see the save call below) --
+  # dot size is an absolute mm range, not proportional to canvas size, so it
+  # needs its own increase to actually use the extra space rather than just
+  # leaving it as blank row spacing.
+  scale_size_continuous(name = '-log10(adj. p)', range = c(1.3, 5.5)) +
   bimodal_theme +
   theme(axis.text.x      = element_text(angle = 45, hjust = 1, vjust = 1),
         panel.grid.major = element_line(colour = 'grey92'),
         legend.key.size  = unit(0.3, 'cm'))
 
+# Sized for the Fig5 layout (A/C/D)|B: shares its column width (3.4in) with
+# panels A and D, and is taller than its own minimal content size to use
+# the extra vertical room left in the A+C+D height budget (summing to B's
+# 9.5in) -- see Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full
+# per-panel size table. The extra height gives this 8x6 dot grid more
+# breathing room (larger dots, more space between rows) rather than sitting
+# unused as padding.
 save_panel_png_pdf(f5c, path_fig5, 'f5c.TF_characteristics_dotplot',
-                   width_in = 3.6, height_in = 2.8)
+                   width_in = 3.4, height_in = 3.80)

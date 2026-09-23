@@ -1,7 +1,7 @@
 #### Extended Figure 5b — eQTL validation F1 curves ####
 #
 # Panel:   Ext Fig 5b. F1 score vs dev_ratio threshold, one line per network
-#          variant (8 total, light=base/dark=lasso): how well each network's
+#          variant (8 total, light=base/dark=elastic net): how well each network's
 #          enhancer-to-promoter edges recover known enhancer-to-gene links
 #          from fine-mapped eQTLs, pooled across all source/target
 #          measurement-type combinations ('All interactions'). TOBIAS
@@ -36,10 +36,10 @@ network_labels <- c(
   base_no_tobias         = 'Base, no TOBIAS',
   base_no_hic            = 'Base, no Hi-C',
   base_no_hic_no_tobias  = 'Base, no Hi-C, no TOBIAS',
-  lasso                  = 'Lasso',
-  lasso_no_tobias        = 'Lasso, no TOBIAS',
-  lasso_no_hic           = 'Lasso, no Hi-C',
-  lasso_no_hic_no_tobias = 'Lasso, no Hi-C, no TOBIAS'
+  lasso                  = 'Elastic net',
+  lasso_no_tobias        = 'Elastic net, no TOBIAS',
+  lasso_no_hic           = 'Elastic net, no Hi-C',
+  lasso_no_hic_no_tobias = 'Elastic net, no Hi-C, no TOBIAS'
 )
 network_levels <- unname(network_labels)
 networks_colors <- c(
@@ -61,23 +61,37 @@ network_linetypes <- setNames(
   network_labels)
 
 results <- results %>%
-  mutate(network = factor(dplyr::recode(network, !!!network_labels), levels = network_levels))
+  mutate(network = factor(dplyr::recode(network, !!!network_labels), levels = network_levels),
+        # A separate TOBIAS grouping, mapped only to linetype, so this
+        # panel's own legend shows just the 2-entry with/without-TOBIAS key
+        # -- the 8-network colour key is shown once, shared with panels
+        # A/C1/C3, as its own standalone legend panel (Ext Fig 5 C2, see
+        # ext_fig5c_legend.R). Colour is still mapped to `network` below (so
+        # the 8 lines keep their distinct colours), just with its own
+        # legend guide suppressed.
+        tobias = factor(ifelse(grepl('no TOBIAS', network), 'No TOBIAS', 'With TOBIAS'),
+                        levels = c('With TOBIAS', 'No TOBIAS')))
 
 ext_f5b <- ggplot(results, aes(x = dev_ratio, y = value,
-                               color = network, linetype = network)) +
+                               color = network, linetype = tobias)) +
   geom_line(linewidth = 0.5) +
   scale_x_continuous(name = 'Deviance ratio threshold',
                      breaks = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) +
   scale_y_continuous(name = 'F1 score') +
-  scale_color_manual(name = 'Network', values = display_colors) +
-  scale_linetype_manual(name = 'Network', values = network_linetypes) +
-  ggtitle('eQTL validation (all interactions)') +
+  scale_color_manual(values = display_colors, guide = 'none') +
+  scale_linetype_manual(name = 'TOBIAS', values = c('With TOBIAS' = 'solid', 'No TOBIAS' = 'dashed')) +
+  # No title -- the panel letter + figure caption identify it.
   bimodal_theme +
   theme(legend.position = 'bottom',
         legend.key.size = unit(0.25, 'cm'),
         legend.key.width = unit(0.5, 'cm'),
-        legend.direction = 'vertical',
+        legend.direction = 'horizontal',
         axis.text.x = element_text(angle = 25, hjust = 1, vjust = 1))
 
+# Sized for the Ext Fig 5 layout (A|B)/C/(D|E|F): shares a common row height
+# with A; shorter than its earlier 3.0in now that its own legend is just a
+# compact 2-entry linetype key rather than the full 8-network colour+
+# linetype key -- see Data_and_code/README_Fig5_6_ExtFig7_topics.md for the
+# full per-panel size table.
 save_panel_png_pdf(ext_f5b, path_fig5, 'ext_f5b.eqtl_F1_all_interactions',
-                   width_in = 3.2, height_in = 3.0)
+                   width_in = 3.3, height_in = 2.6)

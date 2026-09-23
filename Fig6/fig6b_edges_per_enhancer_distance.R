@@ -1,6 +1,6 @@
-#### Figure 6b — lasso-selected edges per enhancer by distance bin ####
+#### Figure 6b — elastic-net-selected edges per enhancer by distance bin ####
 #
-# Panel:   Fig 6b. Mean lasso-selected Enhancer_promoter edges per enhancer in
+# Panel:   Fig 6b. Mean elastic-net-selected Enhancer_promoter edges per enhancer in
 #          50 kb enhancer-promoter distance bins, expressed vs non-expressed
 #          enhancers, in the WITH-tCRE network. Pool-size corrected: every
 #          base-network enhancer in the bin contributes, those with no
@@ -41,8 +41,8 @@ f6b <- ggplot(bin_df %>% filter(n_enhancers >= 10),
                                  'non-expressed enhancers' = 'steelblue')) +
   scale_size_continuous(name = 'N enhancers', range = c(0.5, 2.5)) +
   scale_x_discrete(name = 'Enhancer-promoter distance bin (kb)') +
-  scale_y_continuous(name = 'Mean lasso-selected edges per enhancer') +
-  ggtitle('Lasso-selected edges per enhancer by distance bin:\nexpressed vs non-expressed') +
+  scale_y_continuous(name = 'Mean elastic-net-selected edges per enhancer') +
+  ggtitle('Elastic-net-selected edges per enhancer by distance bin:\nexpressed vs non-expressed') +
   bimodal_theme +
   theme(axis.text.x      = element_text(angle = 45, hjust = 1),
         legend.position  = 'bottom',

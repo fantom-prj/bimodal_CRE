@@ -64,10 +64,10 @@ network_labels <- c(
   base_no_tobias         = 'Base, no TOBIAS',
   base_no_hic            = 'Base, no Hi-C',
   base_no_hic_no_tobias  = 'Base, no Hi-C, no TOBIAS',
-  lasso                  = 'Lasso',
-  lasso_no_tobias        = 'Lasso, no TOBIAS',
-  lasso_no_hic           = 'Lasso, no Hi-C',
-  lasso_no_hic_no_tobias = 'Lasso, no Hi-C, no TOBIAS'
+  lasso                  = 'Elastic net',
+  lasso_no_tobias        = 'Elastic net, no TOBIAS',
+  lasso_no_hic           = 'Elastic net, no Hi-C',
+  lasso_no_hic_no_tobias = 'Elastic net, no Hi-C, no TOBIAS'
 )
 network_levels  <- unname(network_labels)
 display_colors  <- setNames(networks_colors, network_labels[names(networks_colors)])

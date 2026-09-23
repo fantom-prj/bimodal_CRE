@@ -1,9 +1,10 @@
 #### Extended Figure 6c — edges per enhancer by distance bin, without-tCRE ####
 #
-# Panel:   Ext Fig 6c. Same quantity as Fig 6b, but computed on the lasso
-#          network fitted WITHOUT enhancer tCRE measurements -- the
-#          equal-footing control: if expressed enhancers still look enriched
-#          for lasso-selected edges when they can only contribute aCRE edges
+# Panel:   Ext Fig 6c. Same quantity as Fig 6b, but computed on the
+#          elastic-net network fitted WITHOUT enhancer tCRE measurements --
+#          the equal-footing control: if expressed enhancers still look
+#          enriched for elastic-net-selected edges when they can only
+#          contribute aCRE edges
 #          (i.e. cannot benefit from having a second, transcription-based
 #          measurement), the Fig 6b effect is not merely "expressed
 #          enhancers get a second chance at an edge".
@@ -37,8 +38,8 @@ ext_f6c <- ggplot(bin_df %>% filter(n_enhancers >= 10),
                                  'non-expressed enhancers' = 'steelblue')) +
   scale_size_continuous(name = 'N enhancers', range = c(0.5, 2.5)) +
   scale_x_discrete(name = 'Enhancer-promoter distance bin (kb)') +
-  scale_y_continuous(name = 'Mean lasso-selected edges per enhancer') +
-  ggtitle(paste0('Lasso-selected edges per enhancer by distance bin ',
+  scale_y_continuous(name = 'Mean elastic-net-selected edges per enhancer') +
+  ggtitle(paste0('Elastic-net-selected edges per enhancer by distance bin ',
                  '(without-TSS network):\nexpressed vs non-expressed ',
                  '(equal-footing control)')) +
   bimodal_theme +

@@ -42,7 +42,24 @@ sweep_x_labels <- c(adjpvalue_threshold = 'adjpvalue threshold (<=)',
 #                 category, pct, n, n_nodes)
 # theme_name    : 'TF_enhancer' or 'TF_promoter'
 # sweep_name    : one of names(sweep_x_labels)
-make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name) {
+# show_labels   : TRUE (default) draws the in-bar percentage labels used by
+#                 the two MAIN-figure panels (Fig5d, Fig6a). FALSE (used by
+#                 the four EXTENDED-figure panels: Ext5e, Ext5f, Ext6a,
+#                 Ext6b) omits them entirely -- those panels sweep a wider,
+#                 less-stringent threshold range where 2+ categories can be
+#                 simultaneously tiny in the same bar, and no per-segment
+#                 label placement (several were tried: fixed float offset,
+#                 per-rank stagger, full sequential bottom-to-top placement
+#                 tracking each label's own text extent) stayed collision-
+#                 free across every such bar without constant re-tuning.
+#                 Decided with the user to drop in-bar labels for these
+#                 extended panels and report the exact percentages in the
+#                 figure caption instead, rather than keep fighting the
+#                 geometry for a data range where it's least informative
+#                 anyway (least-stringent thresholds = least-filtered,
+#                 least-central results).
+make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name,
+                                       show_labels = TRUE) {
 
   all_sweep_values <- sort(unique(category_table$sweep_value[category_table$sweep == sweep_name]))
 
@@ -84,15 +101,18 @@ make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name) {
   # above/below -- seen directly for the 'fully coupled' segment at the two
   # least-stringent percentile thresholds, where it is only a percent or two
   # of the bar). For those, float the label just above the segment's own top
-  # edge instead, in black rather than white (white text placed on the
-  # WHITE PANEL BACKGROUND above the bar, rather than on the fill colour,
-  # would be invisible).
+  # edge instead of centring it inside -- still low enough to sit over the
+  # segment above it (or the segment itself), not the white panel
+  # background, so plain white geom_text() (no halo) stays legible. This
+  # single-float approach (no cross-label collision handling) is only used
+  # where show_labels=TRUE (Fig5d, Fig6a), where at most one segment per bar
+  # is ever short -- see the show_labels doc above for why the extended
+  # panels don't use in-bar labels at all.
   short_seg_frac  <- 0.06
   df <- df %>%
     mutate(seg_short  = bar_height < short_seg_frac * max_height_n,
            label_y     = ifelse(seg_short, seg_top + max_height_n * 0.02, seg_mid),
-           label_vjust = ifelse(seg_short, 0, 0.5),
-           label_col   = ifelse(seg_short, 'black', 'white'))
+           label_vjust = ifelse(seg_short, 0, 0.5))
 
   label_df <- if (length(zero_n_values) > 0) {
     data.frame(sweep_value = factor(zero_n_values, levels = all_sweep_values),
@@ -104,10 +124,9 @@ make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name) {
 
   ggplot(df, aes(x = sweep_value, y = bar_height, fill = category)) +
     geom_col(width = 0.7) +
-    geom_text(aes(y = label_y, label = pct_label, vjust = label_vjust,
-                 colour = label_col),
-              size = 1.8, fontface = 'bold', family = 'Arial') +
-    scale_colour_identity() +
+    { if (show_labels)
+        geom_text(aes(y = label_y, label = pct_label, vjust = label_vjust),
+                 size = 1.8, colour = 'white', fontface = 'bold', family = 'Arial') } +
     { if (nrow(label_df) > 0)
         geom_text(data = label_df, aes(x = sweep_value, y = bar_height, label = 'n = 0'),
                   inherit.aes = FALSE, size = 1.8, colour = 'grey40', vjust = -0.5,

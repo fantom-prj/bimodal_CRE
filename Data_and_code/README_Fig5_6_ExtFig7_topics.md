@@ -43,7 +43,7 @@ consumers.
 |---|---|---|
 | `grn_reconstruction_pipeline/` | The gene regulatory network itself: TF-to-peak calls, the candidate base network, the expression/accessibility dataset, and the final lasso-pruned network(s) | (all subfolders below, which read its output as `primary_data_folder`) |
 | `tf_effects_clustering/` | TF cumulative-effect matrix + heatmap clustering (`tf_effects_clustering.rds`) | Fig5b, Fig5c |
-| `threshold_sensitivity_sweep/` | 13-grid-point threshold sweep, both themes (`sweep_category_table.csv`) + shared plotting function | Fig5d, Ext5e, Ext5f, Fig6a, Ext6a, Ext6b |
+| `threshold_sensitivity_sweep/` | 13-grid-point threshold sweep, both themes (`sweep_category_table.csv`) + shared plotting function | Fig5d, Ext5e/f (combined, one script/image), Fig6a, Ext6a, Ext6b |
 | `chipseq_eqtl_validation/` | ChIP-seq F1 curve data + eQTL F1 curve data | Ext5a, Ext5b |
 | `network_basic_stats/` | Node/edge counts across all 8 network variants | Ext5c (both node and edge panels) |
 | `abc_validation/` | Network-tier vs ABC concordance F1 table (`tier_comparison.csv`) | Ext5d |

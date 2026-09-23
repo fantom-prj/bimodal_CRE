@@ -1,7 +1,7 @@
 #### Extended Figure 5a — ChIP-seq validation F1 curves ####
 #
 # Panel:   Ext Fig 5a. F1 score vs dev_ratio threshold, one line per network
-#          variant (8 total, light=base/dark=lasso), faceted by TF
+#          variant (8 total, light=base/dark=elastic net), faceted by TF
 #          (TEAD4, ONECUT2). An inferred edge counts as recovered whether it
 #          reaches the TF's ChIP-seq target directly (TF->peak) or indirectly
 #          through an intermediate enhancer (TF->enhancer->peak), pooling
@@ -28,10 +28,10 @@ network_labels <- c(
   base_no_tobias         = 'Base, no TOBIAS',
   base_no_hic            = 'Base, no Hi-C',
   base_no_hic_no_tobias  = 'Base, no Hi-C, no TOBIAS',
-  lasso                  = 'Lasso',
-  lasso_no_tobias        = 'Lasso, no TOBIAS',
-  lasso_no_hic           = 'Lasso, no Hi-C',
-  lasso_no_hic_no_tobias = 'Lasso, no Hi-C, no TOBIAS'
+  lasso                  = 'Elastic net',
+  lasso_no_tobias        = 'Elastic net, no TOBIAS',
+  lasso_no_hic           = 'Elastic net, no Hi-C',
+  lasso_no_hic_no_tobias = 'Elastic net, no Hi-C, no TOBIAS'
 )
 network_levels <- unname(network_labels)
 networks_colors <- c(
@@ -56,12 +56,19 @@ ext_f5a <- ggplot(res, aes(x = dev_ratio, y = value, color = network)) +
                      breaks = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) +
   scale_y_continuous(name = 'F1 score') +
   scale_color_manual(name = 'Network', values = display_colors) +
-  ggtitle('ChIP-seq validation (either connection, all targets)') +
   bimodal_theme +
-  theme(legend.position = 'bottom',
-        legend.key.size = unit(0.25, 'cm'),
-        legend.direction = 'vertical',
+  # No title -- the panel letter + figure caption identify it; no legend
+  # either -- the 8-network colour key is shown once, shared with panels
+  # B/C1/C3, as its own standalone legend panel (Ext Fig 5 C2, see
+  # ext_fig5c_legend.R).
+  theme(legend.position = 'none',
         axis.text.x = element_text(angle = 25, hjust = 1, vjust = 1))
 
+# Sized for the Ext Fig 5 layout (A|B)/C/(D|E|F): A is wider than B (2
+# facets vs B's 1) but shares a common row height with it; shorter than
+# its earlier 3.2in now that its own legend is dropped (shared legend
+# lives in C2 instead, see ext_fig5c_legend.R) -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel
+# size table.
 save_panel_png_pdf(ext_f5a, path_fig5, 'ext_f5a.chipseq_F1_either_all',
-                   width_in = 4.5, height_in = 3.2)
+                   width_in = 4.0, height_in = 2.6)
