@@ -96,8 +96,10 @@ ext_f6e <- (cells[[1]][[1]] | patchwork::plot_spacer()) /
            (cells[[2]][[1]] | cells[[2]][[2]])
 
 # Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): E sits above F in a
-# shared column next to D, tuned together with F to match D's 6.0in total
-# height (E 4.0in + a small patchwork gap + F 1.9in ~= 6.0in) -- see
-# ext_fig6d_new_route_triplet_bars.R / ext_fig6f_hitscore_sign_triplet_bar.R.
+# shared column next to D, tuned together with F to match D's total height
+# -- see ext_fig6d_new_route_triplet_bars.R / ext_fig6f_hitscore_sign_triplet_bar.R.
+# All 6 Ext Fig 6 panels then scaled by a uniform 0.95 factor (4.0x4.0in ->
+# 3.8x3.8in) to fit the full figure within the A4 page height including
+# panel letters, per a later explicit user request.
 save_panel_png_pdf(ext_f6e, path_fig6, 'ext_f6e.gsea_enrichment_plots',
-                   width_in = 4.0, height_in = 4.0)
+                   width_in = 3.8, height_in = 3.8)

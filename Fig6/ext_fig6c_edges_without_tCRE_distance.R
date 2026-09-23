@@ -48,8 +48,10 @@ ext_f6c <- ggplot(bin_df %>% filter(n_enhancers >= 10),
         panel.grid.major = element_line(colour = 'grey92'))
 
 # Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): C has its own row but
-# stays half-width (~3.66in), matching the A-D main-figure panel convention,
-# per explicit user instruction, rather than stretching to the full A4 width
-# that (A|B) uses.
+# stays half-width, matching the A-D main-figure panel convention, per
+# explicit user instruction, rather than stretching to the full A4 width
+# that (A|B) uses. All 6 Ext Fig 6 panels then scaled by a uniform 0.95
+# factor to fit the full figure within the A4 page height including panel
+# letters, per a later explicit user request.
 save_panel_png_pdf(ext_f6c, path_fig6, 'ext_f6c.edges_without_tCRE_distance_bin',
-                   width_in = 3.66, height_in = 2.6)
+                   width_in = 3.48, height_in = 2.47)

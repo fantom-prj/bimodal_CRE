@@ -75,10 +75,13 @@ ext_f6d <- p_tf / p_gene
 
 # Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): D pairs with the (E/F)
 # column, whose combined height (E on top, F below) is tuned to match D's
-# 6.0in -- see ext_fig6e_gsea_enrichment.R / ext_fig6f_hitscore_sign_triplet_bar.R.
+# height -- see ext_fig6e_gsea_enrichment.R / ext_fig6f_hitscore_sign_triplet_bar.R.
 # D keeps its two internal panel titles (the only titled panel in Ext Fig 6,
 # per explicit user instruction) since they are what distinguish the TF bar
-# from the target-gene bar within the same combined image.
+# from the target-gene bar within the same combined image. All 6 Ext Fig 6
+# panels then scaled by a uniform 0.95 factor (3.4x6.0in -> 3.23x5.7in) to
+# fit the full figure within the A4 page height including panel letters,
+# per a later explicit user request.
 save_panel_png_pdf(ext_f6d, path_fig6,
                    'ext_f6d.new_route_triplet_bars_TF_and_target',
-                   width_in = 3.4, height_in = 6.0)
+                   width_in = 3.23, height_in = 5.7)
