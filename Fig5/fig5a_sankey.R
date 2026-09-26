@@ -22,14 +22,23 @@
 #   [primary_data_folder]/4_preparing_dataset/dataset.rds
 #   ../Data_and_code/network_loading/network_thresholds.txt
 #
-# Output (Fig5/out/): f5a.sankey_GRN.png / .pdf
+# Output (Fig5/out/): f5a.sankey_GRN.png / .pdf (compact, no bottom text
+#   block -- the actual panel used in the figure) and, optionally,
+#   f5a.sankey_GRN_with_stats.png / .pdf (full QC/traceability version, see
+#   include_bottom_text below).
 #
 # Cross-check (reported by this script's own messages): 327 TFs, 20,825 sink
 # enhancers, 10,813 mediating enhancers, 20,696 source enhancers, 18,327
 # promoters, TF->promoter n=31,130, TF->enhancer n=14,221 (=TF->sink +
 # TF->mediating), downstream mediating->promoter n=23,695.
 
-rm(list = ls())
+
+# Clear this environment before running, EXCEPT any control-panel override a
+# caller may have pre-set here before sourcing this script -- currently just
+# `include_bottom_text` (see below). A plain `rm(list = ls())` would
+# silently wipe that override too, since it runs before the override is
+# ever read.
+rm(list = setdiff(ls(), 'include_bottom_text'))
 library(tidyverse)
 library(ggplot2)
 
@@ -52,6 +61,18 @@ apply_estimate_threshold        <- TRUE
 positive_only_enhancer_promoter <- FALSE   # keep ALL EP edges, not positive-only
 show_sink_source                 <- TRUE
 
+# The full statistics block below the diagram duplicates what the compact
+# on-node labels (built further down, e.g. "Sink enhancer\nn=20,825\n
+# ATAC=17,461, TSS=3,364") already show in-panel -- it exists purely for
+# traceability/QC (every intermediate count visible in one place), not for
+# the published figure. FALSE by default: the compact, on-node-labels-only
+# version (sized for the Fig5 (a/c/d)|b layout, see the save call at the
+# bottom) is the actual panel used in the figure. Set to TRUE (e.g. from an
+# interactive session: `include_bottom_text <- TRUE` before sourcing) to get
+# the full QC dump instead, saved to a separate _with_stats file so it never
+# overwrites the compact default.
+if (!exists('include_bottom_text')) include_bottom_text <- FALSE
+
 node_w      <- 0.15
 box_fn      <- log2
 ribbon_fn   <- log2
@@ -64,6 +85,13 @@ alpha_sink  <- 0.35
 alpha_src   <- 0.35
 
 text_font      <- 'Arial'
+# text_size is in ggplot's mm units. 2.8mm was tuned for the 12x7in
+# with-stats canvas; the compact default is now saved at 3.4in wide (see
+# the save call at the bottom), where 2.8mm text makes adjacent node
+# labels ("Sink enhancer" / "Source enhancer", both wide multi-line blocks)
+# collide horizontally. Node label font size is set separately, just below
+# node_label_text, so it can shrink for the compact canvas without changing
+# the bottom QC block's own tuned size.
 text_size      <- 2.8
 n_ribbon_pts   <- 1000
 
@@ -458,6 +486,43 @@ node_rects <- data.frame(
                n_unique_source, n_unique_promoter)
 )
 
+#### Compact on-node labels ####
+# Per co-author request: short "label\nn=..." labels sit directly above each
+# node box (matching the manuscript's own Fig5a layout), IN ADDITION TO the
+# full statistics block at the bottom (built further down) -- not instead of
+# it. The bottom block stays for traceability/QC while this script is used
+# standalone; it is expected to be cropped out at figure-assembly time, once
+# the compact on-node labels carry the same information in-panel.
+#
+# ATAC=.../TSS=... is split onto its own two lines (was one comma-joined
+# line) because at this panel's compact 3.4in save width, "Sink enhancer"
+# and "Source enhancer" sit close enough together that one long
+# "ATAC=17,461, TSS=3,364" line collided with its horizontal neighbour;
+# node_label_size is also set below independently from text_size (which
+# still governs the bottom QC block, tuned separately for the 12x7in
+# with-stats canvas) so it can shrink for the compact canvas without
+# affecting that block.
+node_label_size <- if (include_bottom_text) text_size else 2.0
+node_label_text <- c(
+  paste0(label_tf, '\nn=', formatC(n_unique_tf, format = 'd', big.mark = ',')),
+  paste0(label_sink_enhancer, '\nn=', formatC(n_unique_sink, format = 'd', big.mark = ','),
+        '\nATAC=', formatC(n_acre_sink, format = 'd', big.mark = ','),
+        '\nTSS=',  formatC(n_tcre_sink, format = 'd', big.mark = ',')),
+  paste0(label_mediating_enhancer, '\nn=', formatC(n_unique_mediating, format = 'd', big.mark = ','),
+        '\nATAC=', formatC(n_acre_med, format = 'd', big.mark = ','),
+        '\nTSS=',  formatC(n_tcre_med, format = 'd', big.mark = ',')),
+  paste0(label_source_enhancer, '\nn=', formatC(n_unique_source, format = 'd', big.mark = ','),
+        '\nATAC=', formatC(n_acre_src, format = 'd', big.mark = ','),
+        '\nTSS=',  formatC(n_tcre_src, format = 'd', big.mark = ',')),
+  paste0(label_promoter, '\nn=', formatC(n_unique_promoter, format = 'd', big.mark = ','))
+)
+node_label_df <- data.frame(
+  x     = (node_rects$xmin + node_rects$xmax) / 2,
+  y     = node_rects$ymax + 2,
+  label = node_label_text,
+  stringsAsFactors = FALSE
+)
+
 enh_split <- function(xmin, xmax, ymin, ymax, frac_tcre) {
   y_split <- ymin + (ymax - ymin) * (1 - frac_tcre)
   data.frame(xmin = xmin, xmax = xmax,
@@ -695,17 +760,17 @@ pct_string <- function(counts, name_map, sep = ' | ') {
   nms <- name_map[names(counts)]
   paste(paste0(nms, ': ', true_pcts, '%'), collapse = sep)
 }
-tf_names <- c(aCRE = 'aCRE', tCRE = 'tCRE')
-ep_names <- c(aa = 'aCRE → aCRE', at = 'aCRE → tCRE',
-              ta = 'tCRE → aCRE', tt = 'tCRE → tCRE')
+tf_names <- c(aCRE = 'ATAC', tCRE = 'TSS')
+ep_names <- c(aa = 'ATAC → ATAC', at = 'ATAC → TSS',
+              ta = 'TSS → ATAC',  tt = 'TSS → TSS')
 
 text_line_h  <- 2.5
 text_x       <- x_tf - node_w / 2
 text_y_start <- prom_ymin - 5
 
 acre_tcre_string <- function(n_acre, n_tcre) {
-  paste0(', aCRE=', formatC(n_acre, format='d', big.mark=','),
-         ', tCRE=', formatC(n_tcre, format='d', big.mark=','))
+  paste0(', ATAC=', formatC(n_acre, format='d', big.mark=','),
+         ', TSS=', formatC(n_tcre, format='d', big.mark=','))
 }
 
 text_lines <- c(
@@ -717,7 +782,7 @@ text_lines <- c(
   paste0('Source enhancer (n=',   formatC(n_unique_source,    format='d', big.mark=','),
          acre_tcre_string(n_acre_src, n_tcre_src)),
   paste0('Promoter (n=',          formatC(n_unique_promoter,  format='d', big.mark=',')),
-  'TF (Expression) | aCRE (Chromatin) | tCRE (Transcription)',
+  'TF (Expression) | ATAC (Chromatin) | TSS (Transcription)',
   paste0('TF → Sink enhancer: ',
          pct_string(c(nexpr = n_tf_sink_nexpr, expr = n_tf_sink_expr),
                     c(nexpr = 'non-expr', expr = 'expr'))),
@@ -762,19 +827,51 @@ p <- ggplot() +
   geom_rect(data = node_fill_rects,
             aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, alpha = alpha),
             fill = node_fill_rects$fill, color = NA) +
-  geom_text(data = bottom_text_df,
+  geom_text(data = node_label_df,
             aes(x = x, y = y, label = label),
-            hjust = 0, vjust = 1, size = text_size, family = text_font) +
+            hjust = 0.5, vjust = 0, lineheight = 0.9,
+            size = node_label_size, family = text_font, fontface = 'bold') +
+  { if (include_bottom_text)
+      geom_text(data = bottom_text_df,
+               aes(x = x, y = y, label = label),
+               hjust = 0, vjust = 1, size = text_size, family = text_font) } +
   scale_x_continuous(expand = c(0.12, 0.18)) +
-  labs(title = 'GRN edge flows by node type') +
+  scale_y_continuous(expand = expansion(
+    mult = c(0.3, if (include_bottom_text) 0.1 else 0.22))) +
   theme_void() +
   theme(legend.position = 'none',
-        plot.title = element_text(size = 7, family = 'Arial', face = 'bold', margin = margin(b = 8)))
+        # Locking aspect.ratio to this panel's own saved WIDTH:HEIGHT only
+        # matters when the bottom text block is present -- its line spacing
+        # is tuned for the 12x7in with-stats save size and visually overlaps
+        # itself if that version is stretched/squished to a different
+        # aspect. The compact (no-text) default has no such fixed-spacing
+        # content to protect, so it is left unconstrained here and simply
+        # saved at its own target canvas size below -- ggsave() renders
+        # directly into that device size, so no separate aspect.ratio lock
+        # is needed to make it fill a 3.4 x 2.60in canvas correctly.
+        aspect.ratio = if (include_bottom_text) 7 / 12 else NULL)
 
 #### Save outputs ####
 
 message('Saving PNG + PDF...')
-save_panel_png_pdf(p, out_dir, 'f5a.sankey_GRN', width_in = 12, height_in = 7)
+# Sized for the Fig5 layout (A/C/D)|B: C and D share the common column width
+# (3.4in, a bit under half an A4 page) that B's own height (9.5in) is
+# budgeted against; A is sized 10% wider / 5% taller than that shared width
+# (3.74 x 2.73in), which better suits its own aspect ratio -- it therefore
+# runs slightly past C/D's column edge rather than aligning flush with them, and
+# the A+C+D height sum against B (see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table) shifts by the +0.13in this adds to A's own height. The 12x7in
+# full-page size is kept for the optional with-stats QC version only
+# (include_bottom_text = TRUE), which is not meant to sit in the assembled
+# figure.
+if (include_bottom_text) {
+  save_panel_png_pdf(p, out_dir, 'f5a.sankey_GRN_with_stats',
+                     width_in = 12, height_in = 7)
+} else {
+  save_panel_png_pdf(p, out_dir, 'f5a.sankey_GRN',
+                     width_in = 3.74, height_in = 2.73)
+}
 
 message('Done. Results written to: ', out_dir)
 

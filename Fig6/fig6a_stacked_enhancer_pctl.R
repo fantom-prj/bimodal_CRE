@@ -32,5 +32,9 @@ p <- make_stacked_bar_linheight(category_table,
                                 theme_name = 'TF_enhancer',
                                 sweep_name = 'estimate_percentile')
 
+# Sized for the Fig6 layout (A|B)/(C|D)/E: A shares a common row width with
+# B (3.66in, half the usable A4 width) -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table.
 save_panel_png_pdf(p, path_fig6, 'f6a.stacked_TF_enhancer_estimate_pctl',
-                   width_in = 3.2, height_in = 3.0)
+                   width_in = 3.66, height_in = 3.4)

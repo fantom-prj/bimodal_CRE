@@ -24,7 +24,8 @@ d <- read.csv(paste0(path_fig5_data, 'network_node_counts.csv'))
 node_levels <- c('Number of TFs', 'Number of enhancers', 'Number of promoters')
 d$metric  <- factor(d$metric,  levels = node_levels)
 network_levels <- c('Base', 'Base, no TOBIAS', 'Base, no Hi-C', 'Base, no Hi-C, no TOBIAS',
-                    'Lasso', 'Lasso, no TOBIAS', 'Lasso, no Hi-C', 'Lasso, no Hi-C, no TOBIAS')
+                    'Elastic net', 'Elastic net, no TOBIAS', 'Elastic net, no Hi-C',
+                    'Elastic net, no Hi-C, no TOBIAS')
 d$network <- factor(d$network, levels = network_levels)
 
 display_colors <- setNames(d$colour, d$network)[network_levels]
@@ -36,10 +37,22 @@ ext_f5c_nodes <- ggplot(d, aes(x = network, y = value, fill = network)) +
   scale_fill_manual(values = display_colors) +
   ggtitle('Network node counts') +
   bimodal_theme +
+  # No x-axis text -- the 8-network identity is carried by fill colour and
+  # explained once, shared with C3, by the standalone legend panel beside
+  # this one (Ext Fig 5 C2, see ext_fig5c_legend.R); repeating the long
+  # rotated "Base, no Hi-C, no TOBIAS"-style labels under every facet here
+  # (and again under C3) is redundant once that legend exists.
   theme(legend.position = 'none',
-        axis.text.x  = element_text(angle = 45, vjust = 0.9, hjust = 1),
+        axis.text.x  = element_blank(),
+        axis.ticks.x = element_blank(),
         axis.title.x = element_blank(),
         axis.title.y = element_blank())
 
+# Sized for the Ext Fig 5 layout (A|B)/C/(D|E|F), specifically the C row's
+# (C1|C2)/C3 sub-arrangement: C1 sits beside C2 (the shared network-colour
+# legend, see ext_fig5c_legend.R), width chosen so C1+C2 together span the
+# same usable A4 width C3 spans on its own below -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table.
 save_panel_png_pdf(ext_f5c_nodes, path_fig5, 'ext_f5c.network_node_counts',
-                   width_in = 5.0, height_in = 2.0)
+                   width_in = 3.72, height_in = 1.4)

@@ -26,9 +26,21 @@ source(paste0(path_code, 'threshold_sensitivity_sweep/plot_stacked_bar_height.R'
 
 category_table <- read.csv(paste0(path_fig6_data, 'sweep_category_table.csv'))
 
+# show_labels = FALSE: at this panel's less-stringent threshold range, 2+
+# categories can be simultaneously tiny within the same bar, which no
+# per-segment label placement stayed collision-free for -- see
+# plot_stacked_bar_height.R's show_labels doc. Exact percentages belong in
+# the figure caption instead.
 p <- make_stacked_bar_linheight(category_table,
                                 theme_name = 'TF_enhancer',
-                                sweep_name = 'dev_ratio_threshold')
+                                sweep_name = 'dev_ratio_threshold',
+                                show_labels = FALSE)
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): B pairs with A to span
+# the full usable A4 width (~7.47in) on their own shared row -- see
+# ext_fig6a_stacked_enhancer_adjp.R for A.
+# All 6 Ext Fig 6 panels scaled by a uniform 0.95 factor (from the sizes
+# noted above) to fit the full figure within the A4 page height including
+# panel letters -- same relative layout proportions preserved.
 save_panel_png_pdf(p, path_fig6, 'ext_f6b.stacked_TF_enhancer_devratio',
-                   width_in = 3.2, height_in = 3.0)
+                   width_in = 3.5, height_in = 2.47)

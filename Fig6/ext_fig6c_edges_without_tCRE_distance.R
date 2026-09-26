@@ -1,9 +1,10 @@
 #### Extended Figure 6c — edges per enhancer by distance bin, without-tCRE ####
 #
-# Panel:   Ext Fig 6c. Same quantity as Fig 6b, but computed on the lasso
-#          network fitted WITHOUT enhancer tCRE measurements -- the
-#          equal-footing control: if expressed enhancers still look enriched
-#          for lasso-selected edges when they can only contribute aCRE edges
+# Panel:   Ext Fig 6c. Same quantity as Fig 6b, but computed on the
+#          elastic-net network fitted WITHOUT enhancer tCRE measurements --
+#          the equal-footing control: if expressed enhancers still look
+#          enriched for elastic-net-selected edges when they can only
+#          contribute aCRE edges
 #          (i.e. cannot benefit from having a second, transcription-based
 #          measurement), the Fig 6b effect is not merely "expressed
 #          enhancers get a second chance at an edge".
@@ -36,11 +37,9 @@ ext_f6c <- ggplot(bin_df %>% filter(n_enhancers >= 10),
                       values = c('expressed enhancers'     = 'darkorange',
                                  'non-expressed enhancers' = 'steelblue')) +
   scale_size_continuous(name = 'N enhancers', range = c(0.5, 2.5)) +
-  scale_x_discrete(name = 'Enhancer-promoter distance bin (bp)') +
-  scale_y_continuous(name = 'Mean lasso-selected edges per enhancer') +
-  ggtitle(paste0('Lasso-selected edges per enhancer by distance bin ',
-                 '(without-tCRE network):\nexpressed vs non-expressed ',
-                 '(equal-footing control)')) +
+  scale_x_discrete(name = 'Enhancer-promoter distance bin (kb)') +
+  scale_y_continuous(name = 'Mean elastic-net-selected edges per enhancer') +
+  # No title -- the panel letter + figure caption identify it.
   bimodal_theme +
   theme(axis.text.x      = element_text(angle = 45, hjust = 1),
         legend.position  = 'bottom',
@@ -48,5 +47,10 @@ ext_f6c <- ggplot(bin_df %>% filter(n_enhancers >= 10),
         legend.key.size  = unit(0.25, 'cm'),
         panel.grid.major = element_line(colour = 'grey92'))
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): C has its own row but
+# stays half-width, matching the A-D main-figure panel convention, rather
+# than stretching to the full A4 width that (A|B) uses. All 6 Ext Fig 6
+# panels then scaled by a uniform 0.95 factor to fit the full figure
+# within the A4 page height including panel letters.
 save_panel_png_pdf(ext_f6c, path_fig6, 'ext_f6c.edges_without_tCRE_distance_bin',
-                   width_in = 3.6, height_in = 3.0)
+                   width_in = 3.48, height_in = 2.47)

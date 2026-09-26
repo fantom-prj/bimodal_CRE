@@ -22,12 +22,20 @@ source(paste0(path_code, 'network_loading/plot_theme_and_save.R'))
 
 d <- read.csv(paste0(path_fig5_data, 'network_edge_counts.csv'))
 
-edge_levels <- c('Number of edges', 'Number of TF-to-peak edges',
-                 'Number of TF-to-promoter edges', 'Number of TF-to-enhancer edges',
-                 'Number of enhancer-to-promoter edges')
-d$metric <- factor(d$metric, levels = edge_levels)
+# raw_levels match the CSV's 'metric' strings exactly (no line break); wrapped
+# is the display text shown in the (narrow) facet strips -- kept as a
+# separate labels= vector rather than baked into levels=, since factor()
+# matching happens against the raw, un-wrapped data values.
+raw_levels <- c('Number of edges', 'Number of TF-to-peak edges',
+                'Number of TF-to-promoter edges', 'Number of TF-to-enhancer edges',
+                'Number of enhancer-to-promoter edges')
+wrapped    <- c('Number of\nedges', 'Number of\nTF-to-peak edges',
+                'Number of\nTF-to-promoter edges', 'Number of\nTF-to-enhancer edges',
+                'Number of\nenhancer-to-promoter edges')
+d$metric <- factor(d$metric, levels = raw_levels, labels = wrapped)
 network_levels <- c('Base', 'Base, no TOBIAS', 'Base, no Hi-C', 'Base, no Hi-C, no TOBIAS',
-                    'Lasso', 'Lasso, no TOBIAS', 'Lasso, no Hi-C', 'Lasso, no Hi-C, no TOBIAS')
+                    'Elastic net', 'Elastic net, no TOBIAS', 'Elastic net, no Hi-C',
+                    'Elastic net, no Hi-C, no TOBIAS')
 d$network <- factor(d$network, levels = network_levels)
 
 display_colors <- setNames(d$colour, d$network)[network_levels]
@@ -39,10 +47,20 @@ ext_f5c_edges <- ggplot(d, aes(x = network, y = value, fill = network)) +
   scale_fill_manual(values = display_colors) +
   ggtitle('Network edge counts') +
   bimodal_theme +
+  # No x-axis text -- same reasoning as ext_fig5c_network_nodes.R (C1): the
+  # 8-network identity is carried by fill colour, explained once by the
+  # shared legend panel above (Ext Fig 5 C2, see ext_fig5c_legend.R).
   theme(legend.position = 'none',
-        axis.text.x  = element_text(angle = 45, vjust = 0.9, hjust = 1),
+        axis.text.x  = element_blank(),
+        axis.ticks.x = element_blank(),
         axis.title.x = element_blank(),
-        axis.title.y = element_blank())
+        axis.title.y = element_blank(),
+        strip.text   = element_text(size = 5))
 
+# Sized for the Ext Fig 5 layout (A|B)/C/(D|E|F), specifically the C row's
+# (C1|C2)/C3 sub-arrangement: C3 spans the full usable A4 width on its own
+# row below C1|C2 (5 facets need the room a shared row with a legend
+# wouldn't leave) -- see Data_and_code/README_Fig5_6_ExtFig7_topics.md for
+# the full per-panel size table.
 save_panel_png_pdf(ext_f5c_edges, path_fig5, 'ext_f5c.network_edge_counts',
-                   width_in = 7.0, height_in = 2.0)
+                   width_in = 7.4, height_in = 1.5)

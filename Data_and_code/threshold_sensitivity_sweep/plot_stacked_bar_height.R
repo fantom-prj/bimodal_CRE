@@ -2,8 +2,8 @@
 #
 # Sourced by:
 #   Fig5/fig5d_stacked_promoter_pctl.R          (TF_promoter x estimate_percentile)
-#   Fig5/ext_fig5d_stacked_promoter_adjp.R      (TF_promoter x adjpvalue_threshold)
-#   Fig5/ext_fig5e_stacked_promoter_devratio.R  (TF_promoter x dev_ratio_threshold)
+#   Fig5/ext_fig5e_stacked_promoter_adjp.R      (TF_promoter x adjpvalue_threshold)
+#   Fig5/ext_fig5f_stacked_promoter_devratio.R  (TF_promoter x dev_ratio_threshold)
 #   Fig6/fig6a_stacked_enhancer_pctl.R          (TF_enhancer x estimate_percentile)
 #   Fig6/ext_fig6a_stacked_enhancer_adjp.R      (TF_enhancer x adjpvalue_threshold)
 #   Fig6/ext_fig6b_stacked_enhancer_devratio.R  (TF_enhancer x dev_ratio_threshold)
@@ -42,7 +42,23 @@ sweep_x_labels <- c(adjpvalue_threshold = 'adjpvalue threshold (<=)',
 #                 category, pct, n, n_nodes)
 # theme_name    : 'TF_enhancer' or 'TF_promoter'
 # sweep_name    : one of names(sweep_x_labels)
-make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name) {
+# show_labels   : TRUE (default) draws the in-bar percentage labels used by
+#                 the two MAIN-figure panels (Fig5d, Fig6a). FALSE (used by
+#                 the four EXTENDED-figure panels: Ext5e, Ext5f, Ext6a,
+#                 Ext6b) omits them entirely -- those panels sweep a wider,
+#                 less-stringent threshold range where 2+ categories can be
+#                 simultaneously tiny in the same bar, and no per-segment
+#                 label placement (fixed float offset, per-rank stagger,
+#                 full sequential bottom-to-top placement tracking each
+#                 label's own text extent) stayed collision-free across
+#                 every such bar without constant re-tuning. In-bar labels
+#                 are dropped for these extended panels; the exact
+#                 percentages are reported in the figure caption instead,
+#                 rather than fighting the geometry for a data range
+#                 where it's least informative anyway (least-stringent
+#                 thresholds = least-filtered, least-central results).
+make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name,
+                                       show_labels = TRUE) {
 
   all_sweep_values <- sort(unique(category_table$sweep_value[category_table$sweep == sweep_name]))
 
@@ -54,12 +70,48 @@ make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name) {
   zero_n_values <- n_lookup$sweep_value[n_lookup$n_nodes == 0]
   max_height_n  <- max(n_lookup$height_n, na.rm = TRUE)
 
+  # geom_col()'s default stacking draws the FIRST fill factor level at the
+  # TOP of each bar, accumulating downward in REVERSE level order -- i.e.
+  # the opposite of the intuitive "arrange by level, cumsum from 0" order.
+  # Confirmed directly via ggplot_build(): with levels c('A','B','C'), A
+  # lands at the top (highest ymin/ymax), C at the bottom (ymin=0). Sorting
+  # by the REVERSED category level before the cumsum makes seg_bottom/
+  # seg_top/seg_mid match geom_col's actual drawn segment boundaries; get
+  # this backwards and labels silently sit at the wrong segment's midpoint
+  # (invisible for tall segments where the mismatch still lands inside a
+  # neighbouring segment by chance, obvious for short ones).
   df <- category_table %>%
     filter(theme == theme_name, sweep == sweep_name) %>%
     left_join(n_lookup, by = c('sweep_value', 'n_nodes')) %>%
     mutate(category    = factor(category, levels = names(category_colours)),
            sweep_value = factor(sweep_value, levels = all_sweep_values),
-           bar_height  = pct / 100 * height_n)
+           bar_height  = pct / 100 * height_n) %>%
+    arrange(sweep_value, desc(category)) %>%
+    group_by(sweep_value) %>%
+    mutate(seg_top    = cumsum(bar_height),
+           seg_bottom = seg_top - bar_height,
+           seg_mid    = (seg_top + seg_bottom) / 2,
+           pct_label  = paste0(sprintf('%.2f', pct), '%')) %>%
+    ungroup()
+
+  # A segment thinner than ~6% of the tallest bar in the panel doesn't have
+  # room for its label to sit centred and stay legible against the fill
+  # colour (the label gets cropped top/bottom, or spills into the segments
+  # above/below -- seen directly for the 'fully coupled' segment at the two
+  # least-stringent percentile thresholds, where it is only a percent or two
+  # of the bar). For those, float the label just above the segment's own top
+  # edge instead of centring it inside -- still low enough to sit over the
+  # segment above it (or the segment itself), not the white panel
+  # background, so plain white geom_text() (no halo) stays legible. This
+  # single-float approach (no cross-label collision handling) is only used
+  # where show_labels=TRUE (Fig5d, Fig6a), where at most one segment per bar
+  # is ever short -- see the show_labels doc above for why the extended
+  # panels don't use in-bar labels at all.
+  short_seg_frac  <- 0.06
+  df <- df %>%
+    mutate(seg_short  = bar_height < short_seg_frac * max_height_n,
+           label_y     = ifelse(seg_short, seg_top + max_height_n * 0.02, seg_mid),
+           label_vjust = ifelse(seg_short, 0, 0.5))
 
   label_df <- if (length(zero_n_values) > 0) {
     data.frame(sweep_value = factor(zero_n_values, levels = all_sweep_values),
@@ -71,6 +123,9 @@ make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name) {
 
   ggplot(df, aes(x = sweep_value, y = bar_height, fill = category)) +
     geom_col(width = 0.7) +
+    { if (show_labels)
+        geom_text(aes(y = label_y, label = pct_label, vjust = label_vjust),
+                 size = 1.8, colour = 'white', fontface = 'bold', family = 'Arial') } +
     { if (nrow(label_df) > 0)
         geom_text(data = label_df, aes(x = sweep_value, y = bar_height, label = 'n = 0'),
                   inherit.aes = FALSE, size = 1.8, colour = 'grey40', vjust = -0.5,
@@ -79,8 +134,6 @@ make_stacked_bar_linheight <- function(category_table, theme_name, sweep_name) {
     scale_y_continuous(name = 'N targets',
                        limits = c(0, max_height_n * 1.08), expand = c(0, 0)) +
     scale_x_discrete(name = sweep_x_labels[[sweep_name]], drop = FALSE) +
-    ggtitle(paste0(theme_name, ': TF-set coupling vs ', sweep_x_labels[[sweep_name]]),
-            subtitle = 'bar height = N targets') +
     bimodal_theme +
     theme(legend.position     = 'bottom',
           legend.key.size     = unit(0.25, 'cm'),

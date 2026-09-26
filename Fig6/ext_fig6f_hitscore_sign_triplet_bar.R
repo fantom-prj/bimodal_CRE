@@ -56,10 +56,16 @@ ext_f6f <- ggplot(bar_df, aes(x = hit_sign, y = n, fill = has_triplet)) +
                     labels = c(`TRUE` = 'triplet_pairs > 0', `FALSE` = 'triplet_pairs = 0')) +
   scale_y_continuous(name = 'Proportion', expand = expansion(mult = c(0, 0.14))) +
   coord_cartesian(ylim = c(0, 1.12)) +
-  labs(x = 'Hit-score sign', title = 'Triplet participation by hit-score sign') +
+  # No title -- the panel letter + figure caption identify it.
+  labs(x = 'Hit-score sign') +
   bimodal_theme +
   theme(legend.position = 'bottom',
         legend.key.size = unit(0.25, 'cm'))
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): F sits below E in a
+# shared column next to D -- see ext_fig6e_gsea_enrichment.R for the height
+# split with D. All 6 Ext Fig 6 panels then scaled by a uniform 0.95
+# factor (4.0x1.9in -> 3.8x1.8in) to fit the full figure within the A4
+# page height including panel letters.
 save_panel_png_pdf(ext_f6f, path_fig6, 'ext_f6f.hitscore_sign_triplet_bar',
-                   width_in = 4.5, height_in = 2.2)
+                   width_in = 3.8, height_in = 1.8)

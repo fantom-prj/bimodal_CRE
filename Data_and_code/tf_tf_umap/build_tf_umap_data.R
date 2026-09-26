@@ -28,7 +28,9 @@
 #
 # Writes: ../../ExtFig7/data/tf_umap_dominance.rds
 #   list with: layout_all (ggraph layout: name, x, y, pr, dominance, timepoint),
-#              edge_direct, edge_indirect (data frames: from, to, value),
+#              edge_direct, edge_indirect, edge_combined (data frames: from,
+#              to, value; edge_combined takes, per TF pair, whichever of the
+#              direct/indirect weight is stronger),
 #              node_names, num_label_per_cat, dom_colours
 
 rm(list = ls())
@@ -239,6 +241,11 @@ make_edge_table <- function(mat) {
 }
 edge_direct   <- make_edge_table(tf_coeffs)
 edge_indirect <- make_edge_table(tf_coeffs_enh)
+# Same combined matrix already used to build layout_all above (tf_coeffs_all:
+# per TF pair, whichever of the direct/indirect weight is stronger), just
+# run through the same make_edge_table() helper as the other two tables for
+# a consistent from/to/value structure.
+edge_combined <- make_edge_table(tf_coeffs_all)
 
 #### Save ####
 
@@ -247,6 +254,7 @@ saveRDS(list(
   layout_all         = layout_all,
   edge_direct        = edge_direct,
   edge_indirect      = edge_indirect,
+  edge_combined      = edge_combined,
   node_names         = node_names,
   umap_fixed         = umap_fixed,
   num_label_per_cat  = num_label_per_cat,

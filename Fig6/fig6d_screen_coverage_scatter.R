@@ -65,11 +65,15 @@ f6d <- ggplot(stats,
                      name = 'Screen coverage') +
   scale_x_continuous(name = 'Triplet-pair count (log10 scale)') +
   scale_y_continuous(name = 'Cumulative |estimate| (in + out edges)') +
-  ggtitle(paste0('Enhancer centrality - screen coverage (', analysis, ')')) +
+  # No title -- the panel letter + figure caption identify it.
   bimodal_theme +
   theme(legend.position  = 'bottom',
         legend.key.size  = unit(0.25, 'cm'),
         panel.grid.major = element_line(colour = 'grey92'))
 
+# Sized for the Fig6 layout (A|B)/(C|D)/E: D shares a common row width with
+# C (3.66in, half the usable A4 width) -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table.
 save_panel_png_pdf(f6d, path_fig6, 'f6d.screen_coverage_scatter',
-                   width_in = 3.4, height_in = 3.2)
+                   width_in = 3.66, height_in = 3.4)

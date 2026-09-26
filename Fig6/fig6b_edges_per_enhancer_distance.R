@@ -1,6 +1,6 @@
-#### Figure 6b — lasso-selected edges per enhancer by distance bin ####
+#### Figure 6b — elastic-net-selected edges per enhancer by distance bin ####
 #
-# Panel:   Fig 6b. Mean lasso-selected Enhancer_promoter edges per enhancer in
+# Panel:   Fig 6b. Mean elastic-net-selected Enhancer_promoter edges per enhancer in
 #          50 kb enhancer-promoter distance bins, expressed vs non-expressed
 #          enhancers, in the WITH-tCRE network. Pool-size corrected: every
 #          base-network enhancer in the bin contributes, those with no
@@ -40,9 +40,9 @@ f6b <- ggplot(bin_df %>% filter(n_enhancers >= 10),
                       values = c('expressed enhancers'     = 'darkorange',
                                  'non-expressed enhancers' = 'steelblue')) +
   scale_size_continuous(name = 'N enhancers', range = c(0.5, 2.5)) +
-  scale_x_discrete(name = 'Enhancer-promoter distance bin (bp)') +
-  scale_y_continuous(name = 'Mean lasso-selected edges per enhancer') +
-  ggtitle('Lasso-selected edges per enhancer by distance bin:\nexpressed vs non-expressed') +
+  scale_x_discrete(name = 'Enhancer-promoter distance bin (kb)') +
+  scale_y_continuous(name = 'Mean elastic-net-selected edges per enhancer') +
+  # No title -- the panel letter + figure caption identify it.
   bimodal_theme +
   theme(axis.text.x      = element_text(angle = 45, hjust = 1),
         legend.position  = 'bottom',
@@ -50,5 +50,9 @@ f6b <- ggplot(bin_df %>% filter(n_enhancers >= 10),
         legend.key.size  = unit(0.25, 'cm'),
         panel.grid.major = element_line(colour = 'grey92'))
 
+# Sized for the Fig6 layout (A|B)/(C|D)/E: B shares a common row width with
+# A (3.66in, half the usable A4 width) -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table.
 save_panel_png_pdf(f6b, path_fig6, 'f6b.edges_per_enhancer_distance_bin',
-                   width_in = 3.6, height_in = 3.0)
+                   width_in = 3.66, height_in = 3.4)

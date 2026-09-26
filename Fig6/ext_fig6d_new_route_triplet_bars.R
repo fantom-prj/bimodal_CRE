@@ -42,10 +42,10 @@ tf_bar_df <- data.frame(
 p_tf <- ggplot(tf_bar_df, aes(x = TF, y = count)) +
   geom_bar(stat = 'identity', fill = 'steelblue') +
   coord_flip() +
-  scale_y_continuous(name = 'Number of new-route tCRE triplets',
+  scale_y_continuous(name = 'Number of new-route TSS triplets',
                      expand = expansion(mult = c(0, 0.08))) +
   scale_x_discrete(name = '') +
-  ggtitle('Top 20 TFs by number of entirely new tCRE routes') +
+  ggtitle('Top 20 TFs by number of entirely new TSS routes') +
   bimodal_theme +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_line(colour = 'grey92'))
@@ -63,16 +63,24 @@ gene_bar_df <- data.frame(
 p_gene <- ggplot(gene_bar_df, aes(x = gene, y = count)) +
   geom_bar(stat = 'identity', fill = 'darkorange') +
   coord_flip() +
-  scale_y_continuous(name = 'Number of new-route tCRE triplets',
+  scale_y_continuous(name = 'Number of new-route TSS triplets',
                      expand = expansion(mult = c(0, 0.08))) +
   scale_x_discrete(name = '') +
-  ggtitle('Top 20 target genes gaining the most new tCRE routes') +
+  ggtitle('Top 20 target genes gaining the most new TSS routes') +
   bimodal_theme +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_line(colour = 'grey92'))
 
 ext_f6d <- p_tf / p_gene
 
+# Sized for the Ext Fig 6 layout (A|B)/C/(D|(E/F)): D pairs with the (E/F)
+# column, whose combined height (E on top, F below) is tuned to match D's
+# height -- see ext_fig6e_gsea_enrichment.R / ext_fig6f_hitscore_sign_triplet_bar.R.
+# D keeps its two internal panel titles (the only titled panel in Ext Fig 6)
+# since they are what distinguish the TF bar from the target-gene bar
+# within the same combined image. All 6 Ext Fig 6 panels then scaled by a
+# uniform 0.95 factor (3.4x6.0in -> 3.23x5.7in) to fit the full figure
+# within the A4 page height including panel letters.
 save_panel_png_pdf(ext_f6d, path_fig6,
                    'ext_f6d.new_route_triplet_bars_TF_and_target',
-                   width_in = 3.4, height_in = 6.0)
+                   width_in = 3.23, height_in = 5.7)

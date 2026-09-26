@@ -30,5 +30,11 @@ f5d <- make_stacked_bar_linheight(category_table,
                                   theme_name = 'TF_promoter',
                                   sweep_name = 'estimate_percentile')
 
+# Sized for the Fig5 layout (A/C/D)|B: shares its column width (3.4in) with
+# panels A and C, height kept close to this chart type's own natural
+# proportions (stretching a stacked bar chart much taller than its content
+# needs tends to look like padding, unlike C's dot grid) -- see
+# Data_and_code/README_Fig5_6_ExtFig7_topics.md for the full per-panel size
+# table.
 save_panel_png_pdf(f5d, path_fig5, 'f5d.stacked_TF_promoter_estimate_pctl',
-                   width_in = 3.2, height_in = 3.0)
+                   width_in = 3.4, height_in = 3.10)
