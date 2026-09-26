@@ -37,19 +37,41 @@ primary_folder="/analysisdata/fantom6/Interactome/single_cell_wallace/Figure/"
 RNA=paste0(primary_folder,"Data_and_code/sc5nRNA/")
 setwd(RNA)
 
-#the single-cell 5'end RNAseq from 10x was processed by 4 R script in the order of:
+#the single-cell 5'end RNAseq from 10x was processed by the following steps in the order of:
+#cellranger/*.sh
 #scRNA_pre_processing.Rmd
 #scRNA_QC_filtering.Rmd
 #scRNA_integration.Rmd
 #scRNA_monocle.Rmd
+#skewC.R
 
-#final scRNAseq object is saved as paste0(primary_folder,"Data_and_code/DATA/20220331_All.rna.flt.rds") 
+#cellranger results (excluding bam file) are located in ./cellranger 
+#final scRNAseq object is saved as "Data_and_code/DATA/20220331_All.rna.flt.rds"
 
 
 #===============================================================================
-## Trajectory inference using Monocle3
 All.rna.flt <- readRDS(paste0(primary_folder,"Data_and_code/DATA/20220331_All.rna.flt.rds"))
 
+#=======================================
+#add skewC annotation -> no actual filter was performed
+anno=read.delim(paste0(RNA,"output/sc5_SkewC/sc5RNA_SkewC_QC_Annotation.tsv.gz"), header=T, stringsAsFactors = F)
+suffix = c(
+  "iPS1" = "_1",
+  "iPS2" = "_2",
+  "NSC1"  = "_5",
+  "NSC2"  = "_6",
+  "Neuron1"  = "_3",
+  "Neuron2"  = "_4")
+
+anno$cell_barcode = paste0(anno$barcode, suffix[anno$orig.ident])
+All.rna.flt$SkewC <- anno$SkewC[match(colnames(All.rna.flt), anno$cell_barcode)]
+table(All.rna.flt$orig.ident[All.rna.flt$SkewC == "Skewed"])
+# 65 cells are skewed
+# NSC1    NSC2 Neuron1 Neuron2    iPS1    iPS2 
+# 16       5      11       1      27       6
+
+#=======================================
+## Trajectory inference using Monocle3
 # update the cluster name for metacell calling
 library(forcats)
 All.rna.flt$celltype_manual <- fct_collapse(All.rna.flt$celltype_manual, neuron_progenitor_n_schwann = c("neuron_progenitor", "neuron_schwann_like"))

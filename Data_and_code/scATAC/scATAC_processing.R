@@ -27,7 +27,15 @@ show_col(mypal)
 #
 #primary_folder=[primary_folder]
 primary_folder="/analysisdata/fantom6/Interactome/single_cell_wallace/Figure/"
-setwd(paste0(primary_folder,"Data_and_code/scATAC/"))
+scATAC_path=paste0(primary_folder,"Data_and_code/scATAC/")
+
+setwd(scATAC_path)
+#===============================================================================
+#the single-cell ATAC-seq from 10x was preprocessed by CellRanger:
+#cellranger/*.sh
+
+#cellranger results (excluding bam file) are located in ./cellranger 
+#final scATAC object is saved as "Data_and_code/DATA/All.atac.rds"
 
 #===============================================================================
 plan("multiprocess", workers = 6)
@@ -178,10 +186,10 @@ All.atac.raw <- FRiP(object = All.atac.raw, assay = 'peaks', total.fragments = "
 # add blacklist ratio 
 All.atac.raw$blacklist_ratio <- All.atac.raw$blacklist_region_fragments / All.atac.raw$nCount_peaks * 100
 
-saveRDS(All.atac.raw, file = "/analysisdata/fantom6/Interactome/single_cell_wallace/ATAC/All.atac.raw.3samples.rds")
+saveRDS(All.atac.raw, file = paste0(primary_folder,"Data_and_code/DATA/All.atac.raw.3samples.rds"))
 rm(frags.List, gr.List, md.List, peak.List, chrom_assay.List, Marrow.atac.List, counts.List)
 
-All.atac.raw <- readRDS("/analysisdata/fantom6/Interactome/single_cell_wallace/ATAC/All.atac.raw.3samples.rds")
+All.atac.raw <- readRDS(paste0(primary_folder,"Data_and_code/DATA/All.atac.raw.3samples.rds"))
 
 
 # =======================================================
@@ -473,8 +481,8 @@ DimPlot(All.rna.flt, reduction = "umap_harmony", label = TRUE, repel = TRUE, gro
 DimPlot(All.atac, reduction = "umap_integrated", group.by = 'celltype_manual_LT') + ggtitle("scATAC (LT from scRNA)")
 DimPlot(All.atac, reduction = "umap_integrated", label = TRUE, repel = TRUE, group.by = 'integrated_snn_res.0.8') + ggtitle("scATAC clusters")
 
-saveRDS(All.atac, file = "All.atac.rds")
+saveRDS(All.atac, file = paste0(primary_folder,"Data_and_code/DATA/All.atac.rds"))
 
-#only the raw & final R object is located in the [primary_folder]/Data_and_code/DATA/, intermediate objects were not included
+#only the raw & final R object is located in the /Data_and_code/DATA/, intermediate objects were not included
 
 

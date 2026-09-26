@@ -9,7 +9,6 @@
 
 # Related Methods
 * [Chromatin state modeling](#chromatinstate)
-* [Hierarchical CRE classification](#classification)
 
 # <a name="chromatinstate"></a>Chromatin state modeling 
 
@@ -19,7 +18,4 @@ Bulk CUT&Tag data on the genomic profiles of CTCF, H3K4me3, H3K27me3, H3K4me1, a
 [2] java -mx6000M -jar ChromHMM.jar LearnModel -p 8 binary_folder output folder 16 hg38
 ```
 
-# <a name="classification"></a>Hierarchical CRE classification
-
-The final list of CREs (merged peaks derived from scATAC-seq) were assigned with chromatin states in a sample specific manner. For CREs overlapping multiple ChromHMM states, a representative state was selected based on a prioritized hierarchy: 1) promoter / promoter flanked, 2) bivalent promoter, 3) active enhancer, 4) repressed enhancer, 5) primed enhancer, and 6) CTCF-alone. By combining the chromatin states across the 3 samples, the CREs were ultimately categorized as, in the order of, “promoter-like”, "enhancer-like”, “CTCF-alone” or “unclassed”.
 

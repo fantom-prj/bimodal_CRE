@@ -11,11 +11,16 @@
 * Input data is not included here, please refer to https://fantom.gsc.riken.jp/6/suppl/Yip_et_al_2026_scTF
 
 # Related Methods
+* [Hierarchical CRE classification](#classification)
 * [Regulatory element annotation for transcribed and non-transcribed CREs](#regulatoryE)
 * [TATA box prediction from non-transcribed CREs](#TATApredict)
 * [Enrichment of chromatin states with transcription and regulatory elements ](#enrichment)
 * [Genomic coordinate of CREs](#gcoordinate)
 
+
+# <a name="classification"></a>Hierarchical CRE classification
+
+The final list of CREs (merged peaks derived from scATAC-seq) were assigned with chromatin states in a sample specific manner. For CREs overlapping multiple ChromHMM states, a representative state was selected based on a prioritized hierarchy: 1) promoter / promoter flanked, 2) bivalent promoter, 3) active enhancer, 4) repressed enhancer, 5) primed enhancer, and 6) CTCF-alone. By combining the chromatin states across the 3 samples, the CREs were ultimately categorized as, in the order of, “promoter-like”, "enhancer-like”, “CTCF-alone” or “unclassed”.
 
 # <a name="regulatoryE"></a>Regulatory element annotation for transcribed and non-transcribed CREs 
 
