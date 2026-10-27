@@ -60,18 +60,19 @@ theme1=theme(  panel.background = element_rect(fill = "white", color = "white", 
 # fig 3a
 # brief venn, variability and correlation
 together2=read.delim(paste0(path_fig3_data,"auto_correlation_to_p_en.z.summarise_noFP.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+together2=together2[which(together2$group1 != "Both"),]
 together2=together2%>%group_by(group1,group2,motifID)%>%slice_max(abs(acf_exVall_opt))
 #this file pass expression level only, some of them (21) pass neither variability nor correlation
-#247 of them pass both at the same condition (enhancer ATAC, enhancer RNA, promoter ATAC, promoter RNA)
+#257 of them pass both at the same condition (enhancer ATAC, enhancer RNA, promoter ATAC, promoter RNA)
 #26 of them pass both across different conditions
 
 together2a=together2
 together2a$ID=paste0(together2a$motifID,"_",together2a$motifName)
 
-Corr=unique(together2a$ID[which(abs(together2a$acf_exVall_opt) >= 0.5)])  #324
-Var=unique(together2a$ID[which(together2a$chromVar_Var == "yes")]) #338
-nboth=unique(together2a$ID[which(abs(together2a$acf_exVall_opt) >= 0.5 & together2a$chromVar_Var == "yes")]) #247
-nboth_any=intersect(Corr, Var) #273
+Corr=unique(together2a$ID[which(abs(together2a$acf_exVall_opt) >= 0.5)])  #332
+Var=unique(together2a$ID[which(together2a$chromVar_Var == "yes")]) #353
+nboth=unique(together2a$ID[which(abs(together2a$acf_exVall_opt) >= 0.5 & together2a$chromVar_Var == "yes")]) #257
+nboth_any=intersect(Corr, Var) #283
 
 library(VennDiagram)
 grid.newpage()
@@ -101,7 +102,7 @@ together2a$group=paste0(together2a$group1,"_",together2a$group2)
 together2c=data.frame(spread(together2a[,c(20,22,21)], key=2, value=3))
 
 rownames(together2c)=together2c$ID
-together2c=together2c[,c(2:5)]
+together2c=together2c[,c(4:7)]
 together2c[is.na(together2c)]=0
 
 library(dendextend)
@@ -123,12 +124,15 @@ together2c$ID=rownames(together2c)
 together2b=reshape2::melt(together2c, id=5)
 
 together2b$ID <- factor(together2b$ID, levels = rev(row_order))
-together2b$variable=factor(together2b$variable,levels=c("ATAC_Enhancer","TSS_Enhancer","ATAC_Promoter","TSS_Promoter"))
+together2b$variable=gsub(".signal","",together2b$variable)
+together2b$variable=factor(together2b$variable,levels=c("Enhancer_ATAC","Enhancer_TSS","Promoter_ATAC","Promoter_TSS"))
 
-rows_to_label=c("Pou5f1::Sox2","TEAD4","TCF12","NEUROD1","ONECUT2","ZEB1","MEIS2","Sox3","SOX13")
+rows_to_label=c("Pou5f1::Sox2","TEAD4","TCF12","NEUROG2","ONECUT2","ZEB1","MEIS2","Sox3","SOX13")
 together2b$motifName=sapply(strsplit(as.character(together2b$ID),"_"),"[",2)
 together2b$motifName[-which(together2b$motifName %in% rows_to_label)]=""
-together2b$motifName[which(together2b$variable != "TSS_Promoter")]=""
+together2b$motifName[which(together2b$variable != "Promoter_TSS")]=""
+together2b$motifName[which(together2b$ID =="MA1642.2_NEUROG2")]=""
+together2b$motifName[which(together2b$ID =="MA1640.2_MEIS2")]=""
 
 library(ggrepel)
 library(ggnewscale)
@@ -136,15 +140,15 @@ library(cowplot)
 label_data <- together2b %>%dplyr::filter(motifName != "")
 
 f3b=ggplot() +
-  labs(x=NULL, y=NULL, fill="Scaled_variability\nx sign(Corr)", title="247 TF motif variability from 4 contexts")+
+  labs(x=NULL, y=NULL, fill="Scaled_variability\nx sign(Corr)", title="257 TF motif variability from 4 contexts")+
   geom_tile(data=together2b, mapping=aes(x = variable, y = ID, fill = value)) +
-  geom_text_repel(data=together2b, aes(x=4.67,  y = ID, label = motifName), hjust = 0, nudge_x = 2.4, nudge_y = 20, direction = "y", force_pull = 0, segment.size = 0.2 , size=1.6) +
+  geom_text_repel(data=together2b, aes(x=4.67,  y = ID, label = motifName), hjust = 0, nudge_x = 2.4, nudge_y = 20, direction = "y", force_pull = 0, segment.size = 0.2 , size=1.6, box.padding = 0.03) +
   geom_segment(data=label_data, aes(x=4.5, xend=4.7, y=ID, yend=ID), linewidth=0.2) +
   scale_fill_gradient2(low = "navy", mid = "white", high = "firebrick3", midpoint = 0) +
   theme1 +
   theme(panel.grid.major = element_blank(), axis.text.y = element_blank(),axis.text.x = element_text(angle=25, hjust=1, vjust=1), axis.ticks = element_blank(), axis.line = element_blank(), legend.position="right")
 
-pdf(paste0(path_fig3,"f3b.pheatmap.var.ChromVar.score.p_en_var_247TFmotif.pdf"), width=2.8, height=2.6)
+pdf(paste0(path_fig3,"f3b.pheatmap.var.ChromVar.score.p_en_var_257TFmotif.pdf"), width=2.8, height=2.6)
 print(plot_grid(p_rowtree, f3b, ncol = 2, rel_widths = c(1, 8)))
 dev.off()
 
@@ -159,14 +163,14 @@ selection=c("Pou5f1::Sox2","TEAD4","FOS::JUND","NEUROD1","ONECUT2","ZEB1","MEIS3
 overall1=overall2[which(overall2$motifName %in% selection),]
 overall1$motifName=factor(overall1$motifName, levels=c("Pou5f1::Sox2","TEAD4","FOS::JUND","NEUROD1","ONECUT2","INSM1","ZEB1","MEIS3","Sox3"))
 f3c= ggplot(overall1) +
-  geom_point(mapping=aes(x =T2, y = value2, color=group2), size=0.2, shape=19) + 
+  geom_point_rast(mapping=aes(x =T2, y = value2, color=group2), size=0.15, shape=19) + 
   stat_smooth(mapping=aes(x =T2, y = rel.TF1*20), method = "lm", formula = y ~ poly(x, 21), se = FALSE, color="black", alpha=1, linewidth=0.2) +
   stat_smooth(mapping=aes(x =T2, y = rel.TF2*20), method = "lm", formula = y ~ poly(x, 21), se = FALSE, color="grey", alpha=0.6, linewidth=0.2) +
   scale_color_manual(values=c("#7E6148FF","#B09C85FF"))+
   facet_grid(row=vars(group1), col=vars(motifName), scales = "free_x")+
   labs(color=NULL, y="Relative TF motif activity & relative TF expression", x = "Ranked by pseudotime for trajectory 1", title = "TF motif activity by chromatin accessibility and transcription") +
-  theme1+theme(axis.text.x = element_blank())
-pdf(paste0(path_fig3,"f3c.Chromvar.Pseudotime.z.neuronal.trajectory.aCRE.vs.tCRE.expression.pdf"), width = 6, height = 2.5)
+  theme1+theme(axis.text.x = element_blank(), panel.spacing = unit(0.1, "cm"))
+pdf(paste0(path_fig3,"f3c.Chromvar.Pseudotime.z.neuronal.trajectory.aCRE.vs.tCRE.expression.pdf"), width = 5.5, height = 2.5)
 f3c
 dev.off()
 
@@ -196,10 +200,10 @@ dev.off()
 #===============================================================================
 # fig 3d
 # main fig with selected TF
-ddata1=read.delim(paste0(path_fig3_data,"heatmap_z_12motif.plot.tsv.gz") , header=T, stringsAsFactors = F, check.names = F)
+ddata1=read.delim(paste0(path_fig3_data,"heatmap_z_11motif.plot.tsv.gz") , header=T, stringsAsFactors = F, check.names = F)
 ddata1$V2=sapply(strsplit(as.character(ddata1$V2),"_"),"[",2)
-need=c("SOX13","ONECUT2","NEUROG2","NEUROD1","JUND","Jun","CREB3L1","NFYC","TFDP1","TEAD4","ZEB1","Pou5f1::Sox2")
-cluster_info=read.delim(paste0(primary_folder,"Fig1/cluster_info.tsv"),header=T, stringsAsFactors = F, check.names = F)
+need=c("SOX13","ONECUT2","NEUROG2","NEUROD1","EBF1","JUND","Jun","TFDP1","TEAD4","ZEB1","Pou5f1::Sox2")
+#cluster_info=read.delim(paste0(primary_folder,"Fig1/cluster_info.tsv"),header=T, stringsAsFactors = F, check.names = F)
 
 ddata1$V2 <- factor(ddata1$V2, levels = need)
 ddata1$set=factor(ddata1$set,levels=c("en_aCRE","en_tCRE","p_aCRE","p_tCRE"))
@@ -210,16 +214,17 @@ anno_df <- ddata %>%
   mutate(anno1 = ifelse(grepl("tCRE", set), "TSS", "ATAC"), anno2 = ifelse(grepl("en", set), "Enhancer", "Promoter"))
 anno_df$anno1a=substr(anno_df$anno1,1,1)
 anno_df$anno2a=substr(anno_df$anno2,1,1)
+anno_df$label=factor(anno_df$label, levels=cluster_info$label)
 
 library(ggnewscale)
 top_y <- length(levels(ddata1$V2)) + 0.5
 
 out01=ggplot(ddata1, aes(x = set, y = V2, fill = scaledz)) +
-  labs(x=NULL, y=NULL, fill="Scaled z-score", title="TF activity across 10 cell types")+
+  labs(x=NULL, y=NULL, fill="Scaled activity", title="TF activity across 10 cell types")+
   facet_grid(cols=vars(label))+
   geom_tile_rast() +
   scale_y_discrete(position = "right") +
-  scale_fill_gradient2(low = "navy", mid = "white", high = "firebrick3", midpoint = 0) +
+  scale_fill_gradient2(low = "navy", mid = "white", high = "firebrick3", midpoint = 0, breaks=c(-3,0,3,6)) +
   new_scale_fill() +
   geom_tile(data = anno_df, aes(x = set, y = -0.1, fill = anno1), height = 0.5,inherit.aes = FALSE)+
   geom_text(data = anno_df, aes(x = set, y = -0.1, label=anno1a), size=1.4,inherit.aes = FALSE)+
@@ -234,7 +239,7 @@ out01=ggplot(ddata1, aes(x = set, y = V2, fill = scaledz)) +
                                "NSC_2"="#F39B7FFF", "NPC_like"="#8491B4FF","Immature_neuron"="#91D1C2FF", "Mature_neuron_1"="#DC0000FF","Mature_neuron_2"="#7E6148FF", "OPC_like"="#B09C85FF"), name="Cell-type") +
   theme1 +
   theme(panel.spacing = unit(0.12, "lines"), panel.grid.major = element_blank(), axis.text.x = element_blank(),  axis.ticks = element_blank(), axis.line = element_blank(), legend.position="right", strip.background =element_blank(), strip.text.x.top = element_blank())
-pdf(paste0(path_fig3,"f3d.heatmap_z_12motif.pdf"), width=3.3, height=1.7)
+pdf(paste0(path_fig3,"f3d.heatmap_z_11motif.pdf"), width=3.3, height=1.7)
 print(out01)
 dev.off()
 
@@ -246,17 +251,16 @@ overall2=overall[which(overall$group1 == "TSS-signal"),]
 overall.all=left_join(overall1[,c("metacell","variable","group2","value")],overall2[,c("metacell","variable","group2","value")],by=c("metacell","variable","group2"),suffix=c("_TSS","_ATAC"),copy=F)
 overall.alla=overall.all%>%group_by(variable,group2)%>%dplyr::summarise(pearson_r=cor.test(value_TSS,value_ATAC,alternative="greater",method="pearson")$estimate,
                                                                         pearson_p=cor.test(value_TSS,value_ATAC,alternative="greater",method="pearson")$p.value)
-n247=read.delim(paste0(path_fig3_data,"heatmap_z_247motif.plot.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-overall.allb=overall.alla[which(overall.alla$variable %in% unique(n247$variable)),]
+outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_chromvar_correlation_and_literature.n257.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+overall.allb=overall.alla[which(overall.alla$variable %in% unique(outputfile1$motifID)),]
 overall.allb$group2=gsub("Enhancer","Transcribed\nenhancer",overall.allb$group2)
 overall.allb$group2=gsub("Promoter","Transcribed\npromoter",overall.allb$group2)
 
 f3e=ggplot() + 
-  labs(x=NULL, y = "Pearson r (247 TF motifs)",title= "Correlation between motif activities\nderived from ATAC & TSS signal") +
+  labs(x=NULL, y = "Pearson r (257 TF motifs)",title= "Correlation between motif activities\nderived from ATAC & TSS signal") +
   scale_fill_npg(guide=NULL)+
   ggdist::stat_halfeye(data=overall.allb, mapping=aes(y=pearson_r, x=group2, fill=group2),adjust = .5, width = .4, .width = 0, justification = -.4, point_colour = NA, alpha=0.5)+
   geom_boxplot(data=overall.allb, mapping=aes(y=pearson_r, x=group2, fill=group2), size=0.25, color = "black", outlier.colour="grey25", outlier.size=3.5, notch = FALSE, width = 0.2, outlier.shape = NA) + 
-  geom_hline(yintercept=0.3, linetype="dashed", linewidth=0.2)+
   theme1
 pdf(paste0(path_fig3,"f3e.corr_TFmotif_ATAC_TSS_zscore.pdf"), width = 1.6, height = 1.7)
 print(f3e)
@@ -265,7 +269,7 @@ dev.off()
 #===============================================================================
 # fig 3f
 # upsetter
-outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_chromvar_correlation_and_literature.n247.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_chromvar_correlation_and_literature.n257.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 
 outputfile3=outputfile1[,c("label","motifID","ATAC+","ATAC-","TSS+","TSS-")]
 for (i in 1:nrow(outputfile3)){
@@ -295,10 +299,10 @@ print(f3f)
 dev.off()
 
 #upsetter side -> venn diagram is better
-motif_ATAC=together2b1$motifID[which(together2b1$`ATAC+` == "Yes" | together2b1$`ATAC-` == "Yes")]
-motif_RNA=together2b1$motifID[which(together2b1$`TSS+` == "Yes" | together2b1$`TSS-` == "Yes")]
+motif_ATAC=outputfile3$motifID[which(outputfile3$`ATAC+` == "Yes" | outputfile3$`ATAC-` == "Yes")]
+motif_RNA=outputfile3$motifID[which(outputfile3$`TSS+` == "Yes" | outputfile3$`TSS-` == "Yes")]
 both=intersect(motif_ATAC,motif_RNA)
-both_real=together2b1$motifID[which(together2b1$coupled == "Yes")]
+both_real=outputfile3$motifID[which(outputfile3$coupled == "Yes")]
 
 library(VennDiagram)
 grid.newpage()
@@ -324,7 +328,7 @@ f3g=ggplot(mdata6, aes(x = as.character(corr_cutoff), y=value, fill=variable)) +
   scale_fill_manual(values=c("coupled"="black", "uncoupled"="white"))+
   geom_text(data=mdata6, aes(label=modal_specific, y=5),angle=90, hjust=0, size=1.8,color="black")+
   #scale_y_continuous(labels = scales::percent)+
-  labs(x="Cutoff of correlation", y = "Number of TF motifs", title="Modality-specific TF motif identification", fill=NULL) +
+  labs(x="Cutoff of abs. correlation", y = "Number of TF motifs", title="Modality-specific TF motif identification", fill=NULL) +
   theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1), legend.position = c(0.8,0.8))
 pdf(paste0(path_fig3,"f3g.ATAC_RNA.venn.with.cuttoff.pdf"), width = 2.8, height = 1.7)
 print(f3g)
@@ -349,16 +353,16 @@ f3h=ggplot() +
   theme1+theme(panel.grid.major = element_blank(),legend.position = "right",
                axis.ticks = element_blank(), axis.line = element_blank(),
                axis.text.x = element_text(hjust=1, vjust=1, angle=25))
-pdf(paste0(path_fig3,"f3h.TF_action_enrichment167.pdf"), width = 1.5, height = 1.7)
+pdf(paste0(path_fig3,"f3h.TF_action_enrichment184.pdf"), width = 1.5, height = 1.7)
 print (f3h)
 dev.off() 
 
 #===============================================================================
-# get number of TF from 247 motif
-outputfile=read.delim(paste0(path_fig3_data,"variance_corr_p_en_400motif.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_chromvar_correlation_and_literature.n247.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+# get number of TF from 257 motif
+outputfile=read.delim(paste0(path_fig3_data,"variance_corr_p_en_420motif.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_chromvar_correlation_and_literature.n257.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 outputfilea=outputfile[which(outputfile$motif %in% outputfile1$motif),]
-length(unique(outputfilea$TF_symbol))#214
+length(unique(outputfilea$TF_symbol))#218
 
 #===============================================================================
 

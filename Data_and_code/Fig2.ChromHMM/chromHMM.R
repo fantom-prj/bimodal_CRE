@@ -27,9 +27,24 @@ chromHMM_folder=paste0(primary_folder,"Data_and_code/Fig2.ChromHMM/")
 path_fig2_data=paste0(primary_folder,"Fig2/data/")
 
 #===============================================================================
+# mapping
+# fastq files please refer to DDBJ DRA019568 (DRR614873-DRR614905)
+system("for file in *_1.fastq.gz; do bowtie2 -x /analysisdata/fantom6/Interactome/resources/bowtie2_index/GRCh38_no_alt_analysis_set_GCA_000001405.15 -1 \"$file\" -2 \"${file%_1.fastq.gz}_2.fastq.gz\" | samtools view -bS - > \"${file%_1.fastq.gz}.bam\" ; done")
+
+# remove duplicate
+system("for file in *.bam; do samtools rmdup -S \"$file\" \"${file%.bam}_rmdup.bam\"; done")
+
+# sorting
+system("for file in *_rmdup.bam; do samtools sort \"$file\" -o \"${file%.bam}_sorted.bam\"; done")
+
+system("for file in *_rmdup_sorted.bam; do samtools index \"$file\"; done")
+
+
+#===============================================================================
 setwd(chromHMM_folder)
 #=====
 #generate binary file from bam files
+#bam files were maintained in DDBJ DRA019568 (DRR614873-DRR614905)
 system("sh bin.20231108.sh")
 #-> output files stored in [chromHMM_folder]/data_files/all_HG38
 #-> only primary chromosomes were kept

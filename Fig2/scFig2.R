@@ -343,55 +343,45 @@ dev.off()
 
 #====================
 # f2h
-enricha=read.delim(paste0(path_fig2_data,"F_enrichemnt_for_xT.tsv.gz"),header=T, stringsAsFactors = F, check.names = F)
-# from Fig2.motif_enrichment/motif_enrich.R
+aCRE_cell1=read.delim(paste0(path_fig2_data,"enhancer_chromatin_state.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+aCRE_cell1n=aCRE_cell1[which(aCRE_cell1$Neuron %in% c("Active","Primed", "Repressed")),]
+aCRE_cell1n$iPSC[which(aCRE_cell1n$iPSC %in% c("Primed", "Repressed", "Others"))]="Non-Active"
+aCRE_cell1n$NSC[which(aCRE_cell1n$NSC %in% c("Primed", "Repressed", "Others"))]="Non-Active"
+aCRE_cell1n$group2=gsub("Without transcription","Non-transcribed",aCRE_cell1n$group2)
+aCRE_cell1n$group2=gsub("With transcription","Transcribed",aCRE_cell1n$group2)
+aCRE_cell1n$group2=factor(aCRE_cell1n$group2, levels=c("Transcribed","Non-transcribed"))
 
-enrichbscale=data.frame(spread(enricha[,c(2,10,12)], key=2, value=3))
-rownames(enrichbscale)=enrichbscale$ALT_ID
-enrichbscale=enrichbscale[,-1]
-row_order <- rownames(enrichbscale)[hclust(dist(enrichbscale))$order]
+library(ggalluvial)
 
-enricha$ALT_ID=factor(enricha$ALT_ID,levels=row_order)
-enricha$Set5=paste0(enricha$Set3,"_",enricha$Set2)
-enricha$Set5=gsub("_en","\nenhancer",enricha$Set5)
-enricha$Set5=gsub("_p","\npromoter",enricha$Set5)
-enricha$Set5=factor(enricha$Set5, levels=c("active\npromoter","bivalent\npromoter","active\nenhancer","repressed\nenhancer","primed\nenhancer"))
-enricha$Set1=factor(enricha$Set1, levels=c("iPSC","NSC","NRN"))
-f2h=ggplot() + 
-  facet_wrap(~Set5, ncol=5)+
-  labs(x=NULL, y =NULL, title="Motif enrichment of non-transcribed CREs", fill="Scaled\nenrichment")+
-  scale_y_discrete(position = "right", limits=rev)+
-  geom_tile(data=enricha, mapping=aes(x=Set1, fill=scaled_value, y=ALT_ID), size=0.6)+
-  scale_fill_gradient2(low="white",high="firebrick3")+
-  theme1+theme(panel.grid.major = element_blank(),
-               axis.ticks = element_blank(), axis.line = element_blank(),
-               axis.text.x = element_text(color ="black",angle=90,hjust=1, vjust=0.5),
-               axis.text.y = element_text(color ="black", size=5))
-pdf(paste0(path_fig2,"f2h.heatmap_TF_enrichemnt_for_xT.pdf"), width = 2.4, height = 2)
-print (f2h)
-dev.off() 
+state_levels <- c("Active", "Primed", "Repressed", "Non-Active")
 
-#===================
-# fig 2i
-kk=read.delim(paste0(path_fig2_data,"heatmap.markalone_ZBTB6_KLF13.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-kk=kk[which(kk$value == "TRUE"),]
-kk=kk[which(kk$sample == "Neuron"),]
-kk=kk[which(kk$state %in% c("Primed","All","Repressed","Repressed_ZBTB6")),]
-kk$state=factor(kk$state,levels=c("Primed","All","Repressed","Repressed_ZBTB6"))
-kk$group2=gsub(" enhancer","",kk$group2)
-kk$group2=gsub("Non-transcribed","Non-\ntranscribed",kk$group2)
-kk$group2=factor(kk$group2, levels=c("Transcribed","Non-\ntranscribed"))
-f2i=ggplot() + 
-  facet_grid(cols=vars(group2))+
-  labs(x=NULL, y ="% of enhancer in neuron", title="Transition to active", fill="Scope")+
-  geom_bar(data=kk, mapping=aes(x=state, y=percent, fill=state), stat="identity", linewidth=0.25, color="black", alpha=0.8)+
-  geom_text(data=kk, mapping=aes(x=state, y=1, label=paste0(signif(percent,3),"%")), angle=90, hjust=(0), vjust=(0.5), size =1.8 )+
-  geom_text(data=kk, mapping=aes(x=state, y=percent+3, label=paste0("n=",active_count)), angle=90, hjust=(0), vjust=(0.5), size =1.8 )+
-  scale_y_continuous(limits=c(0,100))+
-  scale_fill_manual(values=c("All"="grey", "Primed"="#4DBBD5FF", "Repressed"="#00A087FF", "Repressed_ZBTB6"="#3C5488FF"), guide=NULL)+
-  theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1))
-pdf(paste0(path_fig2,"f2i.neuron_tCRE_active_percentage.pdf"), width = 1.4, height = 2)
-print(f2i)
+# Count enhancers following each complete trajectory
+flows = aCRE_cell1n %>%
+  mutate(across(c(iPSC, NSC, Neuron), ~ factor(.x, levels = state_levels))) %>% 
+  dplyr::count(group2, iPSC, NSC, Neuron, name = "n") %>% group_by(group2,Neuron) %>%
+  mutate(percent = 100 * n / sum(n)) %>%ungroup()
+flows$transition = "Others"
+flows$transition[which(flows$iPSC == "Active" | flows$NSC == "Active")]="Active"
+flows1=flows%>%group_by(group2, Neuron, transition)%>%dplyr::summarise(count=sum(n))%>%mutate(all_percent=paste0(signif(count/sum(count),3)*100,"%"))
+flows1$all_percent[which(flows1$transition=="Others")]=NA
+flows2=flows%>%group_by(group2, Neuron)%>%dplyr::summarise(label=paste0("n = ",sum(n)))
+
+f2h = ggplot(flows,aes(axis1 = iPSC,axis2 = NSC,axis3 = Neuron,y = percent)) +
+  geom_alluvium(aes(fill = transition),width = 0.18,alpha = 0.3) +
+  scale_fill_manual(values = c("Active"= "#E64B35FF","Others" = "grey70") ,guide="none") +
+  ggnewscale::new_scale_fill() +
+  geom_stratum(aes(fill = after_stat(stratum)),width = 0.4, colour = NA,linewidth = 0.25) +
+  facet_grid(cols = vars(group2), rows=vars(Neuron)) +
+  scale_x_discrete(limits = c("iPSC", "NSC", "Neuron"),expand = c(0.08, 0.08)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.02))) +
+  scale_fill_manual(values = c("Active" = "#E64B35FF","Primed" = "#4DBBD5FF","Repressed" = "#00A087FF","Non-Active" = "grey70"), name="State") +
+  labs(x = NULL,y = "% of enhancers",title = "Enhancer state transitions to Neuron") +
+  geom_text(data=flows1,aes(label = all_percent, x=2.5, y=95),inherit.aes = FALSE, size=1.8, color="black")+
+  geom_text(data=flows2,aes(label = label, x=3, y=50),inherit.aes = FALSE, size=1.8, color="black", angle=270)+
+  theme1+theme(panel.grid.major = element_blank())
+
+pdf(paste0(path_fig2,"f2h.state_sankey.pdf"), width = 3.3, height = 2)
+print(f2h)
 dev.off() 
 
 #==============
@@ -509,5 +499,35 @@ final <- plot_grid(g1, g2, gl, ncol = 3, rel_widths = c(1, 1,0.5))
 
 grid.draw(final)
 
+#==========================
+# old f2h
+enricha=read.delim(paste0(path_fig2_data,"TF_enrichemnt_for_xT.tsv.gz"),header=T, stringsAsFactors = F, check.names = F)
+# from Fig2.motif_enrichment/motif_enrich.R
 
+enrichbscale=data.frame(spread(enricha[,c(2,10,12)], key=2, value=3))
+rownames(enrichbscale)=enrichbscale$ALT_ID
+enrichbscale=enrichbscale[,-1]
+row_order <- rownames(enrichbscale)[hclust(dist(enrichbscale))$order]
+
+enricha$ALT_ID=factor(enricha$ALT_ID,levels=row_order)
+enricha$Set5=paste0(enricha$Set3,"_",enricha$Set2)
+enricha$Set5=gsub("_en","\nenhancer",enricha$Set5)
+enricha$Set5=gsub("_p","\npromoter",enricha$Set5)
+enricha$Set5=factor(enricha$Set5, levels=c("active\npromoter","bivalent\npromoter","active\nenhancer","repressed\nenhancer","primed\nenhancer"))
+enricha$Set1=factor(enricha$Set1, levels=c("iPSC","NSC","NRN"))
+f2h=ggplot() + 
+  facet_wrap(~Set5, ncol=5)+
+  labs(x=NULL, y =NULL, title="Motif enrichment of non-transcribed CREs", fill="Scaled\nenrichment")+
+  scale_y_discrete(position = "right", limits=rev)+
+  geom_tile(data=enricha, mapping=aes(x=Set1, fill=scaled_value, y=ALT_ID), size=0.6)+
+  scale_fill_gradient2(low="white",high="firebrick3")+
+  theme1+theme(panel.grid.major = element_blank(),
+               axis.ticks = element_blank(), axis.line = element_blank(),
+               axis.text.x = element_text(color ="black",angle=90,hjust=1, vjust=0.5),
+               axis.text.y = element_text(color ="black", size=5))
+pdf(paste0(path_fig2,"f2h.heatmap_TF_enrichemnt_for_xT.pdf"), width = 2.4, height = 2)
+print (f2h)
+dev.off() 
+
+#===================
 

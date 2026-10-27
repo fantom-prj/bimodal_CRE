@@ -1,44 +1,104 @@
 import numpy as np
 import pandas as pd
-import scanpy as sc
-
+import anndata as ad
 import SEACells
 
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import scanpy as sc
 
 sns.set_style('ticks')
 matplotlib.rcParams['figure.figsize'] = [4, 4]
 matplotlib.rcParams['figure.dpi'] = 100
 
 
-ad = sc.read('./scDART_n_SEACell/OPC_like/coembed.h5ad')
+# --------------------------------------------------
+# Read scDART latent coordinates
+# rows = cells
+# columns = latent dimensions
+# --------------------------------------------------
 
-n_SEACells = round(ad.obs.apply(len)[1]/100)
-build_kernel_on = 'X_umap' 
+latent = pd.read_csv(
+    './SEACell/OPC_like/scDART_latent.csv',
+    index_col=0
+)
+
+print(latent.shape)
+print(latent.head())
+
+
+# --------------------------------------------------
+# Create minimal AnnData object
+# SEACells only needs cell IDs + embedding for assignment
+# --------------------------------------------------
+
+adata = ad.AnnData(
+    X=np.zeros((latent.shape[0], 1))
+)
+
+adata.obs_names = latent.index.astype(str)
+
+# Store full scDART latent embedding
+adata.obsm['X_scDART'] = latent.to_numpy()
+
+
+# --------------------------------------------------
+# Define number of SEACells
+# target ~100 cells per metacell
+# --------------------------------------------------
+
+n_SEACells = round(adata.n_obs / 100)
+
+print("Number of cells:", adata.n_obs)
+print("Number of SEACells:", n_SEACells)
+
+
+# --------------------------------------------------
+# Run SEACells on full scDART latent space
+# --------------------------------------------------
+
+build_kernel_on = 'X_scDART'
 n_waypoint_eigs = 10
 
-model = SEACells.core.SEACells(ad, 
-                  build_kernel_on=build_kernel_on, 
-                  n_SEACells=n_SEACells, 
-                  n_waypoint_eigs=n_waypoint_eigs,
-                  convergence_epsilon = 1e-5)
+model = SEACells.core.SEACells(
+    adata,
+    build_kernel_on=build_kernel_on,
+    n_SEACells=n_SEACells,
+    n_waypoint_eigs=n_waypoint_eigs,
+    convergence_epsilon=1e-5
+)
 
 model.construct_kernel_matrix()
 M = model.kernel_matrix
+
 model.initialize_archetypes()
 
+sc.pp.neighbors(adata, use_rep='X_scDART')
+sc.tl.umap(adata)
 
-SEACells.plot.plot_initialization(ad, model, save_as="./scDART_n_SEACell/OPC_like/SEACells.initialization.png")
+SEACells.plot.plot_initialization(
+    adata,
+    model,
+    plot_basis='X_umap',
+    save_as='./SEACell/OPC_like/SEACells.initialization.png'
+)
 
-model.fit(min_iter=10, max_iter=50)
+model.fit(
+    min_iter=10,
+    max_iter=50
+)
 
-SEACell_ad = SEACells.core.summarize_by_SEACell(ad, SEACells_label='SEACell', summarize_layer='raw')
-SEACell_ad.obs["old_obs_names"] = ""
-for name in SEACell_ad.obs_names:
-	old_names = ad.obs[ad.obs["SEACell"] == name].index.tolist()
-	SEACell_ad.obs.loc[SEACell_ad.obs_names == name, 'old_obs_names'] = "\t".join(old_names)
-SEACell_ad.obs.to_csv("./scDART_n_SEACell/OPC_like/metadata.tsv", sep = "\t", index = False)
+
+# --------------------------------------------------
+# Export cell-to-SEACell assignment
+# --------------------------------------------------
+
+assignment = adata.obs[['SEACell']].copy()
+assignment.index.name = 'cell_barcode'
+
+assignment.to_csv(
+    './SEACell/OPC_like/SEACell_assignment.tsv',
+    sep='\t'
+)
 

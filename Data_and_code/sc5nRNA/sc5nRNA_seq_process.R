@@ -53,7 +53,7 @@ setwd(RNA)
 All.rna.flt <- readRDS(paste0(primary_folder,"Data_and_code/DATA/20220331_All.rna.flt.rds"))
 
 #=======================================
-#add skewC annotation -> no actual filter was performed
+#add skewC annotation 
 anno=read.delim(paste0(RNA,"output/sc5_SkewC/sc5RNA_SkewC_QC_Annotation.tsv.gz"), header=T, stringsAsFactors = F)
 suffix = c(
   "iPS1" = "_1",
@@ -69,6 +69,7 @@ table(All.rna.flt$orig.ident[All.rna.flt$SkewC == "Skewed"])
 # 65 cells are skewed
 # NSC1    NSC2 Neuron1 Neuron2    iPS1    iPS2 
 # 16       5      11       1      27       6
+
 
 #=======================================
 ## Trajectory inference using Monocle3

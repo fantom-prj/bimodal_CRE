@@ -6,7 +6,6 @@ library(ggplot2)
 library(stringr)
 library(ggthemes)
 library(ggrepel)
-library(ggalt)
 library(reshape2)
 library(ggsignif)
 library(gridExtra)
@@ -112,22 +111,26 @@ dev.off()
 #======
 # ex1b-c
 # co-embed with scDART
-pca1=read.delim(paste0(path_fig1_data,"scDART_SEACell_for_all_clusters.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-# generated from Fig1.coembed/conembed.R
+latent0=read.delim(paste0(path_fig1_data,"scDART_SEACell_for_all_clusters.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+# generated from Fig1.coembed/seacell.R
 
-nrow(unique(pca1[,c(13,14)])) #391 #removed metacell with <3 ATAC or <3 RNA single-cells
-pca1=left_join(pca1, cluster_info, by="cluster",copy=F)
-pca1$SEACell=sapply(strsplit(pca1$SEACell,"_"), tail, 1)
-pca1$SEACell2=paste0(pca1$label,"_",pca1$SEACell)
-pca2=pca1%>%group_by(SEACell2,label,dataType)%>%dplyr::summarise(count=n())
-pca3=spread(pca2,key=3, value=4)
-pca3[is.na(pca3)]=0
-pca1$label=factor(pca1$label, levels=label)
-pca1$dataType=paste0(pca1$dataType,"-seq")
+nrow(unique(latent0[,c(1,12)])) #395 #removed metacell with <3 ATAC or <3 RNA single-cells
+latent0=left_join(latent0, cluster_info, by="cluster",copy=F)
+latent0$SEACell=sapply(strsplit(latent0$SEACell,"_"), tail, 1)
+latent0$SEACell2=paste0(latent0$label,"_",latent0$SEACell)
+latent2=latent0%>%group_by(SEACell2,label,dataType)%>%dplyr::summarise(count=n())
+latent3=spread(latent2,key=3, value=4)
+latent3[is.na(latent3)]=0
+exclude=latent3$SEACell2[which(latent3$RNA < 3 | latent3$ATAC < 3)] #2
 
+latent0$label=factor(latent0$label, levels=label)
+latent0$dataType=paste0(latent0$dataType,"-seq")
+latent0=latent0[-which(latent0$SEACell2 %in% exclude),]
+
+#plot for 393 metacells
 ex1b=ggplot() + 
   labs(x="scDART_UMAP1", y ="scDART_UMAP2", title="scDART co-embedding (colored by data type)", color="Data Type")+
-  geom_point_rast(data=pca1[sample(nrow(pca1),nrow(pca1)),], mapping=aes(x=UMAP1, color=as.factor(dataType), y=UMAP2), shape=16, size=0.15, alpha=0.6)+
+  geom_point_rast(data=latent0[sample(nrow(latent0),nrow(latent0)),], mapping=aes(x=UMAP1, color=as.factor(dataType), y=UMAP2), shape=16, size=0.15, alpha=0.6)+
   scale_color_npg(labels=c("snATAC-seq","sc5nRNA-seq"))+
   facet_wrap(facets=vars(label), ncol=4,nrow=3, scale="free")+
   theme1 + theme(panel.grid.major = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position = c(0.7,0.15))
@@ -135,10 +138,11 @@ pdf(paste0(path_fig1,"ex1b.coembed.scDART.colored.by.tech.UMAP.pdf"), width = 3.
 print (ex1b)
 dev.off() 
 
+latent1=latent0%>%group_by(label,SEACell)%>%dplyr::summarise(UMAP1=mean(UMAP1),UMAP2=mean(UMAP2))
 ex1c=ggplot() + 
   labs(x="scDART_UMAP1", y ="scDART_UMAP2", title="scDART co-embedding (colored by SEACell)")+
-  geom_point_rast(data=pca1[sample(nrow(pca1),nrow(pca1)),], mapping=aes(x=UMAP1, color=as.factor(SEACell), y=UMAP2), shape=16, size=0.15, alpha=0.6)+
-  #geom_mark_ellipse(data=pca1, aes(x=X0, color=as.factor(SEACell), y=X1), expand = unit(1, "mm") )+
+  geom_point_rast(data=latent0[sample(nrow(latent0),nrow(latent0)),], mapping=aes(x=UMAP1, color=as.factor(SEACell), y=UMAP2), shape=16, size=0.1, alpha=0.1)+
+  geom_point_rast(data=latent1, mapping=aes(x=UMAP1, color=as.factor(SEACell), y=UMAP2), shape=16, size=1, alpha=1)+
   facet_wrap(facets=vars(label), ncol=4,nrow=3, scale="free")+
   theme1 + theme(panel.grid.major = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position = "none")
 pdf(paste0(path_fig1,"ex1c.coembed.scDART.colored.by.SEACell.UMAP.pdf"), width = 3.6, height = 3)

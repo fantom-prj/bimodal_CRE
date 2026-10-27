@@ -35,20 +35,22 @@ show_col(mypal)
 #####################
 #primary_folder=[primary_folder]
 primary_folder="/analysisdata/fantom6/Interactome/single_cell_wallace/Figure/"
-RNA_folder=paste0(primary_folder,"Data_and_code/sc5nRNA/")
+RNA_folder=paste0(primary_folder,"Data_and_code/DATA/")
 ATAC_folder=paste0(primary_folder,"Data_and_code/scATAC/")
-scDART_SEACell=paste0(primary_folder,"Data_and_code/Fig1.coembed/scDART_n_SEACell/")
+path_scDART=paste0(primary_folder,"Data_and_code/Fig1.coembed/scDART/")
+path_SEACell=paste0(primary_folder,"Data_and_code/Fig1.coembed/SEACell/")
 path_fig1_data=paste0(primary_folder,"Fig1/data/")
 resource_folder=paste0(primary_folder,"Data_and_code/resources/")
 peak_folder=paste0(primary_folder,"Data_and_code/scATAC/merged_peak/")
 
 #===============================================================================
-All.rna <- readRDS(paste0(RNA_folder,"20220331_All.rna.flt.rds"))
-All.atac <- readRDS(paste0(ATAC_folder,"All.atac.rds"))
-All.atac[["RNA"]] <- NULL
+# prepare input files
+All.rna = readRDS(paste0(primary_folder,"Data_and_code/DATA/20220331_All.rna.flt.rds"))
+All.atac = readRDS(paste0(primary_folder,"Data_and_code/DATA/All.atac.rds"))
+All.atac[["RNA"]] = NULL
 
-Idents(All.atac) <- "celltype_manual_LT"
-Idents(All.rna) <- "celltype_manual"
+Idents(All.atac) = "celltype_manual_LT"
+Idents(All.rna) = "celltype_manual"
 
 #take gene region for bedtools
 need2=rownames(All.rna)
@@ -66,31 +68,32 @@ gencode2$V4=gencode2$V4-1
 gencode2$V4[which(gencode2$V7 == "+")]=gencode2$V4[which(gencode2$V7 == "+")]-2000
 gencode2$V5[which(gencode2$V7 == "-")]=gencode2$V5[which(gencode2$V7 == "-")]+2000
 options(scipen=999)
-write.table(gencode2[order(gencode2$V1,gencode2$V4),],gzfile(paste0(resource_folder,"cellranger_genes19524.extended_2000up.bed.gz")),col.names=F, row.names=F, sep="\t", quote=F)
+gencode2=gencode2[which(nchar(gencode2$V1)<=5),] #major chromosome alone
+write.table(gencode2[order(gencode2$V1,gencode2$V4),],gzfile(paste0(resource_folder,"cellranger_genes19519.extended_2000up.bed.gz")),col.names=F, row.names=F, sep="\t", quote=F)
 
 #======================================
 #bedtools intersect
 setwd(resource_folder)
-system("bedtools intersect -wa -wb -a ",peak_folder,"filtered_peaks.merged.all.bed.gz -b cellranger_genes19524.extended_2000up.bed.gz | gzip > atac.peak.genes19524.extended_2000up.bed.gz")
+system(paste0("bedtools intersect -wa -wb -a ",peak_folder,"filtered_peaks.merged.all.bed.gz -b cellranger_genes19519.extended_2000up.bed.gz | gzip > atac.peak.genes19519.extended_2000up.bed.gz"))
 
 #======================================
 # perform co-embed by Seurat & generate input files for scDART (for each cell cluster)
-peak=read.delim(paste0(resource_folder,"atac.peak.genes19524.extended_2000up.bed.gz"), header=F, stringsAsFactors=F, check.names=F)
+peak=read.delim(paste0(resource_folder,"atac.peak.genes19519.extended_2000up.bed.gz"), header=F, stringsAsFactors=F, check.names=F)
 peak$count=1
 
 identity=unique(Idents(All.rna))
 ###
 for (i in 1: length(identity)){
-  path1=paste0(scDART_SEACell,identity[i])
+  path1=paste0(path_scDART,identity[i])
   setwd(path1)
   
   iPS_1_neuroepithelial.All.atac = subset(x = All.atac, idents = identity[i])
   iPS_1_neuroepithelial.All.rna = subset(x = All.rna, idents = identity[i])
-  iPS_1_neuroepithelial.All.rna <- FindVariableFeatures(iPS_1_neuroepithelial.All.rna)
+  iPS_1_neuroepithelial.All.rna = FindVariableFeatures(iPS_1_neuroepithelial.All.rna)
   
-  genes.use <- VariableFeatures(iPS_1_neuroepithelial.All.rna)
+  genes.use = VariableFeatures(iPS_1_neuroepithelial.All.rna)
   
-  transfer.anchors <- FindTransferAnchors(reference = iPS_1_neuroepithelial.All.rna, 
+  transfer.anchors = FindTransferAnchors(reference = iPS_1_neuroepithelial.All.rna, 
                                           reference.assay = "RNA",
                                           normalization.method = "LogNormalize",
                                           features = VariableFeatures(object = iPS_1_neuroepithelial.All.rna), 
@@ -98,24 +101,24 @@ for (i in 1: length(identity)){
                                           query.assay = "GeneActivity", 
                                           reduction = "cca")
   
-  refdata <- GetAssayData(iPS_1_neuroepithelial.All.rna, assay = "RNA", slot = "data")[genes.use, ]
-  imputation <- TransferData(anchorset = transfer.anchors, refdata = refdata, weight.reduction = iPS_1_neuroepithelial.All.atac[["lsi"]], dims = 2:30)
-  iPS_1_neuroepithelial.All.atac[["RNA"]] <- imputation
+  refdata= GetAssayData(iPS_1_neuroepithelial.All.rna, assay = "RNA", slot = "data")[genes.use, ]
+  imputation = TransferData(anchorset = transfer.anchors, refdata = refdata, weight.reduction = iPS_1_neuroepithelial.All.atac[["lsi"]], dims = 2:30)
+  iPS_1_neuroepithelial.All.atac[["RNA"]] = imputation
   
   tmp.x=iPS_1_neuroepithelial.All.rna
-  DefaultAssay(tmp.x) <- "RNA"
-  tmp.x[["SCT"]] <- NULL
-  tmp.x$dataType <- "scRNA"
+  DefaultAssay(tmp.x) = "RNA"
+  tmp.x[["SCT"]] = NULL
+  tmp.x$dataType = "scRNA"
   tmp.y=iPS_1_neuroepithelial.All.atac
-  DefaultAssay(tmp.y) <- "RNA"
-  tmp.y[["GeneActivity"]] <- NULL
-  tmp.y[["peaks"]] <- NULL
-  tmp.y$dataType <- "scATAC"
-  coembed <- merge(x = tmp.x, y = tmp.y)
-  coembed <- FindVariableFeatures(coembed)
-  coembed <- ScaleData(coembed, do.scale = FALSE)
-  coembed <- RunPCA(coembed)
-  coembed <- RunUMAP(coembed, dims = 1:30)
+  DefaultAssay(tmp.y) = "RNA"
+  tmp.y[["GeneActivity"]] = NULL
+  tmp.y[["peaks"]] = NULL
+  tmp.y$dataType = "scATAC"
+  coembed = merge(x = tmp.x, y = tmp.y)
+  coembed = FindVariableFeatures(coembed)
+  coembed = ScaleData(coembed, do.scale = FALSE)
+  coembed = RunPCA(coembed)
+  coembed = RunUMAP(coembed, dims = 1:30)
   a1=DimPlot(coembed, reduction = "umap", group.by = 'dataType') + ggtitle(identity[i])
   jpeg("coembed.jpg", width = 5, height = 4, units = "in", res=600)
   print(a1)
@@ -139,7 +142,7 @@ for (i in 1: length(identity)){
   write.csv(peak1, "region2gene.csv", quote=F, row.names=T, col.names=T)
   
   need=which(rownames(iPS_1_neuroepithelial.All.atac[["peaks"]]) %in% unique(row.names(peak1)))
-  iPS_1_neuroepithelial.All.atac[["peaks"]] <- subset(iPS_1_neuroepithelial.All.atac[["peaks"]], features = rownames(iPS_1_neuroepithelial.All.atac[["peaks"]])[need])
+  iPS_1_neuroepithelial.All.atac[["peaks"]] = subset(iPS_1_neuroepithelial.All.atac[["peaks"]], features = rownames(iPS_1_neuroepithelial.All.atac[["peaks"]])[need])
   ATAC_count=data.frame(t(iPS_1_neuroepithelial.All.atac@assays[["peaks"]]@counts), check.names=F)
   write.csv(ATAC_count, "ATAC.count.csv", quote=F, row.names=T, col.names=T)
   
@@ -147,7 +150,7 @@ for (i in 1: length(identity)){
   write.table(ATAC_label[,36], "ATAC.label.txt", quote=F, row.names=F, col.names=F)
   
   need=which(rownames(iPS_1_neuroepithelial.All.rna[["RNA"]]) %in% colnames(peak1))
-  iPS_1_neuroepithelial.All.rna[["RNA"]] <- subset(iPS_1_neuroepithelial.All.rna[["RNA"]], features = rownames(iPS_1_neuroepithelial.All.rna[["RNA"]])[need])
+  iPS_1_neuroepithelial.All.rna[["RNA"]] = subset(iPS_1_neuroepithelial.All.rna[["RNA"]], features = rownames(iPS_1_neuroepithelial.All.rna[["RNA"]])[need])
   df= data.frame(t(iPS_1_neuroepithelial.All.rna[["RNA"]]@counts), check.names = FALSE)
   write.csv(df, "RNA.count.csv", quote=F, row.names=T, col.names=T)
   
@@ -166,7 +169,7 @@ for (i in 1: length(identity)){
 # compare co-embed between Seurat and scDART
 
 i=1
-path1=paste0(scDART_SEACell,identity[i])
+path1=paste0(path_scDART,identity[i])
 setwd(path1)
 umap=read.delim("seurat.coembed.umap.tsv",header=T, stringsAsFactors = F, check.names = F)
 umap$cellID=rownames(umap)
@@ -183,7 +186,7 @@ colnames(scDART)=c("cellID","scDART_PC1","scDART_PC2")
 umap=left_join(umap, scDART, by="cellID",copy=F)
 
 for (i in 2: length(identity)){
-  path1=paste0(scDART_SEACell,identity[i])
+  path1=paste0(path_scDART,identity[i])
   setwd(path1)
   umap1=read.delim("seurat.coembed.umap.tsv",header=T, stringsAsFactors = F, check.names = F)
   umap1$cellID=rownames(umap1)
@@ -201,7 +204,7 @@ for (i in 2: length(identity)){
   umap=rbind(umap,umap1)
 }
 
-write.table(umap,gzfile(paste0(scDART_SEACell,"umap_for_all_clusters.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
+write.table(umap,gzfile(paste0(path_scDART,"umap_for_all_clusters.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
 mumap=umap%>%group_by(cluster,seq)%>%dplyr::summarise(count=n())
 
 a1=ggplot() + 
@@ -226,7 +229,7 @@ a1=ggplot() +
           legend.key = element_blank(),
           legend.position = c(0.88, 0.12),
           plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm"))
-jpeg(paste0(scDART_SEACell,"coembed.seurat.jpg"), width = 4, height = 4, units = "in", res=600)
+jpeg(paste0(path_scDART,"coembed.seurat.jpg"), width = 4, height = 4, units = "in", res=600)
 print (a1)
 dev.off() 
 
@@ -252,110 +255,35 @@ b1=ggplot() +
           legend.key = element_blank(),
           legend.position = c(0.88, 0.12),
           plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm"))
-jpeg(paste0(scDART_SEACell,"coembed.scDART.jpg"), width = 4, height = 4, units = "in", res=600)
+jpeg(paste0(path_scDART,"coembed.scDART.jpg"), width = 4, height = 4, units = "in", res=600)
 print (b1)
 dev.off() 
 
 #===============================================================================
-#Put back the PCA into each co-embeded cluster
-
-library(Seurat)
-library(SeuratData)
-library(SeuratDisk)
-
-All.rna <- readRDS(paste0(RNA_folder,"20220331_All.rna.flt.rds"))
-All.atac <- readRDS(paste0(ATAC_folder,"All.atac.rds"))
-
-DefaultAssay(All.rna) <- "RNA"
-DefaultAssay(All.atac) <- "RNA"
-All.rna$dataType <- "RNA"
-All.atac$dataType <- "ATAC"
-All.rna[["SCT"]] <- NULL
-All.atac[["GeneActivity"]] <- NULL
-All.atac[["peaks"]] <- NULL
-
-Idents(All.atac) <- "celltype_manual_LT"
-Idents(All.rna) <- "celltype_manual"
-
-#umap=read.delim("/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/umap_for_all_clusters.tsv", header=T, stringsAsFactor=F, check.names=F)
-
-identity=unique(Idents(All.rna))
-###
-for (i in 1: length(identity)){
-  path1=paste0(scDART_SEACell,identity[i])
-  setwd(path1)
-  
-  iPS_1_neuroepithelial.All.atac = subset(x = All.atac, idents = identity[i])
-  iPS_1_neuroepithelial.All.rna = subset(x = All.rna, idents = identity[i])
-  
-  ATAC.latent=read.csv("ATAC.latent.csv")
-  RNA.latent=read.csv("RNA.latent.csv")
-  ATAC.PCA=read.csv("ATAC.PCA.csv")
-  RNA.PCA=read.csv("RNA.PCA.csv")
-  ATAC.label=fread("ATAC.count.csv",header=F, select=1, skip=1)
-  RNA.label=fread("RNA.count.csv",header=F, select=1, skip=1)
-  
-  ATAC.latent=data.frame(cbind(ATAC.label,ATAC.latent[,c(2:9)]))
-  ATAC.PCA=data.frame(cbind(ATAC.label,ATAC.PCA[,c(2:9)]))
-  RNA.latent=data.frame(cbind(RNA.label,RNA.latent[,c(2:9)]))
-  RNA.PCA=data.frame(cbind(RNA.label,RNA.PCA[,c(2:9)]))
-  
-  rownames(ATAC.latent)=ATAC.latent$V1
-  rownames(ATAC.PCA)=ATAC.PCA$V1
-  rownames(RNA.latent)=RNA.latent$V1
-  rownames(RNA.PCA)=RNA.PCA$V1
-  
-  ATAC.latent=ATAC.latent[,-1]
-  ATAC.PCA=ATAC.PCA[,-1]
-  RNA.latent=RNA.latent[,-1]
-  RNA.PCA=RNA.PCA[,-1]
-  latent=rbind(ATAC.latent,RNA.latent)
-  colnames(latent)=c("D1","D2","D3","D4","D5","D6","D7","D8")
-  PCA=rbind(ATAC.PCA,RNA.PCA)
-  colnames(PCA)=c("P1","P2","P3","P4","P5","P6","P7","P8")
-  
-  coembed <- merge(x = iPS_1_neuroepithelial.All.atac, y = iPS_1_neuroepithelial.All.rna)
-  umap=PCA[colnames(coembed),c(1,2)]
-  pca=PCA[colnames(coembed),]
-  
-  umap_coordinates_mat <- as(umap, "matrix")
-  pca_coordinates_mat <- as(pca, "matrix")
-  coembed[['pca']] <- CreateDimReducObject(embeddings = pca_coordinates_mat, key = "pca_", global = T, assay = "RNA")
-  coembed[['umap']] <- CreateDimReducObject(embeddings = umap_coordinates_mat, key = "umap_", global = T, assay = "RNA")
-  
-  DimPlot(coembed, reduction = "pca", group.by = 'dataType') + ggtitle(identity[i])
-  DimPlot(coembed, reduction = "umap", group.by = 'dataType') + ggtitle(identity[i])
-  
-  saveRDS(coembed, file = "coembed.rds")
-  SaveH5Seurat(coembed, filename = "coembed.h5Seurat")
-  Convert("coembed.h5Seurat", dest = "h5ad")}
-
-
-#===================================================================================================
-# schwann cluster is too small, add a cluster that combine progenitor and schwann
+# schwann cluster is too small, combine progenitor and schwann into one cluster
 
 peak=read.delim("/analysisdata/fantom6/Interactome/single_cell_wallace/cellranger_used_gene/atac.peak.genes19524.extended_2000up.bed", header=F, stringsAsFactors=F, check.names=F)
 peak$count=1
 
-All.rna <- readRDS(paste0(RNA_folder,"20220331_All.rna.flt.rds"))
-All.atac <- readRDS(paste0(ATAC_folder,"All.atac.rds"))
-All.atac[["RNA"]] <- NULL
+All.rna = readRDS(paste0(primary_folder,"Data_and_code/DATA/20220331_All.rna.flt.rds"))
+All.atac = readRDS(paste0(primary_folder,"Data_and_code/DATA/All.atac.rds"))
+All.atac[["RNA"]] = NULL
 
-Idents(All.atac) <- "celltype_manual_LT"
-Idents(All.rna) <- "celltype_manual"
+Idents(All.atac) = "celltype_manual_LT"
+Idents(All.rna) = "celltype_manual"
 
 identity="neuron_progenitor_n_schwann"
 ###
-path1=paste0(scDART_SEACell,identity[1])
+path1=paste0(path_scDART,identity[1])
 setwd(path1)
 
 iPS_1_neuroepithelial.All.atac = subset(x = All.atac, idents = c("neuron_progenitor","neuron_schwann_like"))
 iPS_1_neuroepithelial.All.rna = subset(x = All.rna, idents = c("neuron_progenitor","neuron_schwann_like"))
-iPS_1_neuroepithelial.All.rna <- FindVariableFeatures(iPS_1_neuroepithelial.All.rna)
+iPS_1_neuroepithelial.All.rna = FindVariableFeatures(iPS_1_neuroepithelial.All.rna)
 
-genes.use <- VariableFeatures(iPS_1_neuroepithelial.All.rna)
+genes.use = VariableFeatures(iPS_1_neuroepithelial.All.rna)
 
-transfer.anchors <- FindTransferAnchors(reference = iPS_1_neuroepithelial.All.rna, 
+transfer.anchors = FindTransferAnchors(reference = iPS_1_neuroepithelial.All.rna, 
                                         reference.assay = "RNA",
                                         normalization.method = "LogNormalize",
                                         features = VariableFeatures(object = iPS_1_neuroepithelial.All.rna), 
@@ -363,24 +291,24 @@ transfer.anchors <- FindTransferAnchors(reference = iPS_1_neuroepithelial.All.rn
                                         query.assay = "GeneActivity", 
                                         reduction = "cca")
 
-refdata <- GetAssayData(iPS_1_neuroepithelial.All.rna, assay = "RNA", slot = "data")[genes.use, ]
-imputation <- TransferData(anchorset = transfer.anchors, refdata = refdata, weight.reduction = iPS_1_neuroepithelial.All.atac[["lsi"]], dims = 2:30)
-iPS_1_neuroepithelial.All.atac[["RNA"]] <- imputation
+refdata = GetAssayData(iPS_1_neuroepithelial.All.rna, assay = "RNA", slot = "data")[genes.use, ]
+imputation = TransferData(anchorset = transfer.anchors, refdata = refdata, weight.reduction = iPS_1_neuroepithelial.All.atac[["lsi"]], dims = 2:30)
+iPS_1_neuroepithelial.All.atac[["RNA"]] = imputation
 
 tmp.x=iPS_1_neuroepithelial.All.rna
-DefaultAssay(tmp.x) <- "RNA"
-tmp.x[["SCT"]] <- NULL
-tmp.x$dataType <- "scRNA"
+DefaultAssay(tmp.x) = "RNA"
+tmp.x[["SCT"]] = NULL
+tmp.x$dataType = "scRNA"
 tmp.y=iPS_1_neuroepithelial.All.atac
-DefaultAssay(tmp.y) <- "RNA"
-tmp.y[["GeneActivity"]] <- NULL
-tmp.y[["peaks"]] <- NULL
-tmp.y$dataType <- "scATAC"
-coembed <- merge(x = tmp.x, y = tmp.y)
-coembed <- FindVariableFeatures(coembed)
-coembed <- ScaleData(coembed, do.scale = FALSE)
-coembed <- RunPCA(coembed)
-coembed <- RunUMAP(coembed, dims = 1:30)
+DefaultAssay(tmp.y) = "RNA"
+tmp.y[["GeneActivity"]] = NULL
+tmp.y[["peaks"]] = NULL
+tmp.y$dataType = "scATAC"
+coembed = merge(x = tmp.x, y = tmp.y)
+coembed = FindVariableFeatures(coembed)
+coembed = ScaleData(coembed, do.scale = FALSE)
+coembed = RunPCA(coembed)
+coembed = RunUMAP(coembed, dims = 1:30)
 a1=DimPlot(coembed, reduction = "umap", group.by = 'dataType') + ggtitle("neuron_progenitor_n_schwann")
 jpeg("coembed.jpg", width = 5, height = 4, units = "in", res=600)
 print(a1)
@@ -404,7 +332,7 @@ peak1=peak1[,-1]
 write.csv(peak1, "region2gene.csv", quote=F, row.names=T, col.names=T)
 
 need=which(rownames(iPS_1_neuroepithelial.All.atac[["peaks"]]) %in% unique(row.names(peak1)))
-iPS_1_neuroepithelial.All.atac[["peaks"]] <- subset(iPS_1_neuroepithelial.All.atac[["peaks"]], features = rownames(iPS_1_neuroepithelial.All.atac[["peaks"]])[need])
+iPS_1_neuroepithelial.All.atac[["peaks"]] = subset(iPS_1_neuroepithelial.All.atac[["peaks"]], features = rownames(iPS_1_neuroepithelial.All.atac[["peaks"]])[need])
 ATAC_count=data.frame(t(data.frame(iPS_1_neuroepithelial.All.atac@assays[["peaks"]]@counts, check.names = FALSE)), check.names=F)
 write.csv(ATAC_count, "ATAC.count.csv", quote=F, row.names=T, col.names=T)
 
@@ -412,7 +340,7 @@ ATAC_label=iPS_1_neuroepithelial.All.atac@meta.data
 write.table(ATAC_label[,36], "ATAC.label.txt", quote=F, row.names=F, col.names=F)
 
 need=which(rownames(iPS_1_neuroepithelial.All.rna[["RNA"]]) %in% colnames(peak1))
-iPS_1_neuroepithelial.All.rna[["RNA"]] <- subset(iPS_1_neuroepithelial.All.rna[["RNA"]], features = rownames(iPS_1_neuroepithelial.All.rna[["RNA"]])[need])
+iPS_1_neuroepithelial.All.rna[["RNA"]] = subset(iPS_1_neuroepithelial.All.rna[["RNA"]], features = rownames(iPS_1_neuroepithelial.All.rna[["RNA"]])[need])
 df= data.frame(t(data.frame(iPS_1_neuroepithelial.All.rna[["RNA"]]@counts, check.names = FALSE)), check.names = FALSE)
 write.csv(df, "RNA.count.csv", quote=F, row.names=T, col.names=T)
 
@@ -423,72 +351,6 @@ rm(iPS_1_neuroepithelial.All.atac)
 rm(iPS_1_neuroepithelial.All.rna)
 gc()
 
-##########
-
-library(Seurat)
-library(SeuratData)
-library(SeuratDisk)
-
-All.rna <- readRDS(paste0(RNA_folder,"20220331_All.rna.flt.rds"))
-All.atac <- readRDS(paste0(ATAC_folder,"All.atac.rds"))
-DefaultAssay(All.rna) <- "RNA"
-DefaultAssay(All.atac) <- "RNA"
-All.rna$dataType <- "RNA"
-All.atac$dataType <- "ATAC"
-All.rna[["SCT"]] <- NULL
-All.atac[["GeneActivity"]] <- NULL
-All.atac[["peaks"]] <- NULL
-
-Idents(All.atac) <- "celltype_manual_LT"
-Idents(All.rna) <- "celltype_manual"
-
-identity="neuron_progenitor_n_schwann"
-###
-path1=paste0(scDART_SEACell,identity[1])
-setwd(path1)
-
-iPS_1_neuroepithelial.All.atac = subset(x = All.atac, idents = c("neuron_progenitor","neuron_schwann_like"))
-iPS_1_neuroepithelial.All.rna = subset(x = All.rna, idents = c("neuron_progenitor","neuron_schwann_like"))
-
-ATAC.latent=read.csv("ATAC.latent.csv")
-RNA.latent=read.csv("RNA.latent.csv")
-ATAC.PCA=read.csv("ATAC.PCA.csv")
-RNA.PCA=read.csv("RNA.PCA.csv")
-ATAC.label=fread("ATAC.count.csv",header=F, select=1, skip=1)
-RNA.label=fread("RNA.count.csv",header=F, select=1, skip=1)
-
-ATAC.latent=data.frame(cbind(ATAC.label,ATAC.latent[,c(2:9)]))
-ATAC.PCA=data.frame(cbind(ATAC.label,ATAC.PCA[,c(2:9)]))
-RNA.latent=data.frame(cbind(RNA.label,RNA.latent[,c(2:9)]))
-RNA.PCA=data.frame(cbind(RNA.label,RNA.PCA[,c(2:9)]))
-
-rownames(ATAC.latent)=ATAC.latent$V1
-rownames(ATAC.PCA)=ATAC.PCA$V1
-rownames(RNA.latent)=RNA.latent$V1
-rownames(RNA.PCA)=RNA.PCA$V1
-
-ATAC.latent=ATAC.latent[,-1]
-ATAC.PCA=ATAC.PCA[,-1]
-RNA.latent=RNA.latent[,-1]
-RNA.PCA=RNA.PCA[,-1]
-latent=rbind(ATAC.latent,RNA.latent)
-colnames(latent)=c("D1","D2","D3","D4","D5","D6","D7","D8")
-PCA=rbind(ATAC.PCA,RNA.PCA)
-colnames(PCA)=c("P1","P2","P3","P4","P5","P6","P7","P8")
-
-coembed <- merge(x = iPS_1_neuroepithelial.All.atac, y = iPS_1_neuroepithelial.All.rna)
-umap=PCA[colnames(coembed),c(1,2)]
-pca=PCA[colnames(coembed),]
-
-umap_coordinates_mat <- as(umap, "matrix")
-pca_coordinates_mat <- as(pca, "matrix")
-coembed[['pca']] <- CreateDimReducObject(embeddings = pca_coordinates_mat, key = "pca_", global = T, assay = "RNA")
-coembed[['umap']] <- CreateDimReducObject(embeddings = umap_coordinates_mat, key = "umap_", global = T, assay = "RNA")
-
-saveRDS(coembed, file = "coembed.rds")
-SaveH5Seurat(coembed, filename = "coembed.h5Seurat")
-Convert("coembed.h5Seurat", dest = "h5ad")
-
 #===============================================================================
 # plot heatmap for all clusters, including the combined one
 
@@ -496,10 +358,10 @@ Convert("coembed.h5Seurat", dest = "h5ad")
 library(pheatmap)
 library("RColorBrewer")
 
-files=list.files(pattern="ATAC.latent.csv" , path=scDART_SEACell ,recursive =T)
+files=list.files(pattern="ATAC.latent.csv" , path=path_scDART ,recursive =T)
 identity = sapply(strsplit(files,"/"),"[",1)
 for (i in 1: length(identity)){
-  path1=paste0(scDART_SEACell,identity[i])
+  path1=paste0(path_scDART,identity[i])
   setwd(path1)
   
   ATAC.latent=read.csv("ATAC.latent.csv")
@@ -561,67 +423,4 @@ for (i in 1: length(identity)){
   dev.off()}
 
 #===============================================================================
-#run SEACell
-#run [cluster_name]_SEACell.py in "Fig1.coembed"
-
-#Parse SEACell result
-files=list.files(pattern="ATAC.latent.csv" , path=scDART_SEACell, recursive =T)
-identity = sapply(strsplit(files,"/"),"[",1)
-identity=identity[-8]
-
-path1=paste0(scDART_SEACell,identity[1])
-setwd(path1)
-
-seacell=read.delim("metadata.tsv", header=F, skip=1, stringsAsFactors =F)
-seacell$metacell=paste0(identity[i],"_meta",1:nrow(seacell))
-seacell=data.frame(separate_rows(seacell, V1, sep="\t"))
-
-ATAC.PCA=read.csv("ATAC.PCA.csv")
-RNA.PCA=read.csv("RNA.PCA.csv")
-ATAC.label=fread("ATAC.count.csv",header=F, select=1, skip=1)
-RNA.label=fread("RNA.count.csv",header=F, select=1, skip=1)
-
-ATAC.PCA=data.frame(cbind(ATAC.label,ATAC.PCA[,c(2:9)]))
-RNA.PCA=data.frame(cbind(RNA.label,RNA.PCA[,c(2:9)]))
-ATAC.PCA$dataType="ATAC"
-RNA.PCA$dataType="RNA"
-PCA=rbind(ATAC.PCA, RNA.PCA)
-PCA=left_join(PCA, seacell,by="V1", copy=F)
-rownames(PCA)=PCA$V1
-colnames(PCA)[11]="SEACell"
-PCA$cluster=identity[1]
-
-for (i in 2: length(identity)){
-  path1=paste0(scDART_SEACell,identity[i])
-  setwd(path1)
-  
-  seacell=read.delim("metadata.tsv", header=F, skip=1, stringsAsFactors =F)
-  seacell$metacell=paste0(identity[i],"_meta",1:nrow(seacell))
-  seacell=data.frame(separate_rows(seacell, V1, sep="\t"))
-  
-  ATAC.PCA=read.csv("ATAC.PCA.csv")
-  RNA.PCA=read.csv("RNA.PCA.csv")
-  ATAC.label=fread("ATAC.count.csv",header=F, select=1, skip=1)
-  RNA.label=fread("RNA.count.csv",header=F, select=1, skip=1)
-  
-  ATAC.PCA=data.frame(cbind(ATAC.label,ATAC.PCA[,c(2:9)]))
-  RNA.PCA=data.frame(cbind(RNA.label,RNA.PCA[,c(2:9)]))
-  ATAC.PCA$dataType="ATAC"
-  RNA.PCA$dataType="RNA"
-  PCA1=rbind(ATAC.PCA, RNA.PCA)
-  PCA1=left_join(PCA1, seacell,by="V1", copy=F)
-  rownames(PCA1)=PCA1$V1
-  colnames(PCA1)[11]="SEACell"
-  PCA1$cluster=identity[i]
-  PCA=rbind(PCA, PCA1)}
-write.table(PCA,gzfile(paste0(scDART_SEACell,"scDART_SEACell_for_all_clusters.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
-write.table(PCA,gzfile(paste0(path_fig1_data,"scDART_SEACell_for_all_clusters.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
-
-# -> for fig ex1b-c
-
-#===============================================================================
-
-
-
-
 

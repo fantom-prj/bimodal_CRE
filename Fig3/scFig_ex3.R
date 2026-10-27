@@ -57,6 +57,12 @@ theme1=theme(  panel.background = element_rect(fill = "white", color = "white", 
                plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"))
 
 #===============================================================================
+cluster=c("iPS_0_undifferentiaed","iPS_1_neuroepithelial","NSC_0_iPS_like", "NSC_1_differentiating", "NSC_2_astrocyte_like", "neuron_progenitor_n_schwann", "neuron_immature", "neuron_mature","neuron_mature_2", "OPC_like")
+cluster1=c("iPSC_0","iPSC_1","NSC_0", "NSC_1", "NSC_2", "Neuron_0", "Neuron_1", "Neuron_2","Neuron_3", "Neuron_4")
+label=c("iPSC_Sphase","iPSC_G2M","NSC_stem","NSC_1","NSC_2","NPC_like","Immature_neuron","Mature_neuron_1","Mature_neuron_2","OPC_like")
+cluster_info=data.frame(cbind(cluster, cluster1, label))
+
+
 # fig ex3a -> schematics
 
 #===============================================================================
@@ -84,14 +90,15 @@ dev.off()
 # plot x-y variability and correlation
 
 together2=read.delim(paste0(path_fig3_data,"auto_correlation_to_p_en.z.summarise_noFP.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_chromvar_correlation_and_literature.n247.tsv.gz"),  header=T, stringsAsFactors = F, check.names = F)
+together2=together2[which(together2$group1 != "Both"),]
+outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_chromvar_correlation_and_literature.n257.tsv.gz"),  header=T, stringsAsFactors = F, check.names = F)
 
-# together2a=unique(together2[,c("group1", "group2","median_zscaled_var")])
+together2a=unique(together2[,c("group1", "group2","median_zscaled_var")])
 # choose the strongest correlation if there is two TFs
 together2=together2%>%group_by(group1,group2,motifID)%>%slice_max(abs(acf_exVall_opt))
 
 ex3c=ggplot() + 
-  labs(x="ChromVar Variability (Scaled)", y ="Abs(Correlation)", alpha="Pass chromVar\n& Correlation", title="Evaluable TF mmotifs")+
+  labs(x="ChromVar Variability (Scaled)", y ="Abs(Correlation)", alpha="Pass chromVar\n& Correlation", title="Evaluable TF motifs")+
   facet_grid(rows=vars(group1), cols=vars(group2))+
   geom_point(data=together2, mapping=aes(x=zscaled_var, color=interaction(group1, group2), y=abs(acf_exVall_opt),  alpha = pass_both), size=0.2, shape=19)+
   scale_color_npg(guide=NULL)+
@@ -106,8 +113,7 @@ dev.off()
 #======================
 # fig ex3d
 # plotting zscore heatmap showing all cell types (n=10)
-ddata=read.delim(paste0(path_fig3_data,"heatmap_z_247motif.plot.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-cluster_info=read.delim(paste0(primary_folder,"Fig1/cluster_info.tsv"),header=T, stringsAsFactors = F, check.names = F)
+ddata=read.delim(paste0(path_fig3_data,"heatmap_z_257motif.plot.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 
 mddata=data.frame(spread(ddata[,c(4,7,9)], key=2 , value=3))
 
@@ -122,12 +128,7 @@ cn=cn[order(cn$label, cn$set),]
 together2b=together2b[,cn$label2]
 data2= read.delim(paste0(path_fig3_data,"variability_ChromVar_noFP.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 data2$V2[which(data2$rank >5)]=NA
-
-#varfile=read.delim(paste0(path_fig3,"variability_for_all_analyses.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-#varfile$V2[which(varfile$rank >5)]=NA
-need=unique(varfile$label[!is.na(data2$V2)])
-need=need[!need %in% c("MA1962.1_POU2F1::SOX2","MA0754.3_CUX1","MA1642.2_NEUROG2","MA0755.2_CUX2")]
-need=c(need,"MA0809.3_TEAD4","MA0138.3_REST","MA1109.2_NEUROD1","MA0514.3_Sox3")
+need=c("MA0756.3_ONECUT2","MA0142.1_Pou5f1::Sox2","MA0679.3_ONECUT1","MA1628.2_Zic1::Zic2","MA0809.3_TEAD4","MA0103.4_ZEB1","MA0774.1_MEIS2","MA1120.2_SOX13","MA0809.3_TEAD4","MA0138.3_REST","MA1109.2_NEUROD1","MA0514.3_Sox3")
 rows_to_label=unique(need)
 
 library(dendextend)
@@ -184,16 +185,16 @@ out01=ggplot(ddata, aes(x = set, y = V2, fill = scaledz)) +
   theme1 +
   theme(panel.grid.major = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), legend.position="right", strip.background =element_blank(), strip.text.x.top = element_blank())
 
-pdf(paste0(path_fig3,"ex3d.heatmap_z_247motif.pdf"), width=4, height=3.6)
+pdf(paste0(path_fig3,"ex3d.heatmap_z_257motif.pdf"), width=4, height=3.6)
 print(plot_grid(p_rowtree, out01, ncol = 2, rel_widths = c(1, 8)))
 dev.off()
 
-label_data <- ddata %>%filter(motifName != "")
+label_data <- ddata %>%dplyr::filter(motifName != "")
 out02=ggplot(ddata, aes(x = set, y = V2, fill = scaledz)) +
-  labs(x=NULL, y=NULL, fill="Z-score")+
+  labs(x=NULL, y=NULL, fill="Motif activity")+
   geom_tile_rast() +
   geom_text_repel(aes(x=4.78, label = motifName), nudge_x = 3, direction = "y", hjust = 1, segment.size = 0.2 , size=1.6) +
-  scale_fill_gradient2(low = "navy", mid = "white", high = "firebrick3", midpoint = 0) +
+  scale_fill_gradient2(low = "navy", mid = "white", high = "firebrick3", midpoint = 0, breaks=c(-3, 0,3,6)) +
   geom_segment(data=label_data, aes(x=4.5, xend=4.8, y=V2, yend=V2), linewidth=0.2) +
   #facet_grid(cols=vars(label))+
   new_scale_fill() +
@@ -210,7 +211,7 @@ out02=ggplot(ddata, aes(x = set, y = V2, fill = scaledz)) +
                                "NSC_2"="#F39B7FFF", "NPC_like"="#8491B4FF","Immature_neuron"="#91D1C2FF", "Mature_neuron_1"="#DC0000FF","Mature_neuron_2"="#7E6148FF", "OPC_like"="#B09C85FF"), name="Cell-type") +
   theme1 +
   theme(panel.grid.major = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), legend.position="right", strip.background =element_blank(), strip.text.x.top = element_blank())
-pdf(paste0(path_fig3,"ex3d2.heatmap_z_247motif.label.pdf"), width=2.3, height=3.6)
+pdf(paste0(path_fig3,"ex3d2.heatmap_z_257motif.label.pdf"), width=2.3, height=3.6)
 print(out02)
 dev.off()
 
@@ -233,22 +234,43 @@ FEsum3a$logOR[FEsum3a$logOR == Inf]  <- mx + 0.1
 FEsum3a$logOR[FEsum3a$logOR == -Inf] <- mn - 0.1
 
 ex3e=ggplot() + 
-  labs(x="From literature", y ="From co-expression", title="TF action enrichment", fill="logOR")+
+  labs(x="From literature", y ="From co-expression", title="TF regulatory modes", fill="logOR")+
   facet_grid(rows=vars(var_cutoff),cols=vars(corr_cutoff))+
   scale_y_discrete(limits=rev)+
   geom_tile(data=FEsum3a, mapping=aes(x=variable.y, fill=logOR, y=variable.x), size=0.6)+
   scale_fill_gradient2(low="#3C5488FF",mid="white",high="#F0AB00FF", midpoint=0)+
   theme1+theme(panel.grid.major = element_blank(),legend.position = "top", legend.justification = "right",
                axis.ticks = element_blank(), axis.line = element_blank(),
-               axis.text.x = element_text(hjust=1, vjust=1, angle=25))
+               axis.text.x = element_text(hjust=1, vjust=1, angle=25),
+               panel.spacing = grid::unit(0.1, "cm"))
 pdf(paste0(path_fig3,"ex3e.TF_action_enrichment_allcutoffs.pdf"), width = 4.2, height = 2.6)
 print (ex3e)
 dev.off() 
 
 #======================
 # fig ex3f
+# regulatory mode content
+outputfile3=read.delim(paste0(path_fig3_data,"promoter_type_TF_mode.tsv.gz"),header=T, stringsAsFactors = F, check.names = F)
+outputfile3a=outputfile3%>%group_by(variable, Content)%>%dplyr::summarise(count=n())%>%dplyr::mutate(percent=count/sum(count))
+outputfile3a$Content=factor(outputfile3a$Content, levels=c("Enhancer", "Both", "Promoter"))
+outputfile3a$variable=factor(outputfile3a$variable, levels=c("ATAC+","ATAC-","TSS+","TSS-"))
+outputfile3b=outputfile3a%>%group_by( variable)%>%dplyr::summarise(total=paste0("n= ", sum(count)))
+
+ex3f=ggplot() + 
+  labs(x=NULL, y = "% of TF motif",title= "Promoter-types responded\nto TF regulatory modes", fill=NULL) +
+  scale_fill_manual(values=c("#7E6148FF","black","#B09C85FF"))+
+  scale_y_continuous(labels = scales::percent, limits=c(0, 1.1), breaks=c(0, 0.25,0.5,0.75,1))+
+  geom_bar(data=outputfile3a, mapping=aes(y=percent, x=variable, fill=Content), linewidth=0.25, color = "black", stat="identity") + 
+  geom_text(data=outputfile3b, mapping=aes(y=1, x=variable, label=total), size=1.8, angle=25, hjust=0, vjust=0)+
+  theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1))
+pdf(paste0(path_fig3,"ex3f.promoter_type_TF_mode.pdf"), width = 1.7, height = 1.7)
+print(ex3f)
+dev.off() 
+
+#======================
+# fig ex3g
 # upsetter
-outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_joint_pen_chromvar_correlation_and_literature.n181.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+outputfile1=read.delim(paste0(path_fig3_data,"TF_grouping_by_joint_pen_chromvar_correlation_and_literature.n175.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 
 outputfile3=outputfile1[,c("label","motifID","ATAC+","ATAC-","TSS+","TSS-")]
 for (i in 1:nrow(outputfile3)){
@@ -261,7 +283,7 @@ outputfile3$coupled[which(outputfile3$`ATAC-`=="Yes" & outputfile3$`TSS-` == "Ye
 
 library(ggupset)
 library(ComplexUpset)
-ex3f=ggplot(outputfile3, aes(x = result)) +
+ex3g=ggplot(outputfile3, aes(x = result)) +
   geom_bar(aes(fill=coupled), linewidth=0.25, color="black", alpha=1,  width=0.8,  stat="count") + 
   scale_fill_manual(values=c("Yes"="black", "No"="white"))+
   scale_x_upset()+
@@ -273,12 +295,12 @@ ex3f=ggplot(outputfile3, aes(x = result)) +
                    combmatrix.label.text = element_text(color ="black", size=6),
                    combmatrix.label.extra_spacing = 0.3,
                    combmatrix.label.make_space = FALSE)
-pdf(paste0(path_fig3,"ex3f.joint_pen_upseter.TF.mode.by.expression.correlation.pdf"), width = 2.1, height = 1.7)
-print(ex3f)
+pdf(paste0(path_fig3,"ex3g.joint_pen_upseter.TF.mode.by.expression.correlation.pdf"), width = 1.5, height = 1.7)
+print(ex3g)
 dev.off()
 
 #=====================
-# fig ex3g
+# fig ex3h
 data6=read.delim(paste0(path_fig3_data,"ATAC_RNA.venn.with.cuttoff_joint_pen.tsv.gz"), header=T, stringsAsFactors=F, check.names = F)
 
 data6$uncoupled=data6$union-data6$coupled
@@ -287,19 +309,19 @@ mdata6=reshape2::melt(data6, id=c(1,2,3,5))
 mdata6$modal_specific=paste0(signif(mdata6$modal_specific*100,2),"%")
 mdata6$modal_specific[which(mdata6$variable == "uncoupled")]=NA
 
-ex3g=ggplot(mdata6, aes(x = as.character(corr_cutoff), y=value, fill=variable)) +
+ex3h=ggplot(mdata6, aes(x = as.character(corr_cutoff), y=value, fill=variable)) +
   geom_bar(linewidth=0.25, alpha=1,  width=0.8,  color="black", stat="identity") + 
   facet_grid(cols=vars(var_cutoff))+
   scale_fill_manual(values=c("coupled"="black", "uncoupled"="white"))+
   geom_text(data=mdata6, aes(label=modal_specific, y=5),angle=90, hjust=0, size=1.8,color="black")+
   labs(x="Cutoff of correlation", y = "Number of TF motifs", title="Modality-specific TF motifs identified\nfrom promoter enhancer joint motif analysis", fill=NULL) +
-  theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1), legend.position = c(0.8,0.8))
-pdf(paste0(path_fig3,"ex3g.joint_pen_ATAC_RNA.venn.with.cuttoff.pdf"), width = 3.2, height = 1.7)
-print(ex3g)
+  theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1), legend.position = c(0.8,0.8), panel.spacing = grid::unit(0.1, "cm"))
+pdf(paste0(path_fig3,"ex3h.joint_pen_ATAC_RNA.venn.with.cuttoff.pdf"), width = 2.8, height = 1.7)
+print(ex3h)
 dev.off()
 
 #=====================
-# fig ex3h
+# fig ex3i
 # FE with literature only considering those with results from both literature and correlation  
 FEsum3=read.delim(paste0(path_fig3_data,"TF_grouping_by_joint_pen_chromvar_correlation_and_literature.FE.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 
@@ -309,16 +331,16 @@ FEsum3a$variable.y = gsub("TF_activator","Activator",FEsum3a$variable.y)
 FEsum3a$variable.y = gsub("TF_repressor","Repressor",FEsum3a$variable.y)
 FEsum3a$variable.y = factor(FEsum3a$variable.y, levels=c("Pioneer","Activator","Repressor"))
 FEsum3a$variable.x = factor(FEsum3a$variable.x, levels=c("ATAC+","ATAC-","TSS+","TSS-"))
-ex3h=ggplot() + 
-  labs(x="From literature", y ="From co-expression", title="TF action enrichment", fill="logOR")+
+ex3i=ggplot() + 
+  labs(x="From literature", y ="From co-expression", title="TF regulatory modes", fill="logOR")+
   scale_y_discrete(limits=rev)+
-  geom_tile(data=FEsum3a, mapping=aes(x=variable.y, fill=logOR, y=variable.x), size=0.6)+
+  geom_tile(data=FEsum3a, mapping=aes(x=variable.y, fill=logOR, y=variable.x))+
   scale_fill_gradient2(low="#3C5488FF",mid="white",high="#F0AB00FF", midpoint=0)+
   theme1+theme(panel.grid.major = element_blank(),legend.position = "right",
                axis.ticks = element_blank(), axis.line = element_blank(),
                axis.text.x = element_text(hjust=1, vjust=1, angle=25))
-pdf(paste0(path_fig3,"ex3h.joint_pen_TF_action_enrichment122.pdf"), width = 1.5, height = 1.7)
-print (ex3h)
+pdf(paste0(path_fig3,"ex3i.joint_pen_TF_action_enrichment.pdf"), width = 1.4, height = 1.7)
+print (ex3i)
 dev.off() 
 
 #=================

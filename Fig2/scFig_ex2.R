@@ -102,9 +102,10 @@ dev.off()
 
 #=====================================
 #Fig.ex2d
-#bimodal in metacell
+#generated from Fig2.CRE_feature/CRE.R
 data1=read.delim(paste0(path_fig2_data,"metacell_UMAP.tsv.gz"), header = T, stringsAsFactors = F, check.names = F)
 
+data1=left_join(data1, cluster_info, by=c("cluster"))
 data1$label=factor(data1$label, levels=cluster_info$label)
 data1$variable=factor(data1$variable, levels=c("Gene","ATAC-signal","TSS-signal"))
 
@@ -115,7 +116,7 @@ ex2d=ggplot() +
   geom_point(data=data1, mapping=aes(x=UMAP1, color=label, y=UMAP2), shape=16, alpha=0.75, size=0.45)+
   #geom_text_repel(data=umap_info, mapping=aes(x=UMAP1, y=UMAP2, label=label), size=1.8, color="black", bg.color = "white", bg.r=0.1)+
   theme1+theme(legend.position = "bottom",  panel.grid.major = element_blank(), axis.ticks = element_blank(), axis.text.x = element_blank(),axis.text.y = element_blank())
-pdf(paste0(path_fig2,"ex2d.RNA.aCRE.tCRE.umap.pdf"), width = 3.2, height = 1.7) #ext fig 2c
+pdf(paste0(path_fig2,"ex2d.RNA.aCRE.tCRE.umap.pdf"), width = 3.2, height = 1.7)
 print (ex2d)
 dev.off() 
 
@@ -374,22 +375,45 @@ dev.off()
 
 #================
 #fig ex2l
-kk=read.delim(paste0(path_fig2_data,"heatmap.markalone_ZBTB6_KLF13.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-kk=kk[which(kk$value == "TRUE"),]
-kk=kk[which(kk$sample != "Neuron"),]
-kk=kk[which(kk$state %in% c("Primed","All","Repressed")),]
-kk$state=factor(kk$state,levels=c("Primed","All","Repressed"))
-kk$group2=gsub(" enhancer","",kk$group2)
-kk$group2=gsub("Non-transcribed","Non-\ntranscribed",kk$group2)
-kk$group2=factor(kk$group2, levels=c("Transcribed","Non-\ntranscribed"))
+aCRE_cell1=read.delim(paste0(path_fig2_data,"enhancer_chromatin_state.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+aCRE_cell1$group2=gsub("Without transcription","Non-\ntranscribed",aCRE_cell1$group2)
+aCRE_cell1$group2=gsub("With transcription","Transcribed",aCRE_cell1$group2)
+aCRE_cell1$group2=factor(aCRE_cell1$group2, levels=c("Transcribed","Non-\ntranscribed"))
+
+aCRE_cell1i=aCRE_cell1[which(aCRE_cell1$iPSC %in% c("Active","Primed", "Repressed")),]
+aCRE_cell1i$Neuron[which(aCRE_cell1i$Neuron %in% c("Primed", "Repressed", "Others"))]="Non-Active"
+aCRE_cell1i$NSC[which(aCRE_cell1i$NSC %in% c("Primed", "Repressed", "Others"))]="Non-Active"
+
+aCRE_cell1s=aCRE_cell1[which(aCRE_cell1$NSC %in% c("Active","Primed", "Repressed")),]
+aCRE_cell1s$iPSC[which(aCRE_cell1s$iPSC %in% c("Primed", "Repressed", "Others"))]="Non-Active"
+aCRE_cell1s$Neuron[which(aCRE_cell1s$Neuron %in% c("Primed", "Repressed", "Others"))]="Non-Active"
+
+flowsi = aCRE_cell1i %>%
+  mutate(across(c(iPSC, NSC, Neuron), ~ factor(.x, levels = state_levels))) %>% 
+  dplyr::count(group2, iPSC, NSC, Neuron, name = "n") 
+flowss = aCRE_cell1s %>%
+  mutate(across(c(iPSC, NSC, Neuron), ~ factor(.x, levels = state_levels))) %>% 
+  dplyr::count(group2, iPSC, NSC, Neuron, name = "n") 
+
+flowsi$transition = "Others"
+flowsi$transition[which(flowsi$Neuron == "Active" | flowsi$NSC == "Active")]="Active"
+flowsi1=flowsi%>%group_by(group2, iPSC, transition)%>%dplyr::summarise(count=sum(n))%>%mutate(percent=count/sum(count)*100, cell="iPSC")
+flowss$transition = "Others"
+flowss$transition[which(flowss$Neuron == "Active" | flowss$iPSC == "Active")]="Active"
+flowss1=flowss%>%group_by(group2, NSC, transition)%>%dplyr::summarise(count=sum(n))%>%mutate(percent=count/sum(count)*100, cell="NSC")
+
+colnames(flowsi1)[2]="State"
+colnames(flowss1)[2]="State"
+both=rbind(flowsi1,flowss1)
+both=both[which(both$transition!="Others"),]
+
 ex2l=ggplot() + 
-  facet_grid(cols=vars(group2), rows=vars(sample))+
+  facet_grid(cols=vars(group2), rows=vars(cell))+
   labs(x=NULL, y ="% of enhancer", title="Transition to active", fill="Scope")+
-  geom_bar(data=kk, mapping=aes(x=state, y=percent, fill=state), stat="identity", linewidth=0.25, color="black", alpha=0.8)+
-  geom_text(data=kk, mapping=aes(x=state, y=1, label=paste0(signif(percent,3),"%")), angle=90, hjust=(0), vjust=(0.5), size =1.8 )+
-  #geom_text(data=kk, mapping=aes(x=state, y=percent+3, label=paste0("n=",active_count)), angle=90, hjust=(0), vjust=(0.5), size =1.8 )+
+  geom_bar(data=both, mapping=aes(x=State, y=percent, fill=State), stat="identity", linewidth=0.25, color="black", alpha=0.8)+
+  geom_text(data=both, mapping=aes(x=State, y=1, label=paste0(signif(percent,3),"%")), angle=90, hjust=(0), vjust=(0.5), size =1.8 )+
   scale_y_continuous(limits=c(0,100))+
-  scale_fill_manual(values=c("All"="grey", "Primed"="#4DBBD5FF", "Repressed"="#00A087FF"), guide=NULL)+
+  scale_fill_manual(values=c("Active"="#E64B35FF", "Primed"="#4DBBD5FF", "Repressed"="#00A087FF"), guide=NULL)+
   theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1))
 pdf(paste0(path_fig2,"ex2l.iPSNSC_tCRE_active_percentage.pdf"), width = 1.5, height = 2)
 print(ex2l)

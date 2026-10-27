@@ -25,11 +25,11 @@ reg_mmd = 1
 ts = [30, 50, 70]
 use_potential = True
 
-counts_rna = pd.read_csv("/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/RNA.count.csv", index_col = 0)
-counts_atac = pd.read_csv("/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/ATAC.count.csv", index_col = 0)
-label_rna = pd.read_csv("/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/RNA.label.txt", header = None)
-label_atac = pd.read_csv("/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/ATAC.label.txt", header = None)
-coarse_reg = pd.read_csv("/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/region2gene.csv", sep = ",", index_col = 0).values
+counts_rna = pd.read_csv("./scDART/neuron_mature/RNA.count.csv", index_col = 0)
+counts_atac = pd.read_csv("./scDART/neuron_mature/ATAC.count.csv", index_col = 0)
+label_rna = pd.read_csv("./scDART/neuron_mature/RNA.label.txt", header = None)
+label_atac = pd.read_csv("./scDART/neuron_mature/ATAC.label.txt", header = None)
+coarse_reg = pd.read_csv("./scDART/neuron_mature/region2gene.csv", sep = ",", index_col = 0).values
 
 
 scDART_op = scDART.scDART(n_epochs = n_epochs, latent_dim = latent_dim,         ts = ts, use_anchor = use_anchor, use_potential = use_potential, k = 10,         reg_d = 1, reg_g = 1, reg_mmd = 1, l_dist_type = 'kl', seed = seeds[0],         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
@@ -76,13 +76,13 @@ utils.plot_latent_pt(z1 = z_rna_pca, z2 = z_atac_pca, pt1 = pt_infer_rna, pt2 = 
 
 
 df = pd.DataFrame(z_rna_pca)
-df.to_csv('/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/RNA.PCA.csv')
+df.to_csv('./scDART/neuron_mature/RNA.PCA.csv')
 df1 = pd.DataFrame(z_atac_pca)
-df1.to_csv('/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/ATAC.PCA.csv')
+df1.to_csv('./scDART/neuron_mature/ATAC.PCA.csv')
 df2 = pd.DataFrame(z_rna)
-df2.to_csv('/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/RNA.latent.csv')
+df2.to_csv('./scDART/neuron_mature/RNA.latent.csv')
 df3 = pd.DataFrame(z_atac)
-df3.to_csv('/analysisdata/fantom6/Interactome/single_cell_wallace/scDART/neuron_mature/ATAC.latent.csv')
+df3.to_csv('./scDART/neuron_mature/ATAC.latent.csv')
 
 
 # In[ ]:

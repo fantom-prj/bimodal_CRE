@@ -100,28 +100,28 @@ cluster1=c("iPSC_0","iPSC_1","NSC_0", "NSC_1", "NSC_2", "Neuron_0", "Neuron_1", 
 label=c("iPSC_Sphase","iPSC_G2M","NSC_stem","NSC_1","NSC_2","NPC_like","Immature_neuron","Mature_neuron_1","Mature_neuron_2","OPC_like")
 cluster_info=data.frame(cbind(cluster, cluster1, label))
 
-meta=read.delim(paste0(path_fig1_data,"metadata.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-meta$celltype="iPSC"
-meta$celltype[grep("NSC",meta$V1)]="NSC"
-meta$celltype[grep("NRN",meta$V1)]="Neuron"
-meta$celltype[grep("_5",meta$V1)]="NSC"
-meta$celltype[grep("_6",meta$V1)]="NSC"
-meta$celltype[grep("_3",meta$V1)]="Neuron"
-meta$celltype[grep("_4",meta$V1)]="Neuron"
+latent0=read.delim(paste0(path_fig1_data,"scDART_SEACell_for_all_clusters.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+latent0$celltype="iPSC"
+latent0$celltype[grep("NSC",latent0$X)]="NSC"
+latent0$celltype[grep("NRN",latent0$X)]="Neuron"
+latent0$celltype[grep("_5",latent0$X)]="NSC"
+latent0$celltype[grep("_6",latent0$X)]="NSC"
+latent0$celltype[grep("_3",latent0$X)]="Neuron"
+latent0$celltype[grep("_4",latent0$X)]="Neuron"
 
-meta$dataType[which(meta$dataType == "ATAC")]="snATAC-seq"
-meta$dataType[which(meta$dataType == "RNA")]="sc5nRNA-seq"
-meta=left_join(meta, cluster_info, by="cluster", copy=F)
-meta1=meta%>%group_by(dataType,celltype,label)%>%dplyr::summarise(count=n())%>%dplyr::mutate(percent=count/sum(count))
-meta1$label=factor(meta1$label, levels=label)
-meta1$celltype=factor(meta1$celltype, levels=c("iPSC","NSC","Neuron"))
+latent0$dataType[which(latent0$dataType == "ATAC")]="snATAC-seq"
+latent0$dataType[which(latent0$dataType == "RNA")]="sc5nRNA-seq"
+latent0=left_join(latent0, cluster_info, by="cluster", copy=F)
+latent0a=latent0%>%group_by(dataType,celltype,label)%>%dplyr::summarise(count=n())%>%dplyr::mutate(percent=count/sum(count))
+latent0a$label=factor(latent0a$label, levels=label)
+latent0a$celltype=factor(latent0a$celltype, levels=c("iPSC","NSC","Neuron"))
 
 f1c=ggplot() + 
   labs(x=NULL, y = "% of cells",title= "Cell clusters from samples", fill=NULL) +
   scale_fill_npg()+
   scale_y_continuous(labels = scales::percent, limits=c(0,1), breaks=c(0,0.25,0.5,0.75,1))+
   facet_grid(cols=vars(dataType))+
-  geom_bar(data=meta1, mapping=aes(y=percent, x=celltype, fill=label), linewidth=0.25, color = "black", stat="identity", alpha=1) + 
+  geom_bar(data=latent0a, mapping=aes(y=percent, x=celltype, fill=label), linewidth=0.25, color = "black", stat="identity", alpha=1) + 
   theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1), 
                legend.box.margin = margin(t=-10, r=0, b=0, l=-10),legend.position = "right", legend.direction = "vertical")
 pdf(paste0(path_fig1,"f1c.cluster_per_sample.pdf"), width = 2.3, height = 1.7)
@@ -190,33 +190,34 @@ dev.off()
 
 #===============
 # fig 1f
-pca1=read.delim(paste0(path_fig1_data,"scDART_SEACell_for_all_clusters.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-# generated from Fig1.coembed/conembed.R
+latent0=read.delim(paste0(path_fig1_data,"scDART_SEACell_for_all_clusters.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+# generated from Fig1.coembed/seacell.R
 
-nrow(unique(pca1[,c(13,14)])) #395
-pca1=left_join(pca1, cluster_info, by="cluster",copy=F)
-pca1$SEACell=sapply(strsplit(pca1$SEACell,"_"), tail, 1)
-pca1$SEACell2=paste0(pca1$label,"_",pca1$SEACell)
-pca2=pca1%>%group_by(SEACell2,label,dataType)%>%dplyr::summarise(count=n())
-pca3=spread(pca2,key=3, value=4)
-pca3[is.na(pca3)]=0
-exclude=unique(pca3$SEACell2[which(pca3$ATAC<3 | pca3$RNA<3 )])
-pca1$label=factor(pca1$label, levels=label)
-pca1$dataType=paste0(pca1$dataType,"-seq")
+nrow(unique(latent0[,c(1,12)])) #395
+latent0=left_join(latent0, cluster_info, by="cluster",copy=F)
+latent0$SEACell=sapply(strsplit(latent0$SEACell,"_"), tail, 1)
+latent0$SEACell2=paste0(latent0$label,"_",latent0$SEACell)
+latent1=latent0%>%group_by(SEACell2,label,dataType)%>%dplyr::summarise(count=n())
+latent2=spread(latent1,key=3, value=4)
+latent2[is.na(latent2)]=0
+exclude=unique(latent2$SEACell2[which(latent2$ATAC<3 | latent2$RNA<3 )])
+latent0$label=factor(latent0$label, levels=label)
+latent0$dataType=paste0(latent0$dataType,"-seq")
 
-pca3$include="Yes"
-pca3$include[which(pca3$SEACell2 %in% exclude)]="No"
-pca3$RNA=pca3$RNA*(-1)
-pca3$both=pca3$ATAC-pca3$RNA
-pca4=melt(pca3, id=c(1,2,5,6))
-pca4$label=factor(pca4$label, levels=label)
+latent2$include="Yes"
+latent2$include[which(latent2$SEACell2 %in% exclude)]="No"
+latent2=latent2[which(latent2$include == "Yes"),]
+latent2$RNA=latent2$RNA*(-1)
+latent2$both=latent2$ATAC-latent2$RNA
+latent3=reshape2::melt(latent2, id=c(1,2,5,6))
+latent3$label=factor(latent3$label, levels=label)
 
 f1f=ggplot() + 
-  labs(x="Number of single cell (24,342 |15,046)", y ="Metacell (n = 391)", title="Content of metacells", fill=NULL)+
-  geom_bar(data=pca4[which(pca4$include == "Yes"),], mapping=aes(y=reorder(SEACell2,-both), x=value, fill=as.factor(variable)), colour=NA,size=0, width = 1, stat="identity")+
+  labs(x="Number of single cell (24,385 | 15,046)", y ="Metacell (n = 393)", title="Content of metacells", fill=NULL)+
+  geom_bar(data=latent3[which(latent3$include == "Yes"),], mapping=aes(y=reorder(SEACell2,-both), x=value, fill=as.factor(variable)), colour=NA, width = 1, stat="identity")+
   scale_fill_manual(labels=c("scATAC","sc5nRNA"), values=c("#00A087FF","#2A6EBBFF"))+
   facet_grid(rows=vars(label), scale="free_y", space="free")+
-  scale_x_continuous(breaks=c(-500, -250, 0, 250), labels=c(500,250,0,250))+
+  scale_x_continuous(breaks=c(-200, -100, 0, 100), labels=c(200,100,0,100))+
   theme1 + theme(axis.text.y = element_blank(), strip.text.y = element_text(size=5, angle=0, margin = margin(0,0,0,0, "cm")), 
                  legend.position = c(0.1,0.9), axis.line.y = element_blank(), axis.ticks.y = element_blank(),panel.grid.major = element_blank(),
                  panel.spacing = unit(0.1, "lines"))
@@ -231,6 +232,7 @@ umap3=left_join(umap3,cluster_info, by="cluster", copy=F)
 umap3$label=factor(umap3$label, levels=label)
 umap3$tech="UMAP of sc5nRNA-seq"
 colnames(umap3)[c(4,5)]=c("UMAP1", "UMAP2")
+umap_info=umap3[which(umap3$group == "single cell"),]%>%group_by(tech, label)%>%dplyr::summarise(UMAP1=mean(UMAP1),UMAP2=mean(UMAP2))
 
 f1g=ggplot() + 
   labs(x="UMAP1", y ="UMAP2", title="Metacells overlay sc5nRNA-seq UMAP", color="Cluster")+
