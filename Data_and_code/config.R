@@ -34,9 +34,15 @@ raw_data_folder <- '[raw_data_folder]'
 #   3_preparing_base_network/base_network.rds (+ variants)
 #   4_preparing_dataset/dataset.rds (+ variants)
 #   5_lasso_models/lasso_network_with_randomization.rds (+ variants)
+# Three further analyses write their results here too, from the network
+# above (run them after the pipeline):
 #   10_enhancer_centrality/all_edges/all_enhancers_stats.csv
+#     (enhancer_centrality_stats/build_enhancer_stats.R)
 #   10_enhancer_centrality/screen_overlap_enhancers.csv
 #   10_enhancer_centrality/screen_overlap_promoters.csv
+#     (enhancer_centrality_stats/build_screen_overlap.R)
+#   19_abc_validation_full_matrix/tier_comparison.csv
+#     (abc_validation/build_tier_comparison.R)
 #
 # One file ships pre-built, so most scripts below work out of the box even
 # before running the pipeline:

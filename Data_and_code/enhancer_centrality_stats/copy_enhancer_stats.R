@@ -6,15 +6,15 @@
 #   ExtFig6e  GSEA enrichment plots
 #   ExtFig6f  hit-score sign vs triplet participation bar
 #
-# Unlike the other Data_and_code/ regeneration scripts, this one performs no
-# computation: `all_enhancers_stats.csv` is already a finished output of the
-# GRN reconstruction pipeline's enhancer-centrality analysis (control panel:
-# positive_only = FALSE, i.e. the `all_edges` analysis; per-stratum
-# |estimate| p90 filter applied). Regenerating it from scratch means rerunning
-# that analysis against the full lasso network. This script exists to record
-# that provenance and to copy the file (plus the two screen-overlap tables it
-# is analysed against) into Fig6/data/ so the panel scripts read one
-# documented location.
+# This script performs no computation. Its three inputs are produced in
+# primary_data_folder by the two build scripts in this folder:
+#   build_enhancer_stats.R   all_enhancers_stats.csv (positive_only = FALSE,
+#                            i.e. the `all_edges` analysis; per-stratum
+#                            |estimate| p90 filter applied)
+#   build_screen_overlap.R   screen_overlap_enhancers.csv,
+#                            screen_overlap_promoters.csv
+# Run those first; this script copies the three files into Fig6/data/ so the
+# panel scripts read one documented location.
 #
 # `all_enhancers_stats.csv` columns used downstream:
 #   enhancer                 peak id

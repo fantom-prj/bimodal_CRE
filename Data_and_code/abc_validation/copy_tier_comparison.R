@@ -20,13 +20,12 @@
 # filters increase agreement with this independent method, versus a
 # no-selection baseline.
 #
-# Unlike most Data_and_code/ regeneration scripts, this one performs no
-# computation: `tier_comparison.csv` is already a finished output of the GRN
-# reconstruction pipeline's ABC validation analysis. Regenerating it from
-# scratch means re-running that analysis against ABC's full, unfiltered
-# genome-wide score matrix (tens of millions of candidate pairs). This
-# script exists to record that provenance and to copy the file into
-# Fig5/data/ so the panel script reads one documented location.
+# This script performs no computation. `tier_comparison.csv` is produced in
+# primary_data_folder by build_tier_comparison.R (this folder), which runs
+# the comparison against ABC's full, unfiltered genome-wide score matrix
+# (tens of millions of candidate pairs). Run that first; this script copies
+# the file into Fig5/data/ so the panel script reads one documented
+# location.
 #
 # `tier_comparison.csv` columns used downstream:
 #   tier          base | elastic_net | filtered
