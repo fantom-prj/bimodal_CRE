@@ -1,6 +1,6 @@
 #### Data-root configuration ####
 #
-# Every regeneration script under Data_and_code/, plus Fig5/fig5a_sankey.R,
+# Every regeneration script under Data_and_code/, plus Fig5/scFig5a_sankey.R,
 # sources this file to locate the data behind the GRN reconstruction pipeline
 # (gene regulatory network inference from paired scRNA-seq / snATAC-seq /
 # Hi-C data across iPSC -> NSC -> Neuron differentiation).
@@ -47,7 +47,7 @@ raw_data_folder <- '[raw_data_folder]'
 # One file ships pre-built, so most scripts below work out of the box even
 # before running the pipeline:
 #   5_lasso_models/lasso_network_filtered.rds — the final, published
-#     high-confidence GRN (127,938 edges): lasso_network_with_randomization.rds
+#     high-confidence GRN (141,733 edges): lasso_network_with_randomization.rds
 #     after adjpvalue <= 0.05, dev_ratio >= 0.3, and the per-stratum
 #     |estimate| p90 filter (see network_loading/load_and_filter_network.R).
 #
