@@ -3,7 +3,7 @@
 Reconstructs the gene regulatory network (GRN) itself, from raw TOBIAS
 footprinting / Hi-C / paired scRNA-seq-snATAC-seq data through to the final
 elastic-net-pruned network. Every other `Data_and_code/` subfolder, and
-`Fig5/fig5a_sankey.R`, reads this pipeline's output (via `primary_data_folder`
+`Fig5/scFig5a_sankey.R`, reads this pipeline's output (via `primary_data_folder`
 in `../config.R`) rather than the raw data directly — this is the one place
 in the repository where that output is actually produced.
 

@@ -16,4 +16,4 @@ Writes `Fig5/data/network_node_counts.csv` and
 as an ordered factor, metric as an ordered factor, plus a `colour` column for
 direct ggplot use).
 
-Feeds `Fig5/ext_fig5c_network_nodes.R` and `Fig5/ext_fig5c_network_edges.R`.
+Feeds `Fig5/scFig_ex5.R`.

@@ -32,9 +32,8 @@ Fig6a, ExtFig6a, ExtFig6b.
 
 * `plot_stacked_bar_height.R` — draws the linear-height stacked bar (total
   bar height = raw n_nodes, so shrinking sample size at stringent thresholds
-  is visible in the figure itself). All six panel scripts `source()` this
-  and call `make_stacked_bar_linheight(category_table, theme_name,
-  sweep_name)`; they differ only in those two arguments.
+  is visible in the figure itself). Not sourced by the panel scripts, which
+  draw these bars with their own ggplot code.
 
 Cross-check printed by the script (e.g. estimate_percentile=90, TF_promoter:
 fully_uncoupled 61.17%, fully_coupled 10.50%, n_nodes 2457).

@@ -94,7 +94,7 @@ make_dom_panel <- function(layout, edge_df_panel, tfs_label, title_str) {
 # theme_graph() text elements do not reliably resolve that glyph against
 # the Arial subset embedded by cairo_pdf/ragg in this rendering path (it
 # falls back to an ellipsis), unlike plain ggplot2 text geoms elsewhere in
-# this repo (e.g. fig5a_sankey.R's on-plot labels) where the same glyph
+# this repo (e.g. scFig5a_sankey.R's on-plot labels) where the same glyph
 # renders fine.
 p_panel_direct   <- make_dom_panel(layout_all, edge_direct,   tfs_to_label_all,
                                    'Direct edges only\n(TF -> promoter(TF))')

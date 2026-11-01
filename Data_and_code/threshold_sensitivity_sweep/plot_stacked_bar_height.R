@@ -1,15 +1,14 @@
 #### Shared plotting helper for the six threshold-sensitivity stacked bars ####
 #
-# Sourced by:
-#   Fig5/fig5d_stacked_promoter_pctl.R          (TF_promoter x estimate_percentile)
-#   Fig5/ext_fig5e_stacked_promoter_adjp.R      (TF_promoter x adjpvalue_threshold)
-#   Fig5/ext_fig5f_stacked_promoter_devratio.R  (TF_promoter x dev_ratio_threshold)
-#   Fig6/fig6a_stacked_enhancer_pctl.R          (TF_enhancer x estimate_percentile)
-#   Fig6/ext_fig6a_stacked_enhancer_adjp.R      (TF_enhancer x adjpvalue_threshold)
-#   Fig6/ext_fig6b_stacked_enhancer_devratio.R  (TF_enhancer x dev_ratio_threshold)
+# Covers:
+#   TF_promoter x estimate_percentile, adjpvalue_threshold, dev_ratio_threshold
+#   TF_enhancer x estimate_percentile, adjpvalue_threshold, dev_ratio_threshold
 #
-# The plotting logic is identical across all six panels -- only theme_name and
-# sweep_name differ -- so it lives here rather than being copied six times.
+# Not sourced by the panel scripts: Fig5/scFig5.R, Fig5/scFig_ex5.R, Fig6/scFig6.R
+# and Fig6/scFig_ex6.R draw these bars with their own ggplot code.
+#
+# The plotting logic is identical across all six bars -- only theme_name and
+# sweep_name differ.
 #
 # Draws the linear-height variant: total bar height is the raw n_nodes of
 # that grid point, so the shrinking sample size at stringent thresholds is

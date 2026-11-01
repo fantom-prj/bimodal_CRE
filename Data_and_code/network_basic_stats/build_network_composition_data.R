@@ -1,6 +1,6 @@
 #### Regeneration script: basic network node/edge composition across variants ####
 #
-# Feeds: Fig5/ext_fig5c_network_nodes.R, Fig5/ext_fig5c_network_edges.R
+# Feeds: Fig5/scFig_ex5.R
 #
 # For each of the 8 candidate network variants (base vs elastic-net-
 # regularised, with/without TOBIAS footprinting, with/without Hi-C contacts),

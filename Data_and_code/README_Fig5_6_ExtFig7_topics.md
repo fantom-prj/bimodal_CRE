@@ -18,7 +18,7 @@ themselves:
   `../Fig6/`, and `../ExtFig7/` — anything computed from the GRN pipeline's
   output that either (a) is shared by more than one panel, or (b) is cheap to
   isolate into its own regeneration step for traceability. One panel
-  (`Fig5/fig5a_sankey.R`) is a documented exception that reads the GRN
+  (`Fig5/scFig5a_sankey.R`) is a documented exception that reads the GRN
   pipeline's output directly instead — see the note at the bottom.
 
 ## One-time setup
@@ -59,7 +59,7 @@ and the exact output file(s) it writes.
 
 ## Documented exception: Fig5a
 
-`Fig5/fig5a_sankey.R` reads `lasso_network_with_randomization.rds` and
+`Fig5/scFig5a_sankey.R` reads `lasso_network_with_randomization.rds` and
 `dataset.rds` directly (from `primary_data_folder`) and is not fed by any
 `Data_and_code/` subfolder — its custom Sankey ribbon geometry needs dozens of
 fine-grained per-modality-pair edge counts that don't decompose into a

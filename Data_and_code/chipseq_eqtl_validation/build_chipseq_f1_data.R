@@ -12,7 +12,7 @@
 # with/without Hi-C contacts).
 #
 # This produces the data behind Extended Figure 5a; see
-# ../../Fig5/ext_fig5a_chipseq_f1.R for the plot itself.
+# ../../Fig5/scFig_ex5.R for the plot itself.
 #
 # Reads (see ../config.R to set these paths):
 #   [raw_data_folder]/tobias_chip_seq.merged.TEAD.ONECUT.tsv

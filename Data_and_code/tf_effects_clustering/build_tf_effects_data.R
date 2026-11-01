@@ -16,8 +16,7 @@
 #     further split into sub-clusters;
 #   - ranked overall via a log rank-product across the 4 columns.
 #   (The heatmap draw() call and the characteristics dot plot themselves live
-#    in the panel scripts, Fig5/fig5b_heatmap.R and
-#    Fig5/fig5c_tf_characteristics.R.)
+#    in the panel script, Fig5/scFig5.R.)
 #
 # Control-panel values fixed to the variant used for the published figures:
 #   use_abs_estimate         = FALSE  (signed cumulative effect, so activating

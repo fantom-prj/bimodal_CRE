@@ -14,7 +14,7 @@
 # source/target measurement-type pairs (aCRE/tCRE combinations).
 #
 # This produces the data behind Extended Figure 5b; see
-# ../../Fig5/ext_fig5b_eqtl_f1.R for the plot itself, which uses only the
+# ../../Fig5/scFig_ex5.R for the plot itself, which uses only the
 # pooled 'All interactions' slice.
 #
 # Reads (see ../config.R to set these paths):
