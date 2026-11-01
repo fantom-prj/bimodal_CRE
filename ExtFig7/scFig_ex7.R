@@ -41,15 +41,17 @@ res_collapsed <- read.csv(paste0(path_extfig7_data, 'ep_enrichment_collapsed.csv
                           stringsAsFactors = FALSE)
 
 feature_display <- c(
-  any.27ac_enhancer  = 'H3K27ac',   any.27ac_promoter  = 'H3K27ac',
-  any.27m3_enhancer  = 'H3K27me3',  any.27m3_promoter  = 'H3K27me3',
+  any.Active_enhancer    = 'Active',    any.Active_promoter    = 'Active',
+  any.Primed_enhancer    = 'Primed',    any.Primed_promoter    = 'Primed',
+  any.Repressed_enhancer = 'Repressed', any.Repressed_promoter = 'Repressed',
+  any.Bivalent_enhancer  = 'Bivalent',  any.Bivalent_promoter  = 'Bivalent',
   iPSC_SE_enhancer   = 'iPSC SE',   iPSC_SE_promoter   = 'iPSC SE',
   NSC_SE_enhancer    = 'NSC SE',    NSC_SE_promoter    = 'NSC SE',
   Neuron_SE_enhancer = 'Neuron SE', Neuron_SE_promoter = 'Neuron SE',
   CGI_enhancer       = 'CGI',       CGI_promoter       = 'CGI',
   TATA_box_enhancer  = 'TATA box',  TATA_box_promoter  = 'TATA box'
 )
-feature_levels  <- c('H3K27ac', 'H3K27me3', 'iPSC SE', 'NSC SE', 'Neuron SE', 'CGI', 'TATA box')
+feature_levels  <- c('Active', 'Primed', 'Repressed', 'Bivalent', 'iPSC SE', 'NSC SE', 'Neuron SE', 'CGI', 'TATA box')
 stratum_display <- c(all = 'All enhancers', tCRE_all = 'Transcribed enhancers',
                      mediating = 'Mediating enhancers')
 
@@ -90,7 +92,7 @@ ext_f7a <- ggplot(res_plot, aes(x = enhancer, y = promoter)) +
   ) +
   labs(x = 'Enhancer feature', y = 'Promoter feature', title="Enrichment of chromatin feature between connected enhancer-promoter")
 
-pdf(paste0(path_extfig7,"ext_f7a.ep_enrichment_collapsed2.pdf"), width = 7, height = 2.5)
+pdf(paste0(path_extfig7,"ext_f7a.ep_enrichment_collapsed2.pdf"), width = 7, height = 3.1)
 print(ext_f7a)
 dev.off()
 

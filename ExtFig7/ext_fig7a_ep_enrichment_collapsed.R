@@ -1,7 +1,7 @@
 #### Extended Figure 7a — Enhancer-promoter epigenomic feature enrichment (collapsed) ####
 #
 # Panel:   Ext Fig 7a. Dot-plot heatmap of whether pairs of epigenomic
-#          features (H3K27ac, H3K27me3, stage-specific super-enhancer
+#          features (chromatin state, stage-specific super-enhancer
 #          membership, CpG islands, TATA boxes) co-occur more or less often
 #          than expected between an enhancer and the promoter(s) it regulates
 #          in the GRN: fill = odds ratio, size = -log10(adj. p), significant
@@ -30,15 +30,17 @@ res_collapsed <- read.csv(paste0(path_extfig7_data, 'ep_enrichment_collapsed.csv
                           stringsAsFactors = FALSE)
 
 feature_display <- c(
-  any.27ac_enhancer  = 'H3K27ac',   any.27ac_promoter  = 'H3K27ac',
-  any.27m3_enhancer  = 'H3K27me3',  any.27m3_promoter  = 'H3K27me3',
+  any.Active_enhancer    = 'Active',    any.Active_promoter    = 'Active',
+  any.Primed_enhancer    = 'Primed',    any.Primed_promoter    = 'Primed',
+  any.Repressed_enhancer = 'Repressed', any.Repressed_promoter = 'Repressed',
+  any.Bivalent_enhancer  = 'Bivalent',  any.Bivalent_promoter  = 'Bivalent',
   iPSC_SE_enhancer   = 'iPSC SE',   iPSC_SE_promoter   = 'iPSC SE',
   NSC_SE_enhancer    = 'NSC SE',    NSC_SE_promoter    = 'NSC SE',
   Neuron_SE_enhancer = 'Neuron SE', Neuron_SE_promoter = 'Neuron SE',
   CGI_enhancer       = 'CGI',       CGI_promoter       = 'CGI',
   TATA_box_enhancer  = 'TATA box',  TATA_box_promoter  = 'TATA box'
 )
-feature_levels  <- c('H3K27ac', 'H3K27me3', 'iPSC SE', 'NSC SE', 'Neuron SE', 'CGI', 'TATA box')
+feature_levels  <- c('Active', 'Primed', 'Repressed', 'Bivalent', 'iPSC SE', 'NSC SE', 'Neuron SE', 'CGI', 'TATA box')
 stratum_display <- c(all = 'All enhancers', tCRE_all = 'Expressed enhancers',
                      mediating = 'Mediating enhancers')
 
@@ -84,4 +86,4 @@ ext_f7a <- ggplot(res_plot, aes(x = enhancer, y = promoter)) +
 # Sized for the Ext Fig 7 layout A/B: both panels span the full usable A4
 # width (~7.47in) on their own row.
 save_panel_png_pdf(ext_f7a, path_extfig7, 'ext_f7a.ep_enrichment_collapsed',
-                   width_in = 7.47, height_in = 2.8)
+                   width_in = 7.47, height_in = 3.4)
