@@ -60,7 +60,7 @@ it.
 ## Already included: the final, published network
 
 `output/5_lasso_models/lasso_network_filtered.rds` ships pre-built in this
-repository (127,938 edges) — it is `lasso_network_with_randomization.rds`
+repository (141,733 edges) — it is `lasso_network_with_randomization.rds`
 (step 5a's raw output) after the three confidence filters every figure in
 this paper applies (adjpvalue <= 0.05, dev_ratio >= 0.3, per-stratum
 |estimate| >= 90th percentile; see `../network_loading/`). If you only want

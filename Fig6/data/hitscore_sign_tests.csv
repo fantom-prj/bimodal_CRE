@@ -1,7 +1,7 @@
 "analysis","contrast","test","n","n_pos","n_neg","OR","CI_lo","CI_hi","pval","fdr"
-"all_edges","NSC_P0vsNSC_P2","Fisher: triplet_pairs>0 x hit_score sign",145,79,66,2.59875242784558,1.21178263737756,5.75507763192219,0.0092056702729736,0.0276170108189208
-"all_edges","iPSvsNSC_P0","Fisher: triplet_pairs>0 x hit_score sign",145,94,51,0.421772247339642,0.194685657539758,0.904904913832008,0.0186884375633944,0.0280326563450916
-"all_edges","NSC_P2vsNeuron","Fisher: triplet_pairs>0 x hit_score sign",145,66,79,0.498735046797299,0.23025441830273,1.05552210862527,0.0569133140351674,0.0569133140351674
-"all_edges","iPSvsNSC_P0","Wilcoxon: cum_abs_estimate_total ~ hit_score sign",145,94,51,NA,NA,NA,0.176403525127464,0.255327242468183
-"all_edges","NSC_P0vsNSC_P2","Wilcoxon: cum_abs_estimate_total ~ hit_score sign",145,79,66,NA,NA,NA,0.255327242468183,0.255327242468183
-"all_edges","NSC_P2vsNeuron","Wilcoxon: cum_abs_estimate_total ~ hit_score sign",145,66,79,NA,NA,NA,0.225152143846633,0.255327242468183
+"all_edges","NSC_P0vsNSC_P2","Fisher: triplet_pairs>0 x hit_score sign",156,90,66,2.24354081373427,1.034776111612,5.06438670680464,0.0348843628377768,0.0552030611038718
+"all_edges","NSC_P2vsNeuron","Fisher: triplet_pairs>0 x hit_score sign",156,65,91,0.462465439418718,0.204852629247241,1.00303814158681,0.0368020407359145,0.0552030611038718
+"all_edges","iPSvsNSC_P0","Fisher: triplet_pairs>0 x hit_score sign",156,100,56,0.545205272223448,0.255535074527859,1.16254939320301,0.104129269767652,0.104129269767652
+"all_edges","NSC_P0vsNSC_P2","Wilcoxon: cum_abs_estimate_total ~ hit_score sign",156,90,66,NA,NA,NA,0.492122984272788,0.738184476409182
+"all_edges","NSC_P2vsNeuron","Wilcoxon: cum_abs_estimate_total ~ hit_score sign",156,65,91,NA,NA,NA,0.42904004746036,0.738184476409182
+"all_edges","iPSvsNSC_P0","Wilcoxon: cum_abs_estimate_total ~ hit_score sign",156,100,56,NA,NA,NA,0.831772049137767,0.831772049137767
