@@ -1,6 +1,7 @@
 #### Prune the candidate network by elastic-net regression ####
 #
-# Step 5, the final step, of the GRN reconstruction pipeline. For every
+# Step 5a of the GRN reconstruction pipeline (5b only combines its outputs
+# into network variants, see 5b_assemble_network_variants.R). For every
 # candidate edge target in the base network (3_preparing_base_network.R),
 # fits an elastic-net regression of that target's expression or accessibility
 # against all of its candidate regulators (predictor weights set from
@@ -30,7 +31,9 @@
 # computationally expensive step of the pipeline — with `randomize = TRUE`
 # and the full metacell set, expect the two model-fitting loops below (one
 # per edge class) together to need on the order of a day of wall time even
-# with substantial parallelism.
+# with substantial parallelism. The network variants share most of their
+# models, so only the published variant needs a full run; the others need
+# one edge class each (`fit_edge_classes`), see 5b_assemble_network_variants.R.
 #
 # Reads (see ../config.R to set raw_data_folder and primary_data_folder):
 #   [primary_data_folder]/3_preparing_base_network/base_network(_no_hic)
@@ -48,6 +51,18 @@
 #     ols_pvalue, ols_adjpvalue, source_measurement_type,
 #     target_measurement_type
 #   ..._sample.csv   (1000-row random sample, for quick review)
+#   with a single entry in fit_edge_classes, only that edge class is fitted and
+#   the file names end in _TF_peak_part / _Enhancer_promoter_part instead;
+#   5b_assemble_network_variants.R combines such parts into full networks
+#   with target_blocks > 1, the run fits only one block of targets and writes
+#   <name>_block<b>of<B>.rds (per-target results, keyed by target index);
+#   5b_assemble_network_variants.R puts the blocks back together
+#
+# Splitting a run into target blocks lets the blocks run as separate jobs.
+# Block b fits targets b, b + B, b + 2B, ... of each edge class, so every
+# block gets a similar mix of small and large models. Each target keeps its
+# index in the full target list, and the permutation seeds depend only on that
+# index, so the combined blocks are identical to a single run.
 
 #### set up ####
 
@@ -64,12 +79,19 @@ use_hic <- TRUE
 use_footprinting <- TRUE
 randomize <- TRUE
 use_enhancer_tCRE <- TRUE  # if FALSE: enhancer tCRE excluded as predictor in enhancer-->promoter models and as target in all models
+fit_edge_classes <- c('TF_peak', 'Enhancer_promoter') # both: full network; one of them: that part only (see header)
+target_blocks <- 1 # > 1: split the targets into this many blocks, one run per block (see header)
+target_block <- 1  # the block fitted by this run, 1..target_blocks
 num_perms <- ifelse(randomize, 100, 1)
 n.cores <- 90 # parallel::detectCores() - 2
 alpha <- 0.95
 nfolds <- 10
 CRE_types <- c('aCRE', 'tCRE')
 power_law <- 0.75 # as in https://www.cell.com/molecular-cell/pdfExtended/S1097-2765(18)30547-1
+
+stopifnot(length(fit_edge_classes) %in% 1:2,
+          all(fit_edge_classes %in% c('TF_peak', 'Enhancer_promoter')),
+          target_block %in% seq_len(target_blocks))
 
 # set random seed for reproducibility
 set.seed(42)
@@ -89,10 +111,17 @@ pseudo_time_file <- file.path(raw_data_folder, 'pseudotime.scRNA.tsv')
 results_folder <- file.path(primary_data_folder, '5_lasso_models')
 dir.create(results_folder, showWarnings = FALSE, recursive = TRUE)
 
-# parallel computation environment
-my.cluster <- parallel::makeCluster(n.cores)
-doParallel::registerDoParallel(cl = my.cluster)
+# parallel computation environment: forked workers share the loaded data
+# instead of each receiving a copy (on Windows, doParallel falls back to a
+# socket cluster)
+doParallel::registerDoParallel(cores = n.cores)
 foreach::getDoParRegistered()
+
+# indices of the targets fitted by this run (all of them unless target_blocks > 1)
+block_indices <- function(n_targets) {
+  if(n_targets < target_block) integer(0) else seq(target_block, n_targets, by = target_blocks)
+}
+block_results <- list(TF_peak = list(), Enhancer_promoter = list())
 
 # lading data
 base_network <- readRDS(base_network_file)
@@ -128,8 +157,11 @@ perform_permutation_test <- function(tmp_res, current_predictors, target_values,
     k <- 1
     for(k in 1:num_perms){
 
-      # different seed for each target, yet replicable
-      set.seed(k * (i + ((j-1) * n_targets)))
+      # different seed for each target, yet replicable; R's default generator
+      # is named explicitly, because forked workers would otherwise inherit
+      # the L'Ecuyer-CMRG generator set before the loops
+      set.seed(k * (i + ((j-1) * n_targets)), kind = 'Mersenne-Twister',
+               normal.kind = 'Inversion', sample.kind = 'Rejection')
 
       target_values_k <- sample(target_values,
                                 size = length(target_values), replace = FALSE)
@@ -318,7 +350,9 @@ set.seed(42)
 targets <- unique(tf_peak_network$target)
 n_targets <- length(targets)
 
-tmp <- foreach(i = 1:n_targets, .packages = c('glmnet', 'tidyverse')) %dopar% {
+# an edge class not in fit_edge_classes is skipped; the target list (and so
+# every permutation seed) of the fitted class is unchanged
+tmp <- if(!'TF_peak' %in% fit_edge_classes) list() else foreach(i = block_indices(n_targets), .packages = c('glmnet', 'tidyverse')) %dopar% {
 
   # current target
   target <- targets[i]
@@ -427,6 +461,13 @@ tmp <- foreach(i = 1:n_targets, .packages = c('glmnet', 'tidyverse')) %dopar% {
 
 }
 
+# a worker that dies (e.g. out of memory) leaves NULL results: stop rather
+# than silently lose its targets
+stopifnot(!any(vapply(tmp, is.null, logical(1))))
+if(length(tmp) > 0){
+  block_results$TF_peak <- setNames(tmp, block_indices(n_targets))
+}
+
 # removing errors
 errors <- which(sapply(tmp, class) == 'character')
 if(length(errors) > 0){
@@ -437,12 +478,6 @@ if(length(errors) > 0){
 tf_peak_network <- do.call('rbind', tmp)
 
 #### enhancer to promoter ####
-
-# re-starting the cluster
-stopCluster(my.cluster)
-my.cluster <- parallel::makeCluster(n.cores)
-doParallel::registerDoParallel(cl = my.cluster)
-foreach::getDoParRegistered()
 
 # considering only connections from enhancer to promoter
 idx <- base_network$link_type == 'Enhancer_promoter'
@@ -455,7 +490,7 @@ set.seed(42)
 # looping over targets
 targets <- unique(enhancer_promoter_network$target)
 n_targets <- length(targets)
-tmp <- foreach(i = 1:n_targets, .packages = c('glmnet', 'tidyverse')) %dopar% {
+tmp <- if(!'Enhancer_promoter' %in% fit_edge_classes) list() else foreach(i = block_indices(n_targets), .packages = c('glmnet', 'tidyverse')) %dopar% {
 
   # current target
   target <- targets[i]
@@ -574,6 +609,11 @@ tmp <- foreach(i = 1:n_targets, .packages = c('glmnet', 'tidyverse')) %dopar% {
 
 }
 
+stopifnot(!any(vapply(tmp, is.null, logical(1))))
+if(length(tmp) > 0){
+  block_results$Enhancer_promoter <- setNames(tmp, block_indices(n_targets))
+}
+
 # removing errors
 errors <- which(sapply(tmp, class) == 'character')
 if(length(errors) > 0){
@@ -588,24 +628,25 @@ enhancer_promoter_network <- do.call('rbind', tmp)
 # binding the networks together
 lasso_network <- rbind(tf_peak_network, enhancer_promoter_network)
 
-# writing
-idx <- sample(1:dim(lasso_network)[1], 1000)
-write.csv(lasso_network[idx, ], row.names = FALSE,
-          file.path(results_folder, paste0('lasso_network',
-                                           ifelse(use_hic, '', '_no_hic'),
-                                           ifelse(use_footprinting, '', '_no_footprinting'),
-                                           ifelse(randomize, '_with_randomization', ''),
-                                           ifelse(use_enhancer_tCRE, '', '_no_enhancer_tCRE'),
-                                           '_sample.csv')))
-saveRDS(lasso_network, file.path(results_folder,
-                                 paste0('lasso_network',
-                                        ifelse(use_hic, '', '_no_hic'),
-                                        ifelse(use_footprinting, '', '_no_footprinting'),
-                                        ifelse(randomize, '_with_randomization', ''),
-                                        ifelse(use_enhancer_tCRE, '', '_no_enhancer_tCRE'),
-                                        '.rds')))
+# writing; a single fitted edge class never takes a full-network file name
+output_name <- paste0('lasso_network',
+                      ifelse(use_hic, '', '_no_hic'),
+                      ifelse(use_footprinting, '', '_no_footprinting'),
+                      ifelse(randomize, '_with_randomization', ''),
+                      ifelse(use_enhancer_tCRE, '', '_no_enhancer_tCRE'),
+                      ifelse(length(fit_edge_classes) == 1, paste0('_', fit_edge_classes[1], '_part'), ''))
+if(target_blocks > 1){
+  # a block keeps the per-target results; 5b_assemble_network_variants.R
+  # combines the blocks exactly as the lines below combine a single run's
+  saveRDS(block_results, file.path(results_folder,
+                                   paste0(output_name, '_block', target_block, 'of', target_blocks, '.rds')))
+  message('Block ', target_block, ' of ', target_blocks, ': lasso network edges retained: ', nrow(lasso_network))
+}else{
+  idx <- sample(1:dim(lasso_network)[1], min(1000, dim(lasso_network)[1]))
+  write.csv(lasso_network[idx, ], row.names = FALSE,
+            file.path(results_folder, paste0(output_name, '_sample.csv')))
+  saveRDS(lasso_network, file.path(results_folder, paste0(output_name, '.rds')))
+  message('Lasso network edges retained: ', nrow(lasso_network))
+}
 
-message('Lasso network edges retained: ', nrow(lasso_network))
-
-# stopping the cluster
-stopCluster(my.cluster)
+doParallel::stopImplicitCluster()
