@@ -266,7 +266,7 @@ f6d <- ggplot() +
                      name = 'Screen coverage') +
   scale_x_continuous(name = 'Triplet-pair count (log10 scale)') +
   scale_y_continuous(name = 'Cumulative |estimate| (in + out edges)') +
-  labs(title="Network centrality of 52,334 enhancers") +
+  labs(title=paste0("Network centrality of ", format(nrow(stats), big.mark = ","), " enhancers")) +
   theme1+theme(legend.position = "bottom")
 
 pdf(paste0(path_fig6,"f6d.screen_coverage_scatter2.pdf"), width = 2.5, height = 3)
