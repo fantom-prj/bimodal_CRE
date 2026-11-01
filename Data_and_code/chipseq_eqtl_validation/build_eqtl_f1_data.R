@@ -4,7 +4,10 @@
 # inferred links recover known enhancer-to-gene regulatory relationships from
 # fine-mapped eQTLs (credible-set SNPs in the enhancer, linked to their eGene).
 # An inferred edge counts as a true positive if it connects the same
-# peak/gene pair as an eQTL association; precision, recall, and F1 are
+# peak/gene pair as an eQTL association. Genes are matched on Ensembl gene IDs
+# (the eGene ID of the eQTL table, and the Ensembl ID the peak annotation gives
+# the edge's target promoter), so the result does not depend on gene-symbol
+# annotation releases. Precision, recall, and F1 are
 # computed across a range of deviance-ratio thresholds, separately for each
 # of 8 candidate network variants (base vs elastic-net-regularised,
 # with/without TOBIAS footprinting, with/without Hi-C contacts) and for 5
@@ -16,6 +19,7 @@
 #
 # Reads (see ../config.R to set these paths):
 #   [raw_data_folder]/aCRE2egene_eqtl_LD_pip3_all_method_pairbase.tsv
+#   [raw_data_folder]/all_aCRE.PE.final.tsv  (peak annotation: promoter -> Ensembl gene ID)
 #   [primary_data_folder]/3_preparing_base_network/base_network*.rds (4 files)
 #   [primary_data_folder]/5_lasso_models/lasso_network*_with_randomization.rds (4 files)
 #
@@ -24,11 +28,11 @@
 #   (pre-filtered to metric == 'f1', measurement_type == 'All interactions')
 
 rm(list = ls())
-library(org.Hs.eg.db)
 
 # ── CONTROL PANEL ─────────────────────────────────────────────────────────────
 source('../config.R')  # defines primary_data_folder, raw_data_folder
 eqtl_file <- file.path(raw_data_folder, 'aCRE2egene_eqtl_LD_pip3_all_method_pairbase.tsv')
+annotated_peaks_file <- file.path(raw_data_folder, 'all_aCRE.PE.final.tsv')
 out_file  <- '../../Fig5/data/eqtl_f1_all_interactions.csv'
 
 networks_to_compare <- c(
@@ -67,14 +71,13 @@ eqtl_raw <- eqtl_raw[, c('peakID', 'eqtl_gene_id')]
 colnames(eqtl_raw) <- c('peak_id', 'ensembl_gene_id')
 eqtl_raw$peak_id <- gsub('-', '_', eqtl_raw$peak_id)
 
-sym_map <- AnnotationDbi::select(org.Hs.eg.db,
-                         keys    = unique(eqtl_raw$ensembl_gene_id),
-                         keytype = 'ENSEMBL',
-                         columns = 'SYMBOL')
-eqtl <- merge(eqtl_raw, sym_map, by.x = 'ensembl_gene_id', by.y = 'ENSEMBL')
-eqtl$ensembl_gene_id <- NULL
-eqtl <- unique(eqtl)
-eqtl$id <- paste0(eqtl$peak_id, '_', eqtl$SYMBOL)
+eqtl <- unique(eqtl_raw)
+eqtl$id <- paste0(eqtl$peak_id, '_', sub('\\.[0-9]+$', '', eqtl$ensembl_gene_id))
+
+# Ensembl gene ID (without version) of every peak, to identify edge targets
+annotated_peaks <- read.delim(annotated_peaks_file, stringsAsFactors = FALSE)
+peak_gene_id <- setNames(annotated_peaks$simple_geneID, gsub('-', '_', annotated_peaks$peakID))
+rm(annotated_peaks)
 
 message('eQTL ground-truth pairs: ', length(unique(eqtl$id)))
 
@@ -97,7 +100,7 @@ for (i in seq_len(n_networks)) {
   }
 
   network <- network[network$link_type == 'Enhancer_promoter', ]
-  network$id <- paste0(network$source, '_', network$target_gene)
+  network$id <- paste0(network$source, '_', peak_gene_id[network$target])
 
   for (j in seq_along(thresholds)) {
 

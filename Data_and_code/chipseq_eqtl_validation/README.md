@@ -13,7 +13,7 @@ Ext Fig 5 panel.
 
 * `build_eqtl_f1_data.R` — checks how well each network variant's
   enhancer-to-promoter edges recover known enhancer-to-gene links from
-  fine-mapped eQTLs (gene symbols resolved via org.Hs.eg.db), computing
+  fine-mapped eQTLs (genes matched on Ensembl gene IDs), computing
   precision/recall/F1 across dev_ratio thresholds x 8 network variants x 5
   source/target measurement-type pairs, pooled into an 'All interactions'
   slice. Writes `Fig5/data/eqtl_f1_all_interactions.csv`. Feeds
