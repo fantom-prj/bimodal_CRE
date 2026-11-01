@@ -3,6 +3,11 @@ path_fig6_data <- paste0(primary_folder, 'Fig6/data/')
 path_fig6      <- paste0(primary_folder, 'Fig6/out/')
 path_code      <- paste0(primary_folder, 'Data_and_code/')
 
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(patchwork)
+
 #=====================
 theme1=theme(  panel.background = element_rect(fill = "white", color = "white", linewidth = 0.25, linetype = "solid"),
                panel.grid.major = element_line(linewidth = 0.25, linetype = 'solid', color = "grey90"), 

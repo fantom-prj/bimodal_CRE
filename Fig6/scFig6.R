@@ -6,6 +6,7 @@ path_code      <- paste0(primary_folder, 'Data_and_code/')
 library(ggplot2)
 library(dplyr)
 library(ggforce)
+library(ggrastr)
 
 #=====================
 theme1=theme(  panel.background = element_rect(fill = "white", color = "white", linewidth = 0.25, linetype = "solid"),

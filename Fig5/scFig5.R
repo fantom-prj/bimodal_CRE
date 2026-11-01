@@ -4,10 +4,10 @@ library(grid)
 library(tidyverse)
 
 primary_folder <- '[primary_folder]'
-primary_folder <- "/analysisdata/fantom6/Interactome/single_cell_wallace/Figure/"
 path_fig5_data <- paste0(primary_folder, 'Fig5/data/')
 path_fig5      <- paste0(primary_folder, 'Fig5/out/')
 path_code      <- paste0(primary_folder, 'Data_and_code/')
+path_fig3_data <- paste0(primary_folder, 'Fig3/data/')
 
 #=====================
 theme1=theme(  panel.background = element_rect(fill = "white", color = "white", linewidth = 0.25, linetype = "solid"),
@@ -145,7 +145,7 @@ results_bar <- d$results_bar
 #### TF characteristics table ####
 
 tf_characteristics <- read.table(
-  paste0(path_fig3_data, 'TF_grouping_by_chromvar_correlation_and_literature.n258.tsv.gz'),
+  paste0(path_fig3_data, 'TF_grouping_by_chromvar_correlation_and_literature.n257.tsv.gz'),
   header = TRUE, check.names = FALSE)
 
 tf_characteristics <- tf_characteristics[
