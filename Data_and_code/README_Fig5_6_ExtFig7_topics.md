@@ -32,7 +32,7 @@ script below sources this one file — you only need to set it once.
 
 ## Running order
 
-Run `grn_reconstruction_pipeline/`'s five scripts first (in numeric order),
+Run `grn_reconstruction_pipeline/`'s scripts first (in numeric order),
 to produce the GRN itself. After that, there is no cross-dependency between
 the remaining subfolders — each can be run independently, in any order. Run
 a subfolder's `build_*.R` script (from inside that subfolder, so its own
@@ -72,6 +72,50 @@ helpers.
 
 Each figure's panels are saved as standalone PNG/PDF files in that figure's
 own `out/` folder, styled consistently via the shared `bimodal_theme`
-(Arial, 5-7pt). There is no in-repo assembly script that composites a
+(Arial, 5-7pt; where Arial is not installed, fontconfig substitutes a
+metric-compatible font such as Liberation Sans, which is what the shipped panel
+PDFs use). There is no in-repo assembly script that composites a
 figure's panels into one page — multi-panel figures are hand-composed later
 outside R, from these individually-polished panel files.
+
+## Computational environment
+
+The GRN reconstruction pipeline, the regeneration scripts in the subfolders
+listed above, and the panel scripts in `../Fig5/`, `../Fig6/` and `../ExtFig7/`
+were all run in the following environment.
+
+| Component | Version |
+|---|---|
+| R | 4.6.1 (2026-06-24), x86_64-pc-linux-gnu |
+| Bioconductor | 3.23 |
+| Operating system | Rocky Linux 9.4 (Blue Onyx), Linux kernel 5.14 |
+| Compiler (package builds) | GCC 12.2.0, `-O2` |
+| BLAS / LAPACK | OpenBLAS 0.3.21 / LAPACK 3.9.0, single-threaded |
+| Hardware | SLURM cluster nodes with 2 × AMD EPYC 7702 (128 cores) |
+
+R packages loaded by the scripts:
+
+| Package | Version | Package | Version |
+|---|---|---|---|
+| circlize | 0.4.18 | igraph | 2.3.4 |
+| ComplexHeatmap | 2.28.0 | irlba | 2.4.1 |
+| cowplot | 1.2.0 | Matrix | 1.7.5 |
+| data.table | 1.18.6.1 | mclust | 6.1.3 |
+| dendextend | 1.19.1 | patchwork | 1.3.2 |
+| diptest | 0.77.2 | pROC | 1.19.1 |
+| doParallel | 1.0.17 | reshape | 0.8.10 |
+| dplyr | 1.2.1 | scales | 1.4.0 |
+| fgsea | 1.38.0 | Seurat | 5.6.0 |
+| foreach | 1.5.2 | SeuratObject | 5.4.0 |
+| GenomicRanges | 1.64.0 | Signac | 1.17.1 |
+| ggforce | 0.5.0 | stringr | 1.6.0 |
+| ggplot2 | 4.0.3 | tidygraph | 1.3.1 |
+| ggraph | 2.2.2 | tidyr | 1.3.2 |
+| ggrastr | 1.0.2 | tidyverse | 2.0.0 |
+| glmnet | 5.1 | uwot | 0.2.5 |
+
+The metacell object read by `4_preparing_dataset.R` is a Seurat v5 object
+(RNA as an `Assay5`), so Seurat >= 5 and SeuratObject >= 5.0.2 are required.
+`5a_lasso_models.R` uses fixed cross-validation folds and sets one random seed
+per target and permutation, so its results do not depend on the number of
+cores used or on how the targets are split across jobs.
