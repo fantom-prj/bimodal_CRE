@@ -1,7 +1,7 @@
 # Per-enhancer centrality statistics and screen overlap
 
 Supplies the per-enhancer centrality table and the two screen-overlap tables
-read by four Fig6 panels: Fig6d, Fig6e, ExtFig6e and ExtFig6f (and by
+read by four Fig6 panels: Fig6d, Fig6e, ExtFig6d and ExtFig6e (and by
 `../screen_correlation/`).
 
 Run in this order, from inside this folder:
@@ -34,9 +34,9 @@ screen-overlap tables each row is one (screen peak x network peak x contrast)
 triple, with `hit_score` NA for screen peaks that have no quantified score in
 the screen results.
 
-Cross-check (published network): 52,334 enhancers in the `all_edges`
-analysis, of which 9,268 expressed and 10,813 mediating; 16,615 promoter and
-5,280 enhancer screen-overlap rows.
+Cross-check (published network): 53,236 enhancers in the `all_edges`
+analysis, of which 9,452 expressed and 11,310 mediating; 16,596 promoter and
+5,322 enhancer screen-overlap rows.
 
 If `build_screen_overlap.R` stops in `findOverlaps` with
 `build_NCList: memory allocation failed` — even on a handful of ranges —

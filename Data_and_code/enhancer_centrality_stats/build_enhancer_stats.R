@@ -1,7 +1,7 @@
 #### Regeneration script: per-enhancer centrality statistics ####
 #
-# Feeds (via copy_enhancer_stats.R -> Fig6/data/): Fig6d, Fig6e, ExtFig6e,
-# ExtFig6f, and Data_and_code/screen_correlation/.
+# Feeds (via copy_enhancer_stats.R -> Fig6/data/): Fig6d, Fig6e, ExtFig6d,
+# ExtFig6e, and Data_and_code/screen_correlation/.
 #
 # For every enhancer in the filtered GRN, computes two centrality axes:
 #   triplet_pairs           unique (TF, promoter) pairs bridged via the

@@ -51,7 +51,7 @@ ext_f6a=ggplot(category_table1, aes(x = as.character(sweep_value), y=pct, fill=c
   geom_bar(linewidth=0.25, alpha=1,  width=0.8,  color="black", stat="identity") + 
   scale_fill_manual(values=category_colours, labels=category_labels)+
   geom_text(aes(label=n),position = position_stack(vjust = 0.5), size=1.8,color="black")+
-  labs(x=NULL, y = "% of promoters", title="Uncoupled TF contribution to enhancer transcription and accessibility") +
+  labs(x=NULL, y = "% of enhancers", title="Uncoupled TF contribution to enhancer transcription and accessibility") +
   theme1
 pdf(paste0(path_fig6,"ext_f6a.stacked_TF_enhancer_coupling.pdf"), width = 3.5, height = 2)
 print(ext_f6a)

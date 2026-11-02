@@ -3,8 +3,8 @@
 # Supplies the per-enhancer centrality table used by FOUR panels:
 #   Fig6d     screen-coverage scatter
 #   Fig6e     screen correlation heatmap
-#   ExtFig6e  GSEA enrichment plots
-#   ExtFig6f  hit-score sign vs triplet participation bar
+#   ExtFig6d  GSEA enrichment plots
+#   ExtFig6e  hit-score sign vs triplet participation bar
 #
 # This script performs no computation. Its three inputs are produced in
 # primary_data_folder by the two build scripts in this folder:
@@ -24,7 +24,7 @@
 #                            edges touching the enhancer (in + out)
 #   is_expressed, is_mediating, n_regulating_TFs, n_regulated_genes,
 #   n_regulated_promoters    per-enhancer annotations
-# 52,334 enhancers in the all_edges analysis.
+# 53,236 enhancers in the all_edges analysis.
 #
 # The two screen-overlap tables record how each CRISPRi neurogenesis screen
 # peak overlaps the network's enhancer and promoter peaks. Each row is one

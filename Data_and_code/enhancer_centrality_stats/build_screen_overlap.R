@@ -1,7 +1,7 @@
 #### Regeneration script: CRISPRi screen peaks overlapping network peaks ####
 #
-# Feeds (via copy_enhancer_stats.R -> Fig6/data/): Fig6d, Fig6e, ExtFig6e,
-# ExtFig6f, and Data_and_code/screen_correlation/.
+# Feeds (via copy_enhancer_stats.R -> Fig6/data/): Fig6d, Fig6e, ExtFig6d,
+# ExtFig6e, and Data_and_code/screen_correlation/.
 #
 # Overlaps the peaks targeted by the CRISPRi neurogenesis screen (iPSC ->
 # NSC -> cortical neuron, 10 pairwise contrasts) with the network's promoter

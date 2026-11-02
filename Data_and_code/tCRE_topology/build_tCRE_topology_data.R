@@ -3,8 +3,8 @@
 # Produces the shared computation behind FOUR panels:
 #   Fig6b     edges per enhancer by distance bin (with-tCRE network)
 #   Fig6c     new-route donut (tCRE triplets: new route vs shared)
-#   ExtFig6c  edges per enhancer by distance bin (without-tCRE, equal-footing control)
-#   ExtFig6d  top-20 TFs / top-20 target genes by new-route triplet count
+#   ExtFig6b  edges per enhancer by distance bin (without-tCRE, equal-footing control)
+#   ExtFig6c  top-20 TFs / top-20 target genes by new-route triplet count
 #
 # Asks what modelling an enhancer's own transcriptional activity (tCRE) adds
 # to the regulatory network, beyond what chromatin accessibility (aCRE) alone
@@ -35,7 +35,7 @@
 #   distance_bin_with_tCRE.csv     - source_class, dist_bin, n_enhancers, y_mean
 #                                    (feeds Fig6b)
 #   distance_bin_without_tCRE.csv  - same shape, without-tCRE network
-#                                    (feeds ExtFig6c)
+#                                    (feeds ExtFig6b)
 #   distance_bin_promoters.csv     - distinct promoters reached per enhancer
 #                                    (double-chance control; not used by a
 #                                    requested panel, kept because it is the
@@ -45,13 +45,13 @@
 #                                    triplet: enhancer, TF, promoter,
 #                                    promoter_measurement_type, tf_prom_id,
 #                                    new_route, gene
-#                                    (feeds Fig6c and ExtFig6d; the `gene`
+#                                    (feeds Fig6c and ExtFig6c; the `gene`
 #                                    column is resolved here via
-#                                    promoter_gene_lookup so ExtFig6d does not
+#                                    promoter_gene_lookup so ExtFig6c does not
 #                                    have to rebuild it)
 #
-# Cross-check (printed by this script): 3,929 total triplets, 90.3% new-route,
-# 9.7% shared; 3,098 new TF->enhancer edges, 3,390 new enhancer->promoter edges.
+# Cross-check (printed by this script): 3,791 total triplets, 90.1% new-route,
+# 9.9% shared; 4,095 new TF->enhancer edges, 3,202 new enhancer->promoter edges.
 
 rm(list = ls())
 library(tidyverse)
@@ -149,6 +149,12 @@ promoter_gene_lookup <- setNames(promoter_gene_lookup$target_gene,
                                  promoter_gene_lookup$target)
 
 triplets_tCRE   <- unique(merge(tf_to_enh_tCRE, enh_tCRE_to_prom, by = 'enhancer'))
+# merge() sorts on the key using the session's collation, so the row order
+# would differ between C and en_US locales; fix it with C (radix) ordering.
+triplets_tCRE   <- triplets_tCRE[order(triplets_tCRE$enhancer, triplets_tCRE$TF,
+                                       triplets_tCRE$promoter,
+                                       triplets_tCRE$promoter_measurement_type,
+                                       method = 'radix'), ]
 n_triplets_tCRE <- nrow(triplets_tCRE)
 
 # new route = TF/promoter pair absent from the aCRE-only (without-tCRE) network
@@ -166,7 +172,7 @@ aCRE_tf_prom_ids         <- paste0(triplets_aCRE$TF, '__', triplets_aCRE$promote
 triplets_tCRE$new_route  <- !(triplets_tCRE$tf_prom_id %in% aCRE_tf_prom_ids)
 frac_new_route           <- mean(triplets_tCRE$new_route)
 
-# gene names for the promoter end, used by ExtFig6d's target-gene ranking
+# gene names for the promoter end, used by ExtFig6c's target-gene ranking
 triplets_tCRE$gene <- promoter_gene_lookup[triplets_tCRE$promoter]
 
 message('  New TF->enhancer(tCRE) edges: ', n_tf_enh_tCRE_gained)
@@ -244,7 +250,7 @@ enh_prom_counts <- ep_with %>%
 bin_summary_prom <- make_bin_summary(enh_prom_counts, all_enh_dist_base,
                                      'n_promoters_reached')
 
-# aCRE-only edges in the without-tCRE network  (ExtFig6c)
+# aCRE-only edges in the without-tCRE network  (ExtFig6b)
 enh_ep_counts_wout <- ep_without %>%
   group_by(source) %>%
   summarise(n_ep_edges = n(), median_dist = median(link_score), .groups = 'drop')

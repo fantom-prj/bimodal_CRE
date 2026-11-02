@@ -1,12 +1,10 @@
 #### Regeneration script: threshold sensitivity sweep for TF-set coupling ####
 #
-# Produces the per-node Jaccard category table used by SIX panels:
-#   Fig5d   stacked bar, TF_promoter x estimate_pctl  (linear bar height)
-#   ExtFig5d stacked bar, TF_promoter x adjpvalue     (linear bar height)
-#   ExtFig5e stacked bar, TF_promoter x dev_ratio     (linear bar height)
-#   Fig6a   stacked bar, TF_enhancer x estimate_pctl  (linear bar height)
-#   ExtFig6a stacked bar, TF_enhancer x adjpvalue     (linear bar height)
-#   ExtFig6b stacked bar, TF_enhancer x dev_ratio     (linear bar height)
+# Produces the per-node Jaccard category table used by FOUR panels:
+#   Fig5d    stacked bar, TF_promoter x estimate_pctl
+#   ExtFig5e stacked bars, TF_promoter x adjpvalue and x dev_ratio
+#   Fig6a    stacked bar, TF_enhancer x estimate_pctl
+#   ExtFig6a stacked bars, TF_enhancer x adjpvalue and x dev_ratio
 #
 # Tests how robust the "TF-set decoupling" result is to the network's
 # significance thresholds. For each node (an expressed enhancer regulated at
@@ -41,18 +39,17 @@
 #     design: the percentile is a swept axis here, so p90 is just one point
 #     on it. It makes the pctl=90 point differ slightly from a fixed-
 #     threshold computation using the rounded stored values (e.g.
-#     TF_promoter n = 2457 vs 2466) -- the gap is entirely explained by that
+#     TF_promoter n = 2883 vs 2888) -- the gap is entirely explained by that
 #     3-decimal rounding. The published figures are sourced from this sweep,
 #     all four percentile points, so this live recompute is the correct
 #     behaviour to reproduce.
 #
-# Outputs (written to BOTH figure data folders, since the six panels that
+# Outputs (written to BOTH figure data folders, since the four panels that
 # use them live in two different figure folders):
 #   Fig5/data/sweep_category_table.csv
 #   Fig6/data/sweep_category_table.csv
 #     columns: sweep, sweep_value, theme, category, pct, n, n_nodes
-#     (n_nodes is the sample size of the grid point x theme; it sets the bar
-#      height in the linear-height stacked bars)
+#     (n_nodes is the sample size of the grid point x theme)
 
 rm(list = ls())
 library(dplyr)

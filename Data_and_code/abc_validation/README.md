@@ -40,4 +40,4 @@ not used by this panel.
 
 Cross-check (published network): 3 tiers, 4 ABC variants (12 rows total).
 F1 for `max_across_celltypes` rises monotonically across tiers: 0.084
-(`base`) -> 0.124 (`elastic_net`) -> 0.170 (`filtered`).
+(`base`) -> 0.123 (`elastic_net`) -> 0.164 (`filtered`).

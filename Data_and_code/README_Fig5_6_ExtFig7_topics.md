@@ -43,13 +43,13 @@ consumers.
 |---|---|---|
 | `grn_reconstruction_pipeline/` | The gene regulatory network itself: TF-to-peak calls, the candidate base network, the expression/accessibility dataset, and the final lasso-pruned network(s) | (all subfolders below, which read its output as `primary_data_folder`) |
 | `tf_effects_clustering/` | TF cumulative-effect matrix + heatmap clustering (`tf_effects_clustering.rds`) | Fig5b, Fig5c |
-| `threshold_sensitivity_sweep/` | 13-grid-point threshold sweep, both themes (`sweep_category_table.csv`) + shared plotting function | Fig5d, Ext5e/f (combined, one script/image), Fig6a, Ext6a, Ext6b |
+| `threshold_sensitivity_sweep/` | 13-grid-point threshold sweep, both themes (`sweep_category_table.csv`) | Fig5d, Ext5e, Fig6a, Ext6a |
 | `chipseq_eqtl_validation/` | ChIP-seq F1 curve data + eQTL F1 curve data | Ext5a, Ext5b |
 | `network_basic_stats/` | Node/edge counts across all 8 network variants | Ext5c (both node and edge panels) |
 | `abc_validation/` | Network-tier vs ABC concordance F1 table (`tier_comparison.csv`) | Ext5d |
-| `tCRE_topology/` | New-route triplet table + distance-binning tables (with/without tCRE) | Fig6b, Fig6c, Ext6c, Ext6d |
-| `enhancer_centrality_stats/` | Copy of the pipeline's `all_enhancers_stats.csv` + screen overlap tables | Fig6d, Fig6e, Ext6e, Ext6f |
-| `screen_correlation/` | Screen hit-score correlation, GSEA, and hit-score-sign test tables | Fig6e, Ext6e, Ext6f |
+| `tCRE_topology/` | New-route triplet table + distance-binning tables (with/without tCRE) | Fig6b, Fig6c, Ext6b, Ext6c |
+| `enhancer_centrality_stats/` | Copy of the pipeline's `all_enhancers_stats.csv` + screen overlap tables | Fig6d, Fig6e, Ext6d, Ext6e |
+| `screen_correlation/` | Screen hit-score correlation, GSEA, and hit-score-sign test tables | Fig6e, Ext6d, Ext6e |
 | `ep_enrichment/` | Promoter-collapsed epigenomic feature enrichment table | Ext7a |
 | `tf_tf_umap/` | TF coefficient/association matrices + fixed UMAP layout + dominance classification | Ext7b |
 | `network_loading/` | Shared helper (`load_and_filter_network.R`) + canonical `network_thresholds.txt` — sourced by most of the above, not a data-producer itself | (infrastructure only) |
@@ -70,13 +70,19 @@ helpers.
 
 ## Composing the final figures
 
-Each figure's panels are saved as standalone PNG/PDF files in that figure's
-own `out/` folder, styled consistently via the shared `bimodal_theme`
-(Arial, 5-7pt; where Arial is not installed, fontconfig substitutes a
-metric-compatible font such as Liberation Sans, which is what the shipped panel
-PDFs use). There is no in-repo assembly script that composites a
-figure's panels into one page — multi-panel figures are hand-composed later
-outside R, from these individually-polished panel files.
+Each figure's panels are saved as standalone PDF files in that figure's own
+`out/` folder. There is no in-repo assembly script that composites a figure's
+panels into one page: each multi-panel figure is composed by hand in Affinity
+Designer from these panel files (`Fig5/scFig5.afdesign`,
+`Fig5/scexFig5.afdesign`, `Fig6/scFig6.afdesign`, `Fig6/scexFig6.afdesign`,
+`ExtFig7/scexFig7.afdesign`). The exported PDFs next to them
+(`*_obsolete.pdf`) predate the current panels.
+
+Panels written with base `pdf()` reference Helvetica without embedding it.
+Fig5a and Fig5b are written by the helpers in
+`network_loading/plot_theme_and_save.R`, which request Arial; where Arial is
+not installed, fontconfig substitutes a metric-compatible font (Nimbus Sans in
+the shipped files).
 
 ## Computational environment
 

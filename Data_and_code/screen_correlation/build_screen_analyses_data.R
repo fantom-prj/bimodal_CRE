@@ -2,8 +2,8 @@
 #
 # Produces the statistics behind THREE panels:
 #   Fig6e     screen correlation heatmap (Spearman rho per contrast x axis)
-#   ExtFig6e  GSEA enrichment curves (expressed / mediating vs centrality)
-#   ExtFig6f  hit-score sign vs triplet participation bar
+#   ExtFig6d  GSEA enrichment curves (expressed / mediating vs centrality)
+#   ExtFig6e  hit-score sign vs triplet participation bar
 #
 # Relates each enhancer's two network-centrality measures (triplet-pair
 # count and cumulative |estimate|) to its CRISPRi neurogenesis screen
@@ -11,12 +11,12 @@
 # bridge many TF/promoter pairs or carry strong cumulative regulatory
 # weight -- are more likely to matter functionally in the screen:
 #   Part 1  GSEA of centrality rankings against the expressed-enhancer and
-#           mediating-enhancer gene sets                    -> ExtFig6e
+#           mediating-enhancer gene sets                    -> ExtFig6d
 #   Part 2a Spearman correlation of mean screen hit score against each
 #           centrality axis, per differentiation-step contrast -> Fig6e
 #   Part 3  Wilcoxon/Fisher tests of centrality against the SIGN of the mean
 #           hit score (does a positive vs negative screen phenotype track
-#           with centrality or triplet participation?)       -> ExtFig6f
+#           with centrality or triplet participation?)       -> ExtFig6e
 #   Analysis variant: all_edges.
 #
 # contrast_order is restricted to the 3 adjacent differentiation-step
@@ -60,7 +60,7 @@
 #                                 OR, CI_lo, CI_hi, pval, fdr
 #   hitscore_sign_enhancers.csv   per (enhancer x contrast): mean_hit_score,
 #                                 triplet_pairs, cum_abs_estimate_total,
-#                                 has_triplet, hit_sign  (feeds ExtFig6f's bar)
+#                                 has_triplet, hit_sign  (feeds ExtFig6e's bar)
 #   bimodality_diagnostics.csv    analysis, contrast, n, dip_stat, dip_pval,
 #                                 mclust_best_G, bic_G1, bic_G2
 
