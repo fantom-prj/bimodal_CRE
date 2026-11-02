@@ -1,19 +1,25 @@
 #### Regeneration script: enhancer-promoter epigenomic feature enrichment ####
 #
-# Feeds: ExtFig7/ext_fig7a_ep_enrichment_collapsed.R
+# Feeds: ExtFig7/scFig_ex7.R (panel a)
 #
-# Tests whether pairs of epigenomic features (H3K27ac, H3K27me3, stage-specific
+# Tests whether pairs of epigenomic features (chromatin state, stage-specific
 # super-enhancer membership, CpG islands, TATA boxes) co-occur more or less
 # often than expected between an enhancer and the promoter(s) it regulates in
-# the GRN. For each of 7x7 enhancer/promoter feature combinations, builds a
+# the GRN. For each of 9x9 enhancer/promoter feature combinations, builds a
 # 2x2 (or larger) contingency table over enhancer-promoter edges and tests
-# for association (binomial test when both features are binary-coded as a
-# 2-level table, chi-squared otherwise), reporting odds ratio and FDR-adjusted
-# p-value. Repeats this across 3 strata of enhancer-promoter edges: all edges,
-# edges from expressed (tCRE) enhancers only, and edges from "mediating"
+# for association (chi-squared test), reporting odds ratio and FDR-adjusted
+# p-value. A combination where either feature takes a single value across the
+# promoters cannot be tested and is reported with NA odds ratio and p-value.
+# Repeats this across 3 strata of enhancer-promoter edges: all edges, edges
+# from expressed (tCRE) enhancers only, and edges from "mediating"
 # enhancers only (enhancers that are themselves under TF control, i.e. also a
 # target of a TF-to-peak edge in the network) -- mediating status is resolved
 # directly from the network's edge structure.
+#
+# Chromatin states come from the per-cell-type state calls (Active, Primed,
+# Repressed, Bivalent, Null; one state per peak and cell type). Each state is
+# used as a feature that is 'Yes' when the peak has that state in at least one
+# of iPSC, NSC and Neuron; Null is the implicit remainder and is not tested.
 #
 # Reads (see ../config.R to set these paths):
 #   [primary_data_folder]/5_lasso_models/lasso_network_with_randomization.rds
@@ -21,13 +27,13 @@
 #     collapsed-panel computation once the mediating-enhancer set is resolved
 #     from the network alone, but loaded for consistency with the other
 #     enhancer-role analyses run against the same inputs)
-#   [raw_data_folder]/all_aCRE.PE.final.select.tsv
-#     (peak epigenomic feature table)
+#   [raw_data_folder]/all_aCRE.TSS.access.markalone_cuttag.tsv.gz
+#     (peak feature table: chromatin states per cell type, SE, CGI, TATA box)
 #   ../network_loading/network_thresholds.txt
 #
 # Writes: ../../ExtFig7/data/ep_enrichment_collapsed.csv
 #   columns: enhancer, promoter, stratum, odds_ratio, pvalue, adjpvalue
-#   (enhancer/promoter columns here are FEATURE names, e.g. 'any.27ac_enhancer',
+#   (enhancer/promoter columns here are FEATURE names, e.g. 'any.Active_enhancer',
 #    not peak ids -- one row per feature x feature x stratum combination)
 
 rm(list = ls())
@@ -39,14 +45,15 @@ source('../config.R')  # defines primary_data_folder, raw_data_folder
 
 network_file              <- file.path(primary_data_folder, '5_lasso_models/lasso_network_with_randomization.rds')
 dataset_file              <- file.path(primary_data_folder, '4_preparing_dataset/dataset.rds')
-peak_characteristics_file <- file.path(raw_data_folder, 'all_aCRE.PE.final.select.tsv')
+peak_characteristics_file <- file.path(raw_data_folder, 'all_aCRE.TSS.access.markalone_cuttag.tsv.gz')
 thresholds_file           <- '../network_loading/network_thresholds.txt'
 out_dir                   <- '../../ExtFig7/data'
 
 apply_estimate_threshold <- TRUE
 significance_threshold   <- 0.05
 
-characteristics_enhancer <- c('any.27ac', 'any.27m3',
+chromatin_states <- c('Active', 'Primed', 'Repressed', 'Bivalent')
+characteristics_enhancer <- c(paste0('any.', chromatin_states),
                                'iPSC_SE', 'NSC_SE', 'Neuron_SE',
                                'CGI', 'TATA_box')
 characteristics_promoter <- characteristics_enhancer
@@ -80,17 +87,22 @@ message('  Mediating enhancers: ', length(mediating_enhancers))
 #### Part 3 (collapsed only) — EP enrichment tests ####
 
 message('Loading peak feature table...')
-peak_data <- read.table(peak_characteristics_file, header = TRUE)
+# tab-separated, with spaces inside some fields
+peak_data <- read.table(peak_characteristics_file, header = TRUE, sep = '\t',
+                        quote = '', comment.char = '', stringsAsFactors = FALSE)
 peak_data$tCRE   <- str_to_title(peak_data$tCRE)
 peak_data$peakID <- gsub('-', '_', peak_data$peakID)
-peak_data$any.27ac <- ifelse(
-  peak_data$iPS.27ac == 'Yes' | peak_data$NSC.27ac == 'Yes' | peak_data$Neuron.27ac == 'Yes',
-  'Yes', 'No'
-)
-peak_data$any.27m3 <- ifelse(
-  peak_data$iPS.27m3 == 'Yes' | peak_data$NSC.27m3 == 'Yes' | peak_data$Neuron.27m3 == 'Yes',
-  'Yes', 'No'
-)
+colnames(peak_data) <- sub('^(iPSC|NSC|Neuron)\\.SE$', '\\1_SE', colnames(peak_data))
+# a peak without a state call in a cell type counts as not having the state there
+for (state in chromatin_states) {
+  peak_data[[paste0('any.', state)]] <- ifelse(
+    peak_data[[paste0('iPSC.', state)]] %in% 'Yes' |
+      peak_data[[paste0('NSC.', state)]] %in% 'Yes' |
+      peak_data[[paste0('Neuron.', state)]] %in% 'Yes',
+    'Yes', 'No'
+  )
+}
+stopifnot(all(characteristics_enhancer %in% colnames(peak_data)))
 
 ep <- n[n$link_type == 'Enhancer_promoter', ]
 ep$edge_id <- paste0(ep$source, '_', ep$target_gene)
@@ -109,17 +121,13 @@ measurement_strata <- list(
 )
 
 compute_or_p <- function(lk, raw_enh, raw_prom) {
-  n_rows <- nrow(lk)
-  or <- if (n_rows == 2) {
-    lk$weight[2] / lk$weight[1]
-  } else {
-    (lk$weight[4] / lk$weight[3]) / (lk$weight[2] / lk$weight[1])
+  # a feature with a single level across the promoters (e.g. no promoter whose
+  # enhancers all carry a rare state) leaves nothing to test: report NA
+  if (length(unique(raw_enh)) < 2 || length(unique(raw_prom)) < 2) {
+    return(list(or = NA_real_, pv = NA_real_))
   }
-  pv <- if (n_rows == 2) {
-    binom.test(lk$weight[2], sum(lk$weight), p = 0.5, alternative = 'two.sided')$p.value
-  } else {
-    tryCatch(chisq.test(raw_enh, raw_prom)$p.value, error = function(e) 1)
-  }
+  or <- (lk$weight[4] / lk$weight[3]) / (lk$weight[2] / lk$weight[1])
+  pv <- tryCatch(chisq.test(raw_enh, raw_prom)$p.value, error = function(e) 1)
   list(or = or, pv = pv)
 }
 

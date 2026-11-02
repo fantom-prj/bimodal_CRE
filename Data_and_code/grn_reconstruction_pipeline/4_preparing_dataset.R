@@ -7,12 +7,13 @@
 # activity (tCRE) for every peak involved in a candidate edge — normalises
 # each modality, and stacks them into one matrix (rows = one measurement per
 # gene/peak/modality, columns = metacells ordered by pseudotime). This matrix
-# is what 5_lasso_models.R regresses each target measurement against.
+# is what 5a_lasso_models.R regresses each target measurement against.
 #
 # Reads (see ../config.R to set raw_data_folder and primary_data_folder):
 #   [raw_data_folder]/metacell.combined.feature.Rds
-#     paired scRNA-seq / snATAC-seq Seurat/Signac object, metacells as
-#     columns, with RNA, aCRE, and tCRE assays
+#     paired scRNA-seq / snATAC-seq Seurat v5 / Signac object, metacells as
+#     columns, with RNA (Assay5, log-normalised 'data' layer), aCRE, and tCRE
+#     assays; requires Seurat >= 5 and SeuratObject >= 5.0.2
 #   [raw_data_folder]/pseudotime.scRNA.tsv
 #     per-metacell pseudotime (column SEACell = metacell id)
 #   [primary_data_folder]/3_preparing_base_network/base_network(_no_hic)
@@ -56,14 +57,14 @@ metacells <- NormalizeData(metacells, assay = 'tCRE')
 
 # metacells ordered by pseudotime, each modality restricted to measurements
 # with any non-zero signal
-rna_data <- as.matrix(metacells@assays$RNA@data[, pseudo_time$SEACell])
+rna_data <- as.matrix(LayerData(metacells, assay = 'RNA', layer = 'data')[, pseudo_time$SEACell])
 rna_data <- rna_data[rowSums(rna_data) > 0, ]
 
-aCRE_data <- as.matrix(metacells@assays$aCRE@data[, pseudo_time$SEACell])
+aCRE_data <- as.matrix(LayerData(metacells, assay = 'aCRE', layer = 'data')[, pseudo_time$SEACell])
 aCRE_data <- aCRE_data[rowSums(aCRE_data) > 0, ]
 rownames(aCRE_data) <- gsub('-', '_', rownames(aCRE_data))
 
-tCRE_data <- as.matrix(metacells@assays$tCRE@data[, pseudo_time$SEACell])
+tCRE_data <- as.matrix(LayerData(metacells, assay = 'tCRE', layer = 'data')[, pseudo_time$SEACell])
 tCRE_data <- tCRE_data[rowSums(tCRE_data) > 0, ]
 rownames(tCRE_data) <- gsub('-', '_', rownames(tCRE_data))
 

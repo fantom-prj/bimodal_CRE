@@ -6,6 +6,7 @@ path_code      <- paste0(primary_folder, 'Data_and_code/')
 library(ggplot2)
 library(dplyr)
 library(ggforce)
+library(ggrastr)
 
 #=====================
 theme1=theme(  panel.background = element_rect(fill = "white", color = "white", linewidth = 0.25, linetype = "solid"),
@@ -265,7 +266,7 @@ f6d <- ggplot() +
                      name = 'Screen coverage') +
   scale_x_continuous(name = 'Triplet-pair count (log10 scale)') +
   scale_y_continuous(name = 'Cumulative |estimate| (in + out edges)') +
-  labs(title="Network centrality of 52,334 enhancers") +
+  labs(title=paste0("Network centrality of ", format(nrow(stats), big.mark = ","), " enhancers")) +
   theme1+theme(legend.position = "bottom")
 
 pdf(paste0(path_fig6,"f6d.screen_coverage_scatter2.pdf"), width = 2.5, height = 3)

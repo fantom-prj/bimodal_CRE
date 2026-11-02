@@ -19,6 +19,6 @@ pseudotime table, and a stage-marker TF annotation table (both via
 Writes `ExtFig7/data/tf_umap_dominance.rds`: layout_all, edge_direct,
 edge_indirect, node_names, umap_fixed, num_label_per_cat, dom_colours.
 
-Cross-check (this run): 327 TFs, 115,634 filtered edges, 1,084 direct /
-838 indirect / 1,824 combined non-zero TF-TF coefficient entries; dominance
-breakdown Direct-dominant=133, Indirect-dominant=24, Mixed=106.
+Cross-check (this run): 350 TFs, 130,440 filtered edges, 1,198 direct /
+882 indirect / 2,012 combined non-zero TF-TF coefficient entries; dominance
+breakdown Direct-dominant=170, Indirect-dominant=34, Mixed=100.

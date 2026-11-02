@@ -1,7 +1,7 @@
 # Enhancer tCRE topology and distance-binned edge counts
 
 Regenerates the shared computation behind four Fig6 panels: Fig6b, Fig6c,
-ExtFig6c and ExtFig6d.
+ExtFig6b and ExtFig6c.
 
 * `build_tCRE_topology_data.R` — asks what modelling an enhancer's own
   transcriptional activity (tCRE) adds to the regulatory network beyond
@@ -16,7 +16,7 @@ ExtFig6c and ExtFig6d.
 
   The `gene` column on the triplet table is resolved here, via a
   `promoter_gene_lookup` (built from `ep_with$target` / `target_gene`), so
-  ExtFig6d does not rebuild the lookup.
+  ExtFig6c does not rebuild the lookup.
 
   **Filtering is deliberately not the shared `filter_network()` helper.**
   This script applies adjpvalue <= 0.05, then a per-stratum |estimate| p90
@@ -37,9 +37,9 @@ Writes into `Fig6/data/`:
 `distance_bin_with_tCRE.csv` and `distance_bin_without_tCRE.csv` (columns
 source_class, dist_bin, n_enhancers, y_mean), `distance_bin_promoters.csv`
 (the double-chance control, not used by a requested panel but part of the
-same Theme 5 computation), and `triplets_tCRE.csv` (3,929 rows: enhancer, TF,
+same Theme 5 computation), and `triplets_tCRE.csv` (3,791 rows: enhancer, TF,
 promoter, promoter_measurement_type, tf_prom_id, new_route, gene).
 
-Cross-check printed by the script and matching the published figure: 3,929
-complete tCRE triplets, 90.3% new route / 9.7% shared, 3,098 new
-TF->enhancer(tCRE) edges, 3,390 new enhancer(tCRE)->promoter edges.
+Cross-check printed by the script and matching the published figure: 3,791
+complete tCRE triplets, 90.1% new route / 9.9% shared, 4,095 new
+TF->enhancer(tCRE) edges, 3,202 new enhancer(tCRE)->promoter edges.

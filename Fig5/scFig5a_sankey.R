@@ -27,10 +27,10 @@
 #   f5a.sankey_GRN_with_stats.png / .pdf (full QC/traceability version, see
 #   include_bottom_text below).
 #
-# Cross-check (reported by this script's own messages): 327 TFs, 20,825 sink
-# enhancers, 10,813 mediating enhancers, 20,696 source enhancers, 18,327
-# promoters, TF->promoter n=31,130, TF->enhancer n=14,221 (=TF->sink +
-# TF->mediating), downstream mediating->promoter n=23,695.
+# Cross-check (reported by this script's own messages): 350 TFs, 22,058 sink
+# enhancers, 11,310 mediating enhancers, 19,868 source enhancers, 19,517
+# promoters, TF->promoter n=42,659, TF->enhancer n=46,712 (=TF->sink +
+# TF->mediating), downstream mediating->promoter n=24,352.
 
 
 # Clear this environment before running, EXCEPT any control-panel override a
@@ -62,8 +62,8 @@ positive_only_enhancer_promoter <- FALSE   # keep ALL EP edges, not positive-onl
 show_sink_source                 <- TRUE
 
 # The full statistics block below the diagram duplicates what the compact
-# on-node labels (built further down, e.g. "Sink enhancer\nn=20,825\n
-# ATAC=17,461, TSS=3,364") already show in-panel -- it exists purely for
+# on-node labels (built further down, e.g. "Sink enhancer\nn=22,058\n
+# ATAC=18,472, TSS=3,586") already show in-panel -- it exists purely for
 # traceability/QC (every intermediate count visible in one place), not for
 # the published figure. FALSE by default: the compact, on-node-labels-only
 # version (sized for the Fig5 (a/c/d)|b layout, see the save call at the

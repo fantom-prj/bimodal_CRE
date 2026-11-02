@@ -15,7 +15,7 @@
 # within ep_max_distance AND has a Hi-C contact with the promoter passing
 # hic_qvalue_threshold (only when use_hic = TRUE). This candidate set is
 # later pruned by elastic-net regression against expression/accessibility
-# data (5_lasso_models.R); it does not yet reflect which edges are actually
+# data (5a_lasso_models.R); it does not yet reflect which edges are actually
 # statistically supported.
 #
 # The `use_hic` / `use_footprinting` control-panel flags produce one of four
@@ -24,7 +24,7 @@
 # network (see Data_and_code/network_basic_stats/ and
 # Data_and_code/chipseq_eqtl_validation/, which compare all four variants
 # against all four corresponding lasso-network variants from
-# 5_lasso_models.R). Run this script once per combination of the two flags
+# 5a_lasso_models.R). Run this script once per combination of the two flags
 # to produce every variant those comparisons need.
 #
 # Reads (see ../config.R to set raw_data_folder and primary_data_folder):

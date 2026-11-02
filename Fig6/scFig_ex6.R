@@ -3,6 +3,11 @@ path_fig6_data <- paste0(primary_folder, 'Fig6/data/')
 path_fig6      <- paste0(primary_folder, 'Fig6/out/')
 path_code      <- paste0(primary_folder, 'Data_and_code/')
 
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(patchwork)
+
 #=====================
 theme1=theme(  panel.background = element_rect(fill = "white", color = "white", linewidth = 0.25, linetype = "solid"),
                panel.grid.major = element_line(linewidth = 0.25, linetype = 'solid', color = "grey90"), 
@@ -46,7 +51,7 @@ ext_f6a=ggplot(category_table1, aes(x = as.character(sweep_value), y=pct, fill=c
   geom_bar(linewidth=0.25, alpha=1,  width=0.8,  color="black", stat="identity") + 
   scale_fill_manual(values=category_colours, labels=category_labels)+
   geom_text(aes(label=n),position = position_stack(vjust = 0.5), size=1.8,color="black")+
-  labs(x=NULL, y = "% of promoters", title="Uncoupled TF contribution to enhancer transcription and accessibility") +
+  labs(x=NULL, y = "% of enhancers", title="Uncoupled TF contribution to enhancer transcription and accessibility") +
   theme1
 pdf(paste0(path_fig6,"ext_f6a.stacked_TF_enhancer_coupling.pdf"), width = 3.5, height = 2)
 print(ext_f6a)

@@ -16,8 +16,7 @@
 #     further split into sub-clusters;
 #   - ranked overall via a log rank-product across the 4 columns.
 #   (The heatmap draw() call and the characteristics dot plot themselves live
-#    in the panel scripts, Fig5/fig5b_heatmap.R and
-#    Fig5/fig5c_tf_characteristics.R.)
+#    in the panel script, Fig5/scFig5.R.)
 #
 # Control-panel values fixed to the variant used for the published figures:
 #   use_abs_estimate         = FALSE  (signed cumulative effect, so activating
@@ -42,9 +41,6 @@
 #   Fig5/data/tf_effects_clustering.rds
 #     a list with: h_wide, sh, sh_sqrt, rk, row_group, row_group_fine,
 #     col_order, cdend, results_bar
-#   Fig5/data/TF_grouping_by_chromvar_correlation_and_literature.tsv
-#     verbatim copy of the pipeline's TF role annotation table (small enough
-#     to ship with the figure); read by Fig5c.
 
 rm(list = ls())
 library(tidyverse)
@@ -54,9 +50,6 @@ library(dendextend)
 source('../config.R')  # defines primary_data_folder, raw_data_folder
 network_file <- file.path(primary_data_folder,
                           '5_lasso_models/lasso_network_with_randomization.rds')
-
-tf_characteristics_file <- file.path(raw_data_folder,
-                                     'TF_grouping_by_chromvar_correlation_and_literature.tsv')
 
 thresholds_file <- '../network_loading/network_thresholds.txt'
 out_folder      <- '../../Fig5/data'
@@ -223,12 +216,5 @@ saveRDS(list(
 
 message('Saved: ', file.path(out_folder, 'tf_effects_clustering.rds'),
         '  (', nrow(sh), ' TFs x ', ncol(sh), ' columns)')
-
-# Ship the TF role annotation table alongside the RDS (Fig5c reads it).
-file.copy(tf_characteristics_file,
-          file.path(out_folder, 'TF_grouping_by_chromvar_correlation_and_literature.tsv'),
-          overwrite = TRUE)
-message('Saved: ', file.path(out_folder,
-        'TF_grouping_by_chromvar_correlation_and_literature.tsv'))
 
 message('Done.')

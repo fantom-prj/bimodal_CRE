@@ -1,7 +1,7 @@
 # CRISPRi screen x enhancer-centrality analyses
 
 Regenerates the statistics behind three panels: Fig6e (Spearman correlation
-heatmap), ExtFig6e (GSEA enrichment curves) and ExtFig6f (hit-score sign vs
+heatmap), ExtFig6d (GSEA enrichment curves) and ExtFig6e (hit-score sign vs
 triplet participation).
 
 * `build_screen_analyses_data.R` — relates each enhancer's two network-
@@ -38,5 +38,5 @@ Writes into `Fig6/data/`: `gsea_results.csv`, `gsea_running_curves.csv`,
 `hitscore_sign_tests.csv`, `hitscore_sign_enhancers.csv`,
 `bimodality_diagnostics.csv`.
 
-Cross-check printed by the script: 145 scored enhancers; iPSvsNSC_P0 x
-triplet_pairs rho = -0.235, FDR = 0.024.
+Cross-check printed by the script: 156 scored enhancers; iPSvsNSC_P0 x
+triplet_pairs rho = -0.179, FDR = 0.075.
