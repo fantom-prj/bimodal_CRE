@@ -23,9 +23,9 @@ show_col(mypal)
 ##########################
 #primary_folder=[primary_folder]
 primary_folder="/analysisdata/fantom6/Interactome/single_cell_wallace/Figure/"
-ChIP_folder=paste0(primary_folder,"Data_and_code/ChIP_seq/")
+ChIP_folder=paste0(primary_folder,"Data_and_code/Fig4.ChIP_seq/")
 path_fig4_data=paste0(primary_folder,"Fig4/data/")
-FP_output=paste0(FP_folder,"output/")
+FP_output=paste0(primary_folder,"Fig4.Foot_Printing/output/")
 peak_folder=paste0(primary_folder,"Data_and_code/scATAC/merged_peak/")
 
 setwd(ChIP_folder)
@@ -105,12 +105,28 @@ TEAD4_idr1=TEAD4_idr[which(TEAD4_idr$V5 >=540),]
 TEAD4_idr2=TEAD4_idr1[which(nchar(TEAD4_idr1$V1)<=5),]
 write.table(TEAD4_idr2[order(TEAD4_idr2$V1,TEAD4_idr2$V2),],"TEAD4_2_output_p005.bed", col.names=F, row.names=F, sep="\t", quote=F)
 
+colnames(TEAD4_idr2) <- c(
+  "chrom", "chromStart", "chromEnd", "name", "score", "strand", 
+  "signalValue", "pValue", "qValue","summit", "localIDR", "globalIDR",
+  "rep1_start", "rep1_end", "rep1_pValue", "rep1_summit",
+  "rep2_start", "rep2_end", "rep2_pValue", "rep2_summit")
+write.table(TEAD4_idr2[order(TEAD4_idr2$chrom,TEAD4_idr2$chromStart),],gzfile("TEAD4_idr_p005.tsv.gz"), col.names=T, row.names=F, sep="\t", quote=F)
+
+
 setwd(paste0(ChIP_folder,"final_data/ONECUT2/idr/"))
-ONECUT_idr=read.delim("ONECUT_2_output.txt", header=F, stringsAsFactors = F)
+ONECUT_idr=read.delim("ONECUT_2c_output.txt", header=F, stringsAsFactors = F)
 length(which(ONECUT_idr$V5 >=540)) #804
 ONECUT_idr1=ONECUT_idr[which(ONECUT_idr$V5 >=540),]
 ONECUT_idr2=ONECUT_idr1[which(nchar(ONECUT_idr1$V1)<=5),]
 write.table(ONECUT_idr2[order(ONECUT_idr2$V1,ONECUT_idr2$V2),],"ONECUT_2_output_p005.bed", col.names=F, row.names=F, sep="\t", quote=F)
+
+colnames(ONECUT_idr2) <- c(
+  "chrom", "chromStart", "chromEnd", "name", "score", "strand", 
+  "signalValue", "pValue", "qValue","summit", "localIDR", "globalIDR",
+  "rep1_start", "rep1_end", "rep1_pValue", "rep1_summit",
+  "rep2_start", "rep2_end", "rep2_pValue", "rep2_summit")
+write.table(ONECUT_idr2[order(ONECUT_idr2$chrom,ONECUT_idr2$chromStart),],gzfile("ONECUT2_idr_p005.tsv.gz"), col.names=T, row.names=F, sep="\t", quote=F)
+
 
 #homer
 setwd(paste0(ChIP_folder,"final_data/TEAD4/idr/"))

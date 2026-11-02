@@ -35,7 +35,7 @@ primary_FP_path="/analysisdata/fantom6/Interactome/single_cell_wallace/ATAC/subs
 setwd(FP_folder)
 
 #===============================================================================
-# generate cell cluster specific bam file
+# generate cell cluster level bam file (n = 10)
 #===============================================================================
 # subset the scATAC bam for each cell cluster
 pca=read.delim(paste0(primary_folder,"Data_and_code/coembed/scDART_n_SEACell/scDART_SEACell_for_all_clusters.tsv"), header=T, stringsAsFactors = F, check.names = F)
@@ -71,7 +71,7 @@ system("sh 20240101tobias_step3.sh")
 
 #===============================================================================
 # summarize tobias results
-# extract 400 TF motifs with expression support
+# extract 420 TF motifs with expression support
 together2=read.delim(paste0(primary_folder,"Fig3/data/auto_correlation_to_p_en.z.summarise_noFP.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 
 need=unique(paste0(together2$motifName,"_",together2$motifID))
@@ -94,17 +94,17 @@ for (i in 1:length(need)){
   scACREv4_FP02[[need[i]]] = ifelse(scACREv4_FP02$peakID %in% data$V10[which(data$cutoff02 == "Yes")],"Yes","No")
 }
 
-scACREv4_motif=scACREv4_motif%>%mutate(anyMotif = ifelse(rowSums(scACREv4_motif[,6:405] == "Yes") > 0, "Yes","No"))
+scACREv4_motif=scACREv4_motif%>%mutate(anyMotif = ifelse(rowSums(scACREv4_motif[,6:425] == "Yes") > 0, "Yes","No"))
 length(which(scACREv4_motif$anyMotif == "No")) #100 -> those not included in main chromosome
-scACREv4_FP10p=scACREv4_FP10p%>%mutate(anyFP10p = ifelse(rowSums(scACREv4_FP10p[,6:405] == "Yes") > 0, "Yes","No"))
-length(which(scACREv4_FP10p$anyFP10p == "No")) #31806 /463966 = 6.9%
-scACREv4_FP02=scACREv4_FP02%>%mutate(anyFP02 = ifelse(rowSums(scACREv4_FP02[,6:405] == "Yes") > 0, "Yes","No"))
-length(which(scACREv4_FP02$anyFP02 == "No")) #121138 /463966 = 26.1%
+scACREv4_FP10p=scACREv4_FP10p%>%mutate(anyFP10p = ifelse(rowSums(scACREv4_FP10p[,6:425] == "Yes") > 0, "Yes","No"))
+length(which(scACREv4_FP10p$anyFP10p == "No")) #31071 /463966 = 6.7%
+scACREv4_FP02=scACREv4_FP02%>%mutate(anyFP02 = ifelse(rowSums(scACREv4_FP02[,6:425] == "Yes") > 0, "Yes","No"))
+length(which(scACREv4_FP02$anyFP02 == "No")) #121071 /463966 = 26.1%
 
 setwd(FP_output)
-write.table(scACREv4_motif,gzfile("motif_400_CRE463966.matrix.tsv.gz"),col.names=T, row.names=F, sep="\t", quote=F)
-write.table(scACREv4_FP10p,gzfile("Footprint_10percent_cutoff_400_CRE463966.matrix.tsv.gz"),col.names=T, row.names=F, sep="\t", quote=F)
-write.table(scACREv4_FP02,gzfile("Footprint_0.2_cutoff_400_CRE463966.matrix.tsv.gz"),col.names=T, row.names=F, sep="\t", quote=F)
+write.table(scACREv4_motif,gzfile("motif_420_CRE463966.matrix.tsv.gz"),col.names=T, row.names=F, sep="\t", quote=F)
+write.table(scACREv4_FP10p,gzfile("Footprint_10percent_cutoff_420_CRE463966.matrix.tsv.gz"),col.names=T, row.names=F, sep="\t", quote=F)
+write.table(scACREv4_FP02,gzfile("Footprint_0.2_cutoff_420_CRE463966.matrix.tsv.gz"),col.names=T, row.names=F, sep="\t", quote=F)
 rm(scACREv4_motif,scACREv4_FP10p,scACREv4_FP02)
 
 #===============================================================================
@@ -123,6 +123,6 @@ for (i in 1:length(need)){
   data=data[!duplicated(data$V10),]
   colnames(data)[2]=need[i]
   scACREv4_bound=left_join(scACREv4_bound, data, by=c("peakID"="V10"),copy=F)}
-write.table(scACREv4_bound, gzfile(paste0(FP_output,"FP_bound_",cluster[j],"_400_CRE463966.matrix.tsv.gz")),col.names=T, row.names=F, sep="\t", quote=F)
+write.table(scACREv4_bound, gzfile(paste0(FP_output,"FP_bound_",cluster[j],"_420_CRE463966.matrix.tsv.gz")),col.names=T, row.names=F, sep="\t", quote=F)
 scACREv4_bound=scACREv3}
 

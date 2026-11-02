@@ -553,19 +553,17 @@ umap3$cellID=rownames(umap3)
 metadata=left_join(metadata, umap3, by=c("SEACell"="cellID"), copy=F, suffix=c("_aCRE","_tCRE"))
 write.table(metadata,gzfile(paste0(CRE_folder,"metacell/meta_metadata.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
 #=
-cluster_info=read.delim(paste0(primary_folder,"Fig1/cluster_info.tsv"),header=T, stringsAsFactors = F, check.names = F)
 metadata=read.delim(paste0(CRE_folder,"metacell/meta_metadata.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 
-data1=reshape2::melt(metadata[,c(1:23,25,27)], id=c(1:22))
-data1$variable=gsub("UMAP_1_","",data1$variable)
-data2=reshape2::melt(metadata[,c(1:22,24,26,28)], id=c(1:22))
-data2$variable=gsub("UMAP_2_","",data2$variable)
-data1=left_join(data1, data2[,c(8,23,24)], by=c("SEACell","variable"),copy=F)
-colnames(data1)[c(24,25)]=c("UMAP1","UMAP2")
+data1=reshape2::melt(metadata[,c(1:24,25,27,29)], id=c(1:24))
+data1$variable=gsub("umap_1_","",data1$variable)
+data2=reshape2::melt(metadata[,c(1:24,26,28,30)], id=c(1:24))
+data2$variable=gsub("umap_2_","",data2$variable)
+data1=left_join(data1, data2[,c(8,25,26)], by=c("SEACell","variable"),copy=F)
+colnames(data1)[c(26,27)]=c("UMAP1","UMAP2")
 data1$variable=gsub("RNA","Gene",data1$variable)
 data1$variable=gsub("tCRE","TSS-signal",data1$variable)
 data1$variable=gsub("aCRE","ATAC-signal",data1$variable)
-data1=left_join(data1, cluster_info, by="cluster", copy=F)
 
 write.table(data1,gzfile(paste0(path_fig2_data,"metacell_UMAP.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
 # -> for fig ex2d
@@ -633,20 +631,11 @@ combined[["tCRE"]] <- subset(combined[["tCRE"]], features = rownames(combined[["
 tCRE1=data.frame(combined@assays[["tCRE"]]@data)
 aCRE1=data.frame(combined@assays[["aCRE"]]@data)
 
-d <- DGEList(counts=tCRE1)
-RLE <- calcNormFactors(d, method="RLE")
-RLE.tCRE1=cpm(RLE, normalized.lib.sizes=TRUE)
-RLE.tCRE1=as.data.frame(RLE.tCRE1)
-d <- DGEList(counts=aCRE1)
-RLE <- calcNormFactors(d, method="RLE")
-RLE.aCRE1=cpm(RLE, normalized.lib.sizes=TRUE)
-RLE.aCRE1=as.data.frame(RLE.aCRE1)
-
-RLE.tCRE1$CREID=rownames(RLE.tCRE1)
-RLE.tCRE2=reshape2::melt(RLE.tCRE1,id=392)
-RLE.aCRE1$CREID=rownames(RLE.aCRE1)
-RLE.aCRE2=reshape2::melt(RLE.aCRE1,id=392)
-CRE=left_join(RLE.tCRE2,RLE.aCRE2, by=c("CREID","variable"),suffix=c("_t","_a"))
+tCRE1$CREID=rownames(tCRE1)
+tCRE2=reshape2::melt(tCRE1,id=394)
+aCRE1$CREID=rownames(aCRE1)
+aCRE2=reshape2::melt(aCRE1,id=394)
+CRE=left_join(tCRE2,aCRE2, by=c("CREID","variable"),suffix=c("_t","_a"))
 CRE_rho=CRE%>%group_by(CREID)%>%dplyr::summarise(count=n(),rho=cor.test(value_t,value_a,method="spearman")$estimate,pv=cor.test(value_t,value_a,method="spearman")$p.value)
 aCREe=read.delim(paste0(path_fig2_data,"peaks.merged.all.markalone_k16.subclass.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 CRE_rho=left_join(CRE_rho, aCREe[,c(1,9)], by=c("CREID"="V4"),copy=F)
@@ -696,6 +685,20 @@ write.table(summaryCRE, gzfile(paste0(path_fig2_data,"aCRE_cell_Reg_State_FE.tsv
 # -> for fig 2g & fig ex2k
 
 #===============================================================================
+# enhancer state transition - neuron
+aCRE_cell=read.delim(paste0(peak_folder,"all_aCRE.TSS.access.markalone_cuttag.tsv.gz"), header=T, stringsAsFactors = F)
+aCRE_cell1=aCRE_cell[which(aCRE_cell$analysis == "included" & aCRE_cell$promoter_type_CT == "enhancer-like"),c(1,8,9,10,26)]
+aCRE_cell1$Neuron_CT=gsub("_enhancer","",aCRE_cell1$Neuron_CT)
+aCRE_cell1$NSC_CT=gsub("_enhancer","",aCRE_cell1$NSC_CT)
+aCRE_cell1$iPSC_CT=gsub("_enhancer","",aCRE_cell1$iPSC_CT)
+aCRE_cell1[aCRE_cell1=="CTCF"]="Others"
+aCRE_cell1[is.na(aCRE_cell1)]="Others"
+colnames(aCRE_cell1)[2:4]=c("iPSC","NSC","Neuron")
+write.table(aCRE_cell1, gzfile(paste0(path_fig2_data,"enhancer_chromatin_state.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
+
+# for f2h & ex2l
+
+#===============================================================================
 # supp table
 aCRE_cell=read.delim(paste0(peak_folder,"all_aCRE.TSS.access.markalone_cuttag.tsv.gz"), header=T, stringsAsFactors = F)
 aCRE_cell=aCRE_cell[which(aCRE_cell$analysis == "included"),-c(11,13,14,27:48)]
@@ -709,7 +712,100 @@ write.table(aCRE_cell, paste0(primary_folder,"supp_table/all_CRE_features_from_f
 
 
 
+#===============================================================================
+setwd("/analysisdata/fantom6/Interactome/resources/chip_atlas/ZEB1_NR2F1/")
+system(paste0("for files in *.bed; do bedtools intersect -wa -c -a ",peak_folder,"filtered_peaks.merged.all.bed.gz -b \"$files\" | gzip > \"${files%.bed}.all.CRE.bed.gz\"; done"))
 
+data1=read.delim("/analysisdata/fantom6/Interactome/resources/chip_atlas/experimentList.ZEB1_NR2F1.tsv", header=T)
+
+files=list.files(pattern="all.CRE.bed.gz")
+files.names=gsub(".05.all.CRE.bed.gz","",files)
+
+data=read.delim(files[1], header=F, stringsAsFactors = F)
+TFnames=paste0(data1$V4[which(data1$V1 == files.names[1])],"_",files.names[1])
+colnames(data)[7]=TFnames
+
+for(i in 2:5){
+data0=read.delim(files[i], header=F, stringsAsFactors = F)
+TFnames=paste0(data1$V4[which(data1$V1 == files.names[i])],"_",files.names[i])
+colnames(data0)[7]=TFnames
+data=left_join(data,data0[,c(4,7)],by="V4",copy=F)}
+
+#NR2F1
+data$NR2F1_any="No"
+data$NR2F1_any[which(rowSums(data[,c(7:9)]>0)>0)]="Yes" #49029
+data$NR2F1_rep="No"
+data$NR2F1_rep[which(rowSums(data[,c(7:9)]>0)>1)]="Yes" #18575
+
+#ZEB1
+data$ZEB1_any="No"
+data$ZEB1_any[which(rowSums(data[,c(10:11)]>0)>0)]="Yes" #14552
+data$ZEB1_rep="No"
+data$ZEB1_rep[which(rowSums(data[,c(10:11)]>0)>1)]="Yes" #5899
+
+#FE on NR2F1 & ZEB1
+aCRE_cell=read.delim(paste0(peak_folder,"all_aCRE.TSS.access.markalone_cuttag.tsv.gz"), header=T, stringsAsFactors = F)
+aCRE_cell=left_join(aCRE_cell,data[,c(4,12:15)],by=c("peakID"="V4"))
+
+cell=c("iPSC","NSC","Neuron")
+pro_type=c("enhancer-like","promoter-like")
+pro_type2=c("enhancer","romoter")
+summaryCRE=data.frame()
+
+for (k in 1:length(pro_type)){
+  for (i in 1: length(cell)){
+    aCRE_cell1=aCRE_cell[which(aCRE_cell$analysis == "included" & aCRE_cell$promoter_type_CT == pro_type[k]),]
+    aCRE_cell1=aCRE_cell1[,c(1,grep(cell[i],colnames(aCRE_cell1)),49:52,26)] # add peakID,N2RF1,ZEB1 and group2
+    aCRE_cell1=aCRE_cell1[grep(pro_type2[k],aCRE_cell1[,4]),]
+    aCRE_cell1=aCRE_cell1[which(aCRE_cell1[,2]==1),] #only accessible CRE in specific cell-type
+    
+    aCRE_cell1_reg=reshape2::melt(aCRE_cell1[,c("peakID","NR2F1_any","NR2F1_rep","ZEB1_any","ZEB1_rep")],id=1)
+    aCRE_cell1_state=reshape2::melt(aCRE_cell1[,c(1,15,6:9)],id=c(1,2))
+    aCRE_cell1_both=left_join(aCRE_cell1_reg,aCRE_cell1_state, by="peakID",copy=F)
+    aCRE_cell1_both2=aCRE_cell1_both%>%group_by(group2,variable.x,variable.y,value.x,value.y)%>%dplyr::summarise(count=n())
+    aCRE_cell1_both2$reg_state=paste0(aCRE_cell1_both2$value.x,"_",aCRE_cell1_both2$value.y)
+    colnames(aCRE_cell1_both2)[c(2:3)]=c("Reg","State")
+    aCRE_cell1_both3=spread(aCRE_cell1_both2[,c(1,2,3,6,7)],key=5, value=4)
+    aCRE_cell1_both3=aCRE_cell1_both3[which(!is.na(aCRE_cell1_both3$No_Yes)),]
+    aCRE_cell1_both3$Yes_Yes[which(is.na(aCRE_cell1_both3$Yes_Yes))]=0
+    aCRE_cell1_both3$promoter_type_CT=pro_type[k]
+    aCRE_cell1_both3$cell=cell[i]
+    summaryCRE=rbind(summaryCRE,aCRE_cell1_both3)}}
+
+for(i in 1:nrow(summaryCRE)){
+  GSEATasting <- matrix(c(summaryCRE$Yes_Yes[i], summaryCRE$Yes_No[i], summaryCRE$No_Yes[i], summaryCRE$No_No[i]), nrow = 2, dimnames = list(oligo1 = c("yes", "no"), oligo2 = c("yes", "no")))
+  summaryCRE$p.val[i] = fisher.test(GSEATasting, alternative = "two.sided")$p.value
+  summaryCRE$OR[i] = fisher.test(GSEATasting, alternative = "two.sided")$estimate}
+
+summaryCRE$State=sapply(strsplit(as.character(summaryCRE$State),"\\."),"[",2)
+write.table(summaryCRE, gzfile(paste0(path_fig2_data,"aCRE_cell_Reg_State_FE.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
+
+aCRE_cell_both2=summaryCRE
+aCRE_cell_both2=aCRE_cell_both2[which(aCRE_cell_both2$promoter_type_CT == "enhancer-like"),]
+aCRE_cell_both2=aCRE_cell_both2[which(aCRE_cell_both2$cell == "NSC"),]
+#aCRE_cell_both2=aCRE_cell_both2[which(aCRE_cell_both2$Reg %in% c("NR2F1_any","NR2F1_rep")),]
+
+aCRE_cell_both2$label="n.s."
+aCRE_cell_both2$label[which(aCRE_cell_both2$p.val<0.05)]="*"
+aCRE_cell_both2$label[which(aCRE_cell_both2$p.val<0.01)]="**"
+aCRE_cell_both2$label[which(aCRE_cell_both2$p.val<0.001)]="***"
+aCRE_cell_both2$label=factor(aCRE_cell_both2$label, levels=c("n.s.","*","**","***"))
+aCRE_cell_both2$logOR=log(aCRE_cell_both2$OR)
+aCRE_cell_both2$group2=factor(aCRE_cell_both2$group2, levels=c("With transcription","Without transcription"))
+
+f2g=ggplot() + 
+  labs(x=NULL, y =NULL ,title= "Enrichment between enhancer\nstates & regulatory elements", size="p_value") +
+  facet_grid(cols=vars(group2),rows=vars(cell))+
+  scale_y_discrete(limits=rev)+
+  geom_point(data=aCRE_cell_both2[which(aCRE_cell_both2$promoter_type_CT == "enhancer-like"),], mapping=aes(y=State, x=Reg, fill=logOR, size=label),shape=21)+
+  scale_fill_gradient2(low = "#3C5488FF", mid = "white", high = "#DC0000FF", midpoint = 0)+ 
+  scale_size_manual(values=c(0.4,1.2,2.4,3.6))+
+  theme1+theme(axis.text.x = element_text(color ="black", angle=25, hjust=1, vjust=1))
+pdf(paste0(path_fig2,"f2g.regE_enhancer_chromatin_state.FE.pdf"), width = 2, height = 2)
+print(f2g)
+dev.off() 
+
+aCRE_cell[which(aCRE_cell$NSC.Active=="Yes"),]%>%group_by(promoter_type_CT,group2,NR2F1_any)%>%dplyr::summarise(count=n())
 
 
 

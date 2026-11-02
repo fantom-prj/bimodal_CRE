@@ -61,19 +61,16 @@ setwd(paste0(primary_folder,"Data_and_code/Fig4.TEAD_ONECUT"))
 library(pROC)
 
 TEAD4final=read.delim(paste0(ChIP_path,"final_data/TEAD4_ChIP_aCRE_final.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-TEAD4final=TEAD4final[which(TEAD4final$tobias_motif == "yes"),]
 
 tead_FPb1=read.delim(paste0(primary_FP_path,"TEAD4_MA0809.3/beds/TEAD4_MA0809.3_out_iPS_0_undifferentiaed_CB_footprints_bound.bed"), header=F, stringsAsFactors = F)
 tead_FPub1=read.delim(paste0(primary_FP_path,"TEAD4_MA0809.3/beds/TEAD4_MA0809.3_out_iPS_0_undifferentiaed_CB_footprints_unbound.bed"), header=F, stringsAsFactors = F)
-
 tead_FP1=rbind(tead_FPb1,tead_FPub1)
-tead_FP1=tead_FP1%>%group_by(V10)%>%dplyr::slice_max(V13)
+tead_FP1=tead_FP1%>%group_by(V10)%>%dplyr::slice_max(V13, n = 1, with_ties = F)
 tead_FP1=unique(tead_FP1[,c(10,13)])
 tead_FP1$ChIP="No"
 tead_FP1$ChIP[which(tead_FP1$V10 %in% TEAD4final$peakID)]="Yes"
-
-roc_data1 <- roc(tead_FP1$ChIP, tead_FP1$V13, levels=c("Yes","No"))
-auc1=auc(roc_data1) #0.937
+roc_data1 <- roc(response = tead_FP1$ChIP, predictor = tead_FP1$V13, levels = c("No", "Yes"), direction = "<")
+auc(roc_data1) #0.937
 write.table(tead_FP1,gzfile(paste0(path_fig4_data,"tobias_chip_tead4_cluster1.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
 # -> for fig ex4c
 
@@ -81,52 +78,52 @@ write.table(tead_FP1,gzfile(paste0(path_fig4_data,"tobias_chip_tead4_cluster1.ts
 tead_FPb2=read.delim(paste0(primary_FP_path,"TEAD4_MA0809.3/beds/TEAD4_MA0809.3_out_iPS_1_neuroepithelial_CB_footprints_bound.bed"), header=F, stringsAsFactors = F)
 tead_FPub2=read.delim(paste0(primary_FP_path,"TEAD4_MA0809.3/beds/TEAD4_MA0809.3_out_iPS_1_neuroepithelial_CB_footprints_unbound.bed"), header=F, stringsAsFactors = F)
 tead_FP2=rbind(tead_FPb2,tead_FPub2)
-tead_FP2=tead_FP2%>%group_by(V10)%>%dplyr::slice_max(V13)
+tead_FP2=tead_FP2%>%group_by(V10)%>%dplyr::slice_max(V13, n = 1, with_ties = F)
 tead_FP2=unique(tead_FP2[,c(10,13)])
 tead_FP2$ChIP="No"
 tead_FP2$ChIP[which(tead_FP2$V10 %in% TEAD4final$peakID)]="Yes"
-roc_data2 <- roc(tead_FP2$ChIP, tead_FP2$V13, levels=c("Yes","No"))
-auc2=auc(roc_data2) #0.938
+roc_data2 <- roc(response = tead_FP2$ChIP, predictor = tead_FP2$V13, levels = c("No", "Yes"), direction = "<")
+
+auc(roc_data2) #0.938
 write.table(tead_FP2,gzfile(paste0(path_fig4_data,"tobias_chip_tead4_cluster2.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
 
 #=======
 #ONECUT2
 ONECUTfinal=read.delim(paste0(ChIP_path,"final_data/ONECUT_ChIP_aCRE_final.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
-ONECUTfinal=ONECUTfinal[which(ONECUTfinal$tobias_motif == "yes"),]
 
 onecut_FPb1=read.delim(paste0(primary_FP_path,"ONECUT2_MA0756.3/beds/ONECUT2_MA0756.3_out_neuron_immature_CB_footprints_bound.bed"), header=F, stringsAsFactors = F)
 onecut_FPub1=read.delim(paste0(primary_FP_path,"ONECUT2_MA0756.3/beds/ONECUT2_MA0756.3_out_neuron_immature_CB_footprints_unbound.bed"), header=F, stringsAsFactors = F)
 onecut_FP1=rbind(onecut_FPb1,onecut_FPub1)
-onecut_FP1=onecut_FP1%>%group_by(V10)%>%dplyr::slice_max(V13)
+onecut_FP1=onecut_FP1%>%group_by(V10)%>%dplyr::slice_max(V13, n = 1, with_ties = F)
 onecut_FP1=unique(onecut_FP1[,c(10,13)])
 onecut_FP1$ChIP="No"
 onecut_FP1$ChIP[which(onecut_FP1$V10 %in% ONECUTfinal$peakID)]="Yes"
-roc_data3 <- roc(onecut_FP1$ChIP, onecut_FP1$V13, levels=c("Yes","No"))
-auc3=auc(roc_data3) #0.9302
+roc_data3 <- roc(response = onecut_FP1$ChIP, predictor = onecut_FP1$V13, levels = c("No", "Yes"), direction = "<")
+auc(roc_data3) #0.9302
 write.table(onecut_FP1,gzfile(paste0(path_fig4_data,"tobias_chip_onecut2_cluster7.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
 
 #===
 onecut_FPb2=read.delim(paste0(primary_FP_path,"ONECUT2_MA0756.3/beds/ONECUT2_MA0756.3_out_neuron_mature_CB_footprints_bound.bed"), header=F, stringsAsFactors = F)
 onecut_FPub2=read.delim(paste0(primary_FP_path,"ONECUT2_MA0756.3/beds/ONECUT2_MA0756.3_out_neuron_mature_CB_footprints_unbound.bed"), header=F, stringsAsFactors = F)
 onecut_FP2=rbind(onecut_FPb2,onecut_FPub2)
-onecut_FP2=onecut_FP2%>%group_by(V10)%>%dplyr::slice_max(V13)
+onecut_FP2=onecut_FP2%>%group_by(V10)%>%dplyr::slice_max(V13, n = 1, with_ties = F)
 onecut_FP2=unique(onecut_FP2[,c(10,13)])
 onecut_FP2$ChIP="No"
 onecut_FP2$ChIP[which(onecut_FP2$V10 %in% ONECUTfinal$peakID)]="Yes"
-roc_data4 <- roc(onecut_FP2$ChIP, onecut_FP2$V13, levels=c("Yes","No"))
-auc4=auc(roc_data4) #0.926
+roc_data4 <- roc(response = onecut_FP2$ChIP, predictor = onecut_FP2$V13, levels = c("No", "Yes"), direction = "<")
+auc(roc_data4) #0.926
 write.table(onecut_FP2,gzfile(paste0(path_fig4_data,"tobias_chip_onecut2_cluster8.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
 
 #===
 onecut_FPb3=read.delim(paste0(primary_FP_path,"ONECUT2_MA0756.3/beds/ONECUT2_MA0756.3_out_neuron_mature_2_CB_footprints_bound.bed"), header=F, stringsAsFactors = F)
 onecut_FPub3=read.delim(paste0(primary_FP_path,"ONECUT2_MA0756.3/beds/ONECUT2_MA0756.3_out_neuron_mature_2_CB_footprints_unbound.bed"), header=F, stringsAsFactors = F)
 onecut_FP3=rbind(onecut_FPb3,onecut_FPub3)
-onecut_FP3=onecut_FP3%>%group_by(V10)%>%dplyr::slice_max(V13)
+onecut_FP3=onecut_FP3%>%group_by(V10)%>%dplyr::slice_max(V13, n = 1, with_ties = F)
 onecut_FP3=unique(onecut_FP3[,c(10,13)])
 onecut_FP3$ChIP="No"
 onecut_FP3$ChIP[which(onecut_FP3$V10 %in% ONECUTfinal$peakID)]="Yes"
-roc_data5 <- roc(onecut_FP3$ChIP, onecut_FP3$V13, levels=c("Yes","No"))
-auc5=auc(roc_data5) #0.912
+roc_data5 <- roc(response = onecut_FP3$ChIP, predictor = onecut_FP3$V13, levels = c("No", "Yes"), direction = "<")
+auc(roc_data5) #0.912
 
 write.table(onecut_FP3,gzfile(paste0(path_fig4_data,"tobias_chip_onecut2_cluster9.tsv.gz")), row.names=F, col.names=T, sep="\t", quote=F)
 # -> for fig ex4c
@@ -134,8 +131,14 @@ write.table(onecut_FP3,gzfile(paste0(path_fig4_data,"tobias_chip_onecut2_cluster
 #===============================================================================
 # prepare heatmap at metacell level
 combined=readRDS(paste0(primary_folder,"Data_and_code/DATA/metacell.combined.feature.Rds"))
+
+cluster=c("iPS_0_undifferentiaed","iPS_1_neuroepithelial","NSC_0_iPS_like", "NSC_1_differentiating", "NSC_2_astrocyte_like", "neuron_progenitor_n_schwann", "neuron_immature", "neuron_mature","neuron_mature_2", "OPC_like")
+cluster1=c("iPSC_0","iPSC_1","NSC_0", "NSC_1", "NSC_2", "Neuron_0", "Neuron_1", "Neuron_2","Neuron_3", "Neuron_4")
+label=c("iPSC_Sphase","iPSC_G2M","NSC_stem","NSC_1","NSC_2","NPC_like","Immature_neuron","Mature_neuron_1","Mature_neuron_2","OPC_like")
+cluster_info=data.frame(cbind(cluster, cluster1, label))
+
 #subset the data only included aCRE that i needed
-acre=union(TEAD4final0$peakID,ONECUTfinal0$peakID)
+acre=union(TEAD4final$peakID[which(TEAD4final$TEAD_motif == "Yes")],ONECUTfinal$peakID[which(ONECUTfinal$ONECUT_motif =="Yes")])
 need.atac=which(rownames(combined[["aCRE"]]) %in% acre)
 need.rna=which(rownames(combined[["tCRE"]]) %in% acre)
 combined[["aCRE"]] <- subset(combined[["aCRE"]], features = rownames(combined[["aCRE"]])[need.atac])
@@ -143,9 +146,9 @@ combined[["tCRE"]] <- subset(combined[["tCRE"]], features = rownames(combined[["
 
 zt=as.data.frame(combined@assays[["tCRE"]]@data)
 za=as.data.frame(combined@assays[["aCRE"]]@data)
-pseudotime1=read.delim(paste0(primary_folder,"Data_and_code/metacell/output/pseudotime.scRNA.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
+pseudotime1=read.delim(paste0(primary_folder,"Data_and_code/Fig1.metacell/output/pseudotime.scRNA.tsv.gz"), header=T, stringsAsFactors = F, check.names = F)
 pseudotime1$cluster=sapply(strsplit(pseudotime1$SEACell,"_meta"),"[",1)
-cluster_info=read.delim(paste0(primary_folder,"Fig1/cluster_info.tsv"),header=T, stringsAsFactors = F, check.names = F)
+
 pseudotime1=left_join(pseudotime1,cluster_info[,c(1,3)],by="cluster",copy=F)
 dd=data.frame(unique(pseudotime1$label))
 dd$rank=c(1,2,3,4,6,5,0,7,8,9)
@@ -161,14 +164,14 @@ za$peakID=rownames(za)
 zt$peakID=rownames(zt)
 
 #TEAD_both with and without transcription
-TEAD4final0=left_join(TEAD4final0[,-5], za, by="peakID", copy=F)
-TEAD4final0=left_join(TEAD4final0, zt, by="peakID", copy=F, suffix=c("_kkATAC","_kkRNA"))
+TEAD4final0=left_join(TEAD4final[which(TEAD4final$TEAD_motif == "Yes"),c(1,4:6)], za, by="peakID", copy=F)
+TEAD4final0=left_join(TEAD4final0, zt, by="peakID", copy=F, suffix=c("_kkATAC","_kkTSS"))
 write.table(TEAD4final0,gzfile(paste0(path_fig4_data,"heatmap.aCRE.TEAD4.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
 # -> for fig ex4a
 
 #ONECUT_both with and without transcription
-ONECUTfinal0=left_join(ONECUTfinal0[,-5], za, by="peakID", copy=F)
-ONECUTfinal0=left_join(ONECUTfinal0, zt, by="peakID", copy=F, suffix=c("_kkATAC","_kkRNA"))
+ONECUTfinal0=left_join(ONECUTfinal[which(ONECUTfinal$ONECUT_motif =="Yes"),c(1,4:6)], za, by="peakID", copy=F)
+ONECUTfinal0=left_join(ONECUTfinal0, zt, by="peakID", copy=F, suffix=c("_kkATAC","_kkTSS"))
 write.table(ONECUTfinal0,gzfile(paste0(path_fig4_data,"heatmap.aCRE.ONECUT.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
 # -> for fig ex4a
 
@@ -183,6 +186,8 @@ griPSC <- GRanges(seqnames = iPSC.ATAC$V1, ranges = IRanges(start = iPSC.ATAC$V2
 grNSC <- GRanges(seqnames = NSC.ATAC$V1, ranges = IRanges(start = NSC.ATAC$V2, end = NSC.ATAC$V3))
 grNRN <- GRanges(seqnames = NRN.ATAC$V1, ranges = IRanges(start = NRN.ATAC$V2, end = NRN.ATAC$V3))
 
+#===
+# TEAD
 TEAD4m=read.delim(paste0(primary_folder,"Data_and_code/Fig4.ChIP_seq/final_data/TEAD4/TEAD4_2c_output_merge.bed"), header=F, stringsAsFactors = F, check.names = F)
 TEAD4m$V4=paste0(TEAD4m$V1,"_",TEAD4m$V2,"_",TEAD4m$V3)
 write.table(TEAD4m, paste0(primary_folder,"Data_and_code/Fig4.ChIP_seq/final_data/TEAD4/TEAD4_2c_output_merge.bed"), col.names=F, row.names=F, sep="\t", quote=F)
@@ -204,6 +209,8 @@ mm_df1$overlap_ATACNSC <- ifelse(seq_along(bed0) %in% queryHits(overlaps2), "Yes
 overlaps3 <- findOverlaps(bed0, grNRN, minoverlap = 1)
 mm_df1$overlap_ATACNeuron <- ifelse(seq_along(bed0) %in% queryHits(overlaps3), "Yes", "No")
 
+#===
+# ONECUT
 ONECUTm=read.delim(paste0(primary_folder,"Data_and_code/Fig4.ChIP_seq/final_data/ONECUT2/ONECUT_2c_output_merge.bed"), header=F, stringsAsFactors = F, check.names = F)
 ONECUTm$V4=paste0(ONECUTm$V1,"_",ONECUTm$V2,"_",ONECUTm$V3)
 write.table(ONECUTm, paste0(primary_folder,"Data_and_code/Fig4.ChIP_seq/final_data/ONECUT2/ONECUT_2c_output_merge.bed"), col.names=F, row.names=F, sep="\t", quote=F)
@@ -301,7 +308,8 @@ ReK.table=rbind(ReK.table,ReK.table1)}
 GO.table=GO.table%>%group_by(ABCcutoff)%>%mutate(FDR=p.adjust(as.numeric(Fisher.elim), method="BH"))
 write.table(GO.table, gzfile("GO/TEAD4_ChIP_indirect.tsv.gz"), col.names=T, row.names=F, sep="\t", quote=F)
 write.table(ReK.table, gzfile("GO/KEGG_REACTOME_TEAD4_ChIP_indirect.tsv.gz"), col.names=T, row.names=F, sep="\t", quote=F)
-
+data0_TEAD4a=data0_TEAD4[which(data0_TEAD4$TargetGene %in% uni & data0_TEAD4$CellType=="iPSC"),]
+write.table(data0_TEAD4a,gzfile(paste0(primary_folder,"supp_table/ABC_TEAD_ChIP.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
 #
 ABC=c(0.02, 0.04, 0.08)
 GO.table=data.frame()
@@ -374,6 +382,8 @@ for (i in 1:length(ABC)){
 GO.table=GO.table%>%group_by(ABCcutoff)%>%mutate(FDR=p.adjust(as.numeric(Fisher.elim), method="BH"))
 write.table(GO.table, gzfile("GO/ONECUT2_ChIP_indirect.tsv.gz"), col.names=T, row.names=F, sep="\t", quote=F)
 write.table(ReK.table, gzfile("GO/KEGG_REACTOME_ONECUT_ChIP_indirect.tsv.gz"), col.names=T, row.names=F, sep="\t", quote=F)
+data0_ONECUTa=data0_ONECUT[which(data0_ONECUT$TargetGene %in% uni & data0_ONECUT$CellType=="Neuron"),]
+write.table(data0_ONECUTa,gzfile(paste0(primary_folder,"supp_table/ABC_ONECUT_ChIP.tsv.gz")), col.names=T, row.names=F, sep="\t", quote=F)
 
 #
 ABC=c(0.02, 0.04, 0.08)

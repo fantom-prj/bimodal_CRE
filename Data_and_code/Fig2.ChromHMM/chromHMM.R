@@ -270,7 +270,6 @@ p_bedn=read.delim(paste0(chromHMM_folder,"zenbu/markalone_Neuron_k16.bed.gz"), h
 p_bedn=left_join(p_bedn, labeling1, by=c("V4"="X2"), copy=F)
 write.table(p_bedn[,c(1:4,10,6:9)],gzfile(paste0(chromHMM_folder,"zenbu/markalone_Neuron_k16.bed.gz")), col.names=F, row.names=F, sep="\t", quote=F)
 
-
 #===============================================================================
 #extract chromHMM 200bp binary files
 path1=paste0(chromHMM_folder,"data_files/all_HG38/")
@@ -278,13 +277,12 @@ path2=paste0(chromHMM_folder,"data_files/binary_bed/")
 files=list.files(path=path1, pattern="txt.gz")
 cell.names=unique(sapply(strsplit(files, "_"),"[",1))
 
-data_27ac=data.frame()
-data_27m=data.frame()
-data_m1=data.frame()
-data_m3=data.frame()
-data_ctcf=data.frame()
-
 for (j in 1: length(cell.names)){
+  data_27ac=data.frame()
+  data_27m=data.frame()
+  data_m1=data.frame()
+  data_m3=data.frame()
+  data_ctcf=data.frame()
   files1=files[grep(cell.names[j], files)]
   chr.names=sapply(strsplit(files1, "_"),"[",2)
   for (i in 1: length(files1)){
@@ -308,6 +306,7 @@ for (j in 1: length(cell.names)){
   write.table(data_m1[order(data_m1$V1,data_m1$V2),],gzfile(paste0(path2,cell.names[j],".4m1.bed.gz")), col.names=F, row.names=F, sep="\t", quote=F)
   write.table(data_m3[order(data_m3$V1,data_m3$V2),],gzfile(paste0(path2,cell.names[j],".4m3.bed.gz")), col.names=F, row.names=F, sep="\t", quote=F)
   write.table(data_ctcf[order(data_ctcf$V1,data_ctcf$V2),],gzfile(paste0(path2,cell.names[j],".ctcf.bed.gz")), col.names=F, row.names=F, sep="\t", quote=F)}
+# this output was not used in the manuscript
 
 #===============================================================================
 # prepare figure files for k16 chromatin state

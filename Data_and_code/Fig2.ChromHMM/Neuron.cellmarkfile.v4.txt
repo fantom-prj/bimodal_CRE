@@ -1,0 +1,33 @@
+iPS	iPS_ATAC	iPS-ATAC-r1.bed.gz	
+iPS	iPS_CTCF	iPS-CTCF-r1_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_CTCF	iPS-CTCF-r2_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K27ac	iPS-K27ac-r1_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K27ac	iPS-K27ac-r2_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K27m3	iPS-K27m3-r1_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K27m3	iPS-K27m3-r2_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K4m1	iPS-K4m1-r1_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K4m1	iPS-K4m1-r2_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K4m3	iPS-K4m3-r1_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+iPS	iPS_K4m3	iPS-K4m3-r2_1.CUTnTag.R1.bed.gz	iPS-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_ATAC	NRN-ATAC-r1.bed.gz	
+NRN	NRN_CTCF	NRN-CTCF-r1_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_CTCF	NRN-CTCF-r2_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K27ac	NRN-K27ac-r1_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K27ac	NRN-K27ac-r2_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K27m3	NRN-K27m3-r1_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K27m3	NRN-K27m3-r2-r_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K4m1	NRN-K4m1-r1-re_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K4m1	NRN-K4m1-r2_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K4m3	NRN-K4m3-r1_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NRN	NRN_K4m3	NRN-K4m3-r2_1.CUTnTag.R1.bed.gz	NRN-IgG-r1_1.CUTnTag.R1.bed.gz
+NSC	NSC_ATAC	NSC-ATAC-r1.bed.gz	
+NSC	NSC_CTCF	NSC-CTCF-r1_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_CTCF	NSC-CTCF-r2_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K27ac	NSC-K27ac-r1_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K27ac	NSC-K27ac-r2_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K27m3	NSC-K27m3-r1_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K27m3	NSC-K27m3-r2_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K4m1	NSC-K4m1-r1_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K4m1	NSC-K4m1-r2_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K4m3	NSC-K4m3-r1_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz
+NSC	NSC_K4m3	NSC-K4m3-r2_1.CUTnTag.R1.bed.gz	NSC-IgG-r2_1.CUTnTag.R1.bed.gz

@@ -16,11 +16,12 @@
 * [TATA box prediction from non-transcribed CREs](#TATApredict)
 * [Enrichment of chromatin states with transcription and regulatory elements ](#enrichment)
 * [Genomic coordinate of CREs](#gcoordinate)
+* [Connecting genes to CREs](#gene_CRE)
 
 
 # <a name="classification"></a>Hierarchical CRE classification
 
-The final list of CREs (merged peaks derived from scATAC-seq) were assigned with chromatin states in a sample specific manner. For CREs overlapping multiple ChromHMM states, a representative state was selected based on a prioritized hierarchy: 1) promoter / promoter flanked, 2) bivalent promoter, 3) active enhancer, 4) repressed enhancer, 5) primed enhancer, and 6) CTCF-alone. By combining the chromatin states across the 3 samples, the CREs were ultimately categorized as, in the order of, “promoter-like”, "enhancer-like”, “CTCF-alone” or “unclassed”.
+The final list of CREs (merged peaks derived from scATAC-seq) were assigned with chromatin states in a sample specific manner. For CREs overlapping multiple ChromHMM states, a representative state was selected based on a prioritized hierarchy: 1) promoter / promoter flanked, 2) bivalent promoter, 3) active enhancer, 4) repressed enhancer, 5) primed enhancer, and 6) CTCF-alone. In addition to sample specific chromatin states, overall chromatin states were also assigned to each CRE using the same prioritized hierarchy. Across the 3 samples, the CREs were ultimately categorized as, in the order of, “promoter-like”, "enhancer-like”, “CTCF-alone” or “unclassed”.
 
 # <a name="regulatoryE"></a>Regulatory element annotation for transcribed and non-transcribed CREs 
 
@@ -40,7 +41,9 @@ Enrichment was assessed using Fisher’s exact test based on 2 × 2 contingency 
 
 Coordinates of CREs were intersected with coordinates of annotated transcript models from GENCODE v39 without considering strand. For CREs overlapping multiple genomic features, a representative feature was selected based on a prioritized hierarchy: 1) 5’end (TSS), 2) 5’UTR, 3) 3’UTR, 4) exon, and 5) intron. CREs without any overlap were considered as intergenic.
 
+# <a name="gene_CRE"></a>Connecting genes to CREs 
 
+All the CRE regions were intersected with the 5’ end of transcript models derived from CFC-seq on the same samples (iPSC, NSC and neuron) including all the transcript models from GENCODE (v39). Since CFC-seq identify transcript model with CAP-trapping, this model represent accurate 5’ ends from the same sample types. The transcript models were then collapsed into gene models after intersection. This annotated the CREs where the genes transcribed with relative expression levels. Besides assigning protein-coding genes to promoters, this also addresses the genes transcribed from enhancers.
 
 
 

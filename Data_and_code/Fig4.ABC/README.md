@@ -1,8 +1,8 @@
 # Enhancer regulating gene prediction from iPSC, NSC and Neuron 
 
 * ABC_input_and_output.R -> main code describing all the steps
-* ABC_sc.sh -> code for running ABD model workflow
-* config.yaml, config_biosamples_NeuronSeries_sc.tsv and files inside input folder -> supportive parameter for running ABD model workflow
+* ABC_sc.sh -> code for running ABC model workflow
+* config.yaml, config_biosamples_NeuronSeries_sc.tsv and files inside input folder -> supportive parameter for running ABC model workflow
 * Results are presented in Fig.4
 * Input data is not included here, please refer to https://fantom.gsc.riken.jp/6/suppl/Yip_et_al_2026_scTF
 * For fastq and bam files, please refer to DDBJ (H3K27ac CUT&Tag: DRA019568 (DRR614873-DRR614905); Hi-C: DRA019572 (DRR614942-DRR614953); scATAC-seq: DRA019608 (DRR618513-DRR618515))
