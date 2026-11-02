@@ -45,13 +45,13 @@ Run the scripts in order, from inside this folder:
    first rebuilds any step 5a output that was run in target blocks (see
    "Producing every network variant used downstream" below). No model
    fitting.
-7. **`6_filter_network.R`** — applies the three confidence filters
-   (adjpvalue, dev_ratio, per-stratum |estimate| 90th percentile; thresholds
-   from `../network_loading/network_thresholds.txt`) to the published network
-   and writes `lasso_network_filtered.rds`. It also recomputes the
-   per-stratum percentiles and writes them, next to the stored values, to
-   `abs_estimate_p90_recomputed.tsv`, warning if any differ; after a refit,
-   copy the recomputed values into `network_thresholds.txt` and rerun it.
+7. **`6_filter_network.R`** — derives the edge-filtering thresholds from the
+   published network (adjpvalue and dev_ratio cutoffs from its control
+   panel; per-stratum |estimate| 90th percentile computed on the edges that
+   pass both), writes them to `../network_loading/network_thresholds.txt`,
+   and applies them to write `lasso_network_filtered.rds`. Every downstream
+   script reads that thresholds file, so cutoffs are changed in this
+   script's control panel, not in the file.
 
 ## One-time setup
 

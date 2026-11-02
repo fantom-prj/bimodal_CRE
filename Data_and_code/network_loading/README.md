@@ -14,10 +14,11 @@ needs the lasso GRN. Not a figure-specific analysis on its own.
     `network_thresholds.txt` were themselves derived AFTER the adjpvalue and
     dev_ratio filters, so the percentile filter must be applied last to
     reproduce them exactly.
-* `network_thresholds.txt` -> a copy of the canonical per-stratum threshold
-  file (adjpvalue, dev_ratio, and the |estimate| p90 cutoffs used to call an
-  edge significant), so every script that filters the network to the
-  published edge set uses the same values.
+* `network_thresholds.txt` -> the adjpvalue, dev_ratio and per-stratum
+  |estimate| p90 cutoffs used to call an edge significant, so every script
+  that filters the network to the published edge set uses the same values.
+  Written by `../grn_reconstruction_pipeline/6_filter_network.R`; change the
+  cutoffs there and rerun it, rather than editing this file.
 
 ## Inputs (external, not committed — see path note below)
 

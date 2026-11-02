@@ -52,7 +52,7 @@ consumers.
 | `screen_correlation/` | Screen hit-score correlation, GSEA, and hit-score-sign test tables | Fig6e, Ext6d, Ext6e |
 | `ep_enrichment/` | Promoter-collapsed epigenomic feature enrichment table | Ext7a |
 | `tf_tf_umap/` | TF coefficient/association matrices + fixed UMAP layout + dominance classification | Ext7b |
-| `network_loading/` | Shared helper (`load_and_filter_network.R`) + canonical `network_thresholds.txt` — sourced by most of the above, not a data-producer itself | (infrastructure only) |
+| `network_loading/` | Shared helper (`load_and_filter_network.R`) + canonical `network_thresholds.txt` (written by `grn_reconstruction_pipeline/6_filter_network.R`) — sourced by most of the above, not a data-producer itself | (infrastructure only) |
 
 Each subfolder's own `README.md` documents exactly what analysis it performs
 and the exact output file(s) it writes.

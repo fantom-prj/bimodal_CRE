@@ -1,15 +1,14 @@
 # Network edge filtering thresholds
 # ============================================================
-# These values are applied consistently across all analysis scripts.
-# Load them with read_thresholds() from load_and_filter_network.R.
-#
-# Derived on the full network, lasso_network_with_randomization.rds:
+# Written by grn_reconstruction_pipeline/6_filter_network.R from
+# lasso_network_with_randomization.rds -- to change a cutoff, edit that
+# script's control panel and rerun it rather than editing this file.
+# Load these values with read_thresholds() from load_and_filter_network.R.
 #
 #   adjpvalue_threshold  — permutation-test adjusted p-value from lasso randomisation
 #   dev_ratio_threshold  — proportion of deviance explained by the edge in the lasso model
 #   abs_estimate_thresholds — 90th percentile of |estimate| within each edge-type stratum,
 #                             computed AFTER applying adjpvalue and dev_ratio filters.
-#                             Retains the top 10% of edges by effect size per category.
 #                             Stratum keys: <source_measurement_type>_<target_measurement_type>
 #                             for Enhancer_promoter edges, and
 #                             TF_<target_type>_<target_measurement_type> for TF_peak edges.
@@ -34,9 +33,6 @@ abs_estimate_TF_peak_Promoter_aCRE = 0.162
 abs_estimate_TF_peak_Promoter_tCRE = 0.160
 
 # ── Notes ─────────────────────────────────────────────────────────────────────
-# - grn_reconstruction_pipeline/6_filter_network.R applies these values to
-#   produce lasso_network_filtered.rds, and recomputes the p90 values on the
-#   network (reporting any that differ) without editing this file.
 # - chipseq_eqtl_validation/ sweeps dev_ratio from 0 to 0.8 to draw performance
 #   curves; dev_ratio_threshold above marks the operating point highlighted in
 #   its summary figures.

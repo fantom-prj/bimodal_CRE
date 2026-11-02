@@ -1,27 +1,25 @@
-#### Step 6: filter the lasso network down to the published high-confidence GRN ####
+#### Step 6: edge thresholds and the published high-confidence GRN ####
 #
-# Applies the three confidence filters used by every figure to the published
-# network variant (lasso_network_with_randomization.rds, from step 5a) and
-# writes lasso_network_filtered.rds, the network shipped in this repository:
+# Derives the edge-filtering thresholds from the published network variant
+# (lasso_network_with_randomization.rds, from step 5a), writes them to
+# ../network_loading/network_thresholds.txt, and applies them to write
+# lasso_network_filtered.rds, the network shipped in this repository:
 #   adjpvalue <= adjpvalue_threshold, then dev_ratio >= dev_ratio_threshold,
-#   then |estimate| >= the stored per-stratum 90th percentile.
-# Thresholds are read from ../network_loading/network_thresholds.txt and
-# applied by filter_network() in ../network_loading/load_and_filter_network.R.
+#   then |estimate| >= the per-stratum threshold.
+# The per-stratum |estimate| threshold is the 90th percentile of |estimate|
+# within each stratum (TF_peak: target type x target measurement type;
+# Enhancer_promoter: source x target measurement type), computed on the
+# edges that pass the first two filters and rounded to 3 decimals.
 #
-# The per-stratum |estimate| thresholds stored in network_thresholds.txt are
-# the 90th percentile of |estimate| within each stratum, computed on this
-# network after the adjpvalue and dev_ratio filters and rounded to 3
-# decimals. This script recomputes them and writes them, next to the stored
-# values, to abs_estimate_p90_recomputed.tsv; it warns if any differ. After
-# refitting step 5a, copy the recomputed values into network_thresholds.txt
-# and rerun this script. The thresholds file is never edited automatically.
+# Every downstream script reads network_thresholds.txt through
+# read_thresholds() in ../network_loading/load_and_filter_network.R, so to
+# change a cutoff, edit the control panel below and rerun this script.
 #
 # Reads:
 #   [primary_data_folder]/5_lasso_models/lasso_network_with_randomization.rds
-#   ../network_loading/network_thresholds.txt
 # Writes:
+#   ../network_loading/network_thresholds.txt
 #   [primary_data_folder]/5_lasso_models/lasso_network_filtered.rds
-#   [primary_data_folder]/5_lasso_models/abs_estimate_p90_recomputed.tsv
 #
 # Cross-check (published network): 89,371 TF_peak + 52,362 Enhancer_promoter
 # = 141,733 edges.
@@ -34,50 +32,84 @@ network_file        <- file.path(primary_data_folder,
                                  '5_lasso_models/lasso_network_with_randomization.rds')
 thresholds_file     <- '../network_loading/network_thresholds.txt'
 out_folder          <- file.path(primary_data_folder, '5_lasso_models')
+adjpvalue_threshold <- 0.05
+dev_ratio_threshold <- 0.3
 estimate_percentile <- 0.9
 # ──────────────────────────────────────────────────────────────────────────────
 
 source('../network_loading/load_and_filter_network.R')
-thresholds <- read_thresholds(thresholds_file)
 
 message('Loading network...')
 network <- readRDS(network_file)
 message('  Edges: ', nrow(network))
 
-#### Recompute the per-stratum |estimate| thresholds ####
+#### Per-stratum |estimate| thresholds ####
 
-# Same order as filter_network(): the percentile is taken on the edges that
-# pass the adjpvalue and dev_ratio filters.
-net_pd <- network[network$adjpvalue <= thresholds$adjpvalue_threshold, ]
-net_pd <- net_pd[net_pd$dev_ratio >= thresholds$dev_ratio_threshold, ]
+net_pd  <- network[network$adjpvalue <= adjpvalue_threshold, ]
+net_pd  <- net_pd[net_pd$dev_ratio >= dev_ratio_threshold, ]
 stratum <- ifelse(net_pd$link_type == 'TF_peak',
-                  paste0('TF_', net_pd$target_type, '_', net_pd$target_measurement_type),
-                  paste0('EP_', net_pd$source_measurement_type, '_', net_pd$target_measurement_type))
+                  paste0('TF_peak_', net_pd$target_type, '_', net_pd$target_measurement_type),
+                  paste0('Enhancer_promoter_', net_pd$source_measurement_type, '_',
+                         net_pd$target_measurement_type))
 p90 <- tapply(abs(net_pd$estimate), stratum,
               function(x) unname(quantile(x, probs = estimate_percentile)))
 
-strata    <- names(thresholds$abs_estimate_thresholds)
-p90_table <- data.frame(
-  stratum    = strata,
-  n_edges    = as.integer(table(stratum)[strata]),
-  stored     = unname(thresholds$abs_estimate_thresholds),
-  recomputed = round(unname(p90[strata]), 3)
-)
-write.table(p90_table, file.path(out_folder, 'abs_estimate_p90_recomputed.tsv'),
-            sep = '\t', quote = FALSE, row.names = FALSE)
-print(p90_table, row.names = FALSE)
+ep_strata <- paste0('Enhancer_promoter_', c('aCRE_aCRE', 'aCRE_tCRE', 'tCRE_aCRE', 'tCRE_tCRE'))
+tf_strata <- paste0('TF_peak_', c('Enhancer_aCRE', 'Enhancer_tCRE', 'Promoter_aCRE', 'Promoter_tCRE'))
+stopifnot(all(c(ep_strata, tf_strata) %in% names(p90)))
+threshold_line <- function(s) sprintf('abs_estimate_%s = %.3f', s, p90[[s]])
 
-differs <- is.na(p90_table$recomputed) |
-           abs(p90_table$stored - p90_table$recomputed) > 1e-9
-if (any(differs)) {
-  warning('Recomputed |estimate| thresholds differ from network_thresholds.txt for: ',
-          paste(p90_table$stratum[differs], collapse = ', '),
-          '. The filtered network below uses the stored values.')
-}
+#### Write network_thresholds.txt ####
 
-#### Filter and save ####
+pctl_label <- paste0('p', round(100 * estimate_percentile))
+writeLines(c(
+  '# Network edge filtering thresholds',
+  '# ============================================================',
+  '# Written by grn_reconstruction_pipeline/6_filter_network.R from',
+  '# lasso_network_with_randomization.rds -- to change a cutoff, edit that',
+  '# script\'s control panel and rerun it rather than editing this file.',
+  '# Load these values with read_thresholds() from load_and_filter_network.R.',
+  '#',
+  '#   adjpvalue_threshold  — permutation-test adjusted p-value from lasso randomisation',
+  '#   dev_ratio_threshold  — proportion of deviance explained by the edge in the lasso model',
+  paste0('#   abs_estimate_thresholds — ', round(100 * estimate_percentile),
+         'th percentile of |estimate| within each edge-type stratum,'),
+  '#                             computed AFTER applying adjpvalue and dev_ratio filters.',
+  '#                             Stratum keys: <source_measurement_type>_<target_measurement_type>',
+  '#                             for Enhancer_promoter edges, and',
+  '#                             TF_<target_type>_<target_measurement_type> for TF_peak edges.',
+  '# ============================================================',
+  '',
+  '# ── Global filters (applied to all lasso network edges) ──────────────────────',
+  paste0('adjpvalue_threshold = ', adjpvalue_threshold),
+  paste0('dev_ratio_threshold = ', dev_ratio_threshold),
+  '',
+  paste0('# ── Per-stratum |estimate| thresholds (', pctl_label,
+         ', Enhancer_promoter edges) ─────────'),
+  '# Stratum: enhancer_source_modality → promoter_target_modality',
+  sapply(ep_strata, threshold_line),
+  '',
+  paste0('# ── Per-stratum |estimate| thresholds (', pctl_label,
+         ', TF_peak edges) ───────────────────'),
+  '# Stratum: TF → target_type (Enhancer/Promoter) × target_measurement_type',
+  sapply(tf_strata, threshold_line),
+  '',
+  '# ── Notes ─────────────────────────────────────────────────────────────────────',
+  '# - chipseq_eqtl_validation/ sweeps dev_ratio from 0 to 0.8 to draw performance',
+  '#   curves; dev_ratio_threshold above marks the operating point highlighted in',
+  '#   its summary figures.',
+  '# - The abs_estimate thresholds were cross-validated against a collaborator\'s',
+  '#   independent elbow-point analysis on a previous network version; the p90',
+  '#   criterion reproduces their values within ±0.05 for all strata.'
+), thresholds_file)
+message('Saved: ', thresholds_file)
 
-filtered <- filter_network(network, thresholds)
+#### Filter with the thresholds just written, and save ####
+
+# Filtering through the written file (rather than the unrounded values above)
+# keeps the shipped network exactly reproducible by every downstream script.
+thresholds <- read_thresholds(thresholds_file)
+filtered   <- filter_network(network, thresholds)
 saveRDS(filtered, file.path(out_folder, 'lasso_network_filtered.rds'))
 
 counts <- table(filtered$link_type)
