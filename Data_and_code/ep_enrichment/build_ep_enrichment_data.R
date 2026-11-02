@@ -1,6 +1,6 @@
 #### Regeneration script: enhancer-promoter epigenomic feature enrichment ####
 #
-# Feeds: ExtFig7/ext_fig7a_ep_enrichment_collapsed.R
+# Feeds: ExtFig7/scFig_ex7.R (panel a)
 #
 # Tests whether pairs of epigenomic features (chromatin state, stage-specific
 # super-enhancer membership, CpG islands, TATA boxes) co-occur more or less

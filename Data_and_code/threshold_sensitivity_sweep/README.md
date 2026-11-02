@@ -1,8 +1,7 @@
 # Threshold sensitivity sweep (TF-set coupling)
 
-Regenerates the per-node Jaccard category table, and holds the shared
-plotting logic, for the six stacked-bar panels: Fig5d, ExtFig5d, ExtFig5e,
-Fig6a, ExtFig6a, ExtFig6b.
+Regenerates the per-node Jaccard category table for the six stacked-bar
+panels: Fig5d, ExtFig5d, ExtFig5e, Fig6a, ExtFig6a, ExtFig6b.
 
 * `build_sweep_data.R` — tests how robust the TF-set decoupling result is to
   the network's significance thresholds. `run_decoupling()` computes, for
@@ -29,11 +28,6 @@ Fig6a, ExtFig6a, ExtFig6b.
   Jaccard categories; columns sweep, sweep_value, theme, category, pct, n,
   n_nodes) into **both** `Fig5/data/` and `Fig6/data/`, since the six panels
   that read it live in two figure folders.
-
-* `plot_stacked_bar_height.R` — draws the linear-height stacked bar (total
-  bar height = raw n_nodes, so shrinking sample size at stringent thresholds
-  is visible in the figure itself). Not sourced by the panel scripts, which
-  draw these bars with their own ggplot code.
 
 Cross-check printed by the script (e.g. estimate_percentile=90, TF_promoter:
 fully_uncoupled 61.17%, fully_coupled 10.50%, n_nodes 2457).

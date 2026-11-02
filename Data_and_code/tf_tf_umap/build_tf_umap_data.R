@@ -1,6 +1,6 @@
 #### Regeneration script: TF-TF regulatory UMAP with dominance classification ####
 #
-# Feeds: ExtFig7/ext_fig7b_tf_umap_dominance.R
+# Feeds: ExtFig7/scFig_ex7.R (panel b)
 #
 # For every TF in the network, builds a fixed 2D layout (UMAP on a combined
 # TF-TF regulatory-association matrix) and classifies each TF by whether its

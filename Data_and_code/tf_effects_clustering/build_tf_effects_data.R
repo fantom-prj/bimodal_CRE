@@ -41,11 +41,6 @@
 #   Fig5/data/tf_effects_clustering.rds
 #     a list with: h_wide, sh, sh_sqrt, rk, row_group, row_group_fine,
 #     col_order, cdend, results_bar
-#   Fig5/data/TF_grouping_by_chromvar_correlation_and_literature.tsv
-#     decompressed verbatim copy of the TF role annotation table
-#     (Fig3/data/TF_grouping_by_chromvar_correlation_and_literature.n257.tsv.gz,
-#     which ships with the repository), kept next to the RDS for reference;
-#     Fig5/scFig5.R reads the Fig3/data table directly.
 
 rm(list = ls())
 library(tidyverse)
@@ -55,8 +50,6 @@ library(dendextend)
 source('../config.R')  # defines primary_data_folder, raw_data_folder
 network_file <- file.path(primary_data_folder,
                           '5_lasso_models/lasso_network_with_randomization.rds')
-
-tf_characteristics_file <- '../../Fig3/data/TF_grouping_by_chromvar_correlation_and_literature.n257.tsv.gz'
 
 thresholds_file <- '../network_loading/network_thresholds.txt'
 out_folder      <- '../../Fig5/data'
@@ -223,11 +216,5 @@ saveRDS(list(
 
 message('Saved: ', file.path(out_folder, 'tf_effects_clustering.rds'),
         '  (', nrow(sh), ' TFs x ', ncol(sh), ' columns)')
-
-# Keep a copy of the TF role annotation table alongside the RDS.
-writeLines(readLines(gzfile(tf_characteristics_file)),
-           file.path(out_folder, 'TF_grouping_by_chromvar_correlation_and_literature.tsv'))
-message('Saved: ', file.path(out_folder,
-        'TF_grouping_by_chromvar_correlation_and_literature.tsv'))
 
 message('Done.')
