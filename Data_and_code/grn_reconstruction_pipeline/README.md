@@ -45,6 +45,13 @@ Run the scripts in order, from inside this folder:
    first rebuilds any step 5a output that was run in target blocks (see
    "Producing every network variant used downstream" below). No model
    fitting.
+7. **`6_filter_network.R`** — applies the three confidence filters
+   (adjpvalue, dev_ratio, per-stratum |estimate| 90th percentile; thresholds
+   from `../network_loading/network_thresholds.txt`) to the published network
+   and writes `lasso_network_filtered.rds`. It also recomputes the
+   per-stratum percentiles and writes them, next to the stored values, to
+   `abs_estimate_p90_recomputed.tsv`, warning if any differ; after a refit,
+   copy the recomputed values into `network_thresholds.txt` and rerun it.
 
 ## One-time setup
 
@@ -63,7 +70,8 @@ it.
 repository (141,733 edges) — it is `lasso_network_with_randomization.rds`
 (step 5a's raw output) after the three confidence filters every figure in
 this paper applies (adjpvalue <= 0.05, dev_ratio >= 0.3, per-stratum
-|estimate| >= 90th percentile; see `../network_loading/`). If you only want
+|estimate| >= 90th percentile; see `../network_loading/`), as written by
+`6_filter_network.R`. If you only want
 to explore the final GRN or rerun a downstream figure script, you do not
 need `raw_data_folder` or any of the scripts above — this file already
 has everything they would produce, filtered down to the edges the paper

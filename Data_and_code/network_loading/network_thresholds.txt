@@ -34,6 +34,9 @@ abs_estimate_TF_peak_Promoter_aCRE = 0.162
 abs_estimate_TF_peak_Promoter_tCRE = 0.160
 
 # ── Notes ─────────────────────────────────────────────────────────────────────
+# - grn_reconstruction_pipeline/6_filter_network.R applies these values to
+#   produce lasso_network_filtered.rds, and recomputes the p90 values on the
+#   network (reporting any that differ) without editing this file.
 # - chipseq_eqtl_validation/ sweeps dev_ratio from 0 to 0.8 to draw performance
 #   curves; dev_ratio_threshold above marks the operating point highlighted in
 #   its summary figures.

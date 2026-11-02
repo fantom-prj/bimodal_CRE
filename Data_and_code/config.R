@@ -49,7 +49,9 @@ raw_data_folder <- '[raw_data_folder]'
 #   5_lasso_models/lasso_network_filtered.rds — the final, published
 #     high-confidence GRN (141,733 edges): lasso_network_with_randomization.rds
 #     after adjpvalue <= 0.05, dev_ratio >= 0.3, and the per-stratum
-#     |estimate| p90 filter (see network_loading/load_and_filter_network.R).
+#     |estimate| p90 filter (written by
+#     grn_reconstruction_pipeline/6_filter_network.R; see
+#     network_loading/load_and_filter_network.R).
 #
 # this_config_dir is resolved by walking the call stack for the nearest
 # source()/sys.source() frame that names this file, rather than the simpler
