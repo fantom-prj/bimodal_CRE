@@ -6,20 +6,7 @@ Figures 5-6 and Extended Data Figure 7: `grn_reconstruction_pipeline/`,
 `chipseq_eqtl_validation/`, `network_basic_stats/`, `tCRE_topology/`,
 `enhancer_centrality_stats/`, `screen_correlation/`, `ep_enrichment/`,
 `tf_tf_umap/`, `abc_validation/`, and `network_loading/` — plus `config.R`
-at the top of this folder. None of these subfolders hold any figure panels
-themselves:
-
-- `grn_reconstruction_pipeline/` — the pipeline that builds the gene
-  regulatory network (GRN) itself, from raw data through to the final
-  elastic-net-pruned network; every other subfolder listed above reads its
-  output.
-- Everything else listed above: scripts that regenerate the small,
-  pre-extracted data files consumed by the panel scripts in `../Fig5/`,
-  `../Fig6/`, and `../ExtFig7/` — anything computed from the GRN pipeline's
-  output that either (a) is shared by more than one panel, or (b) is cheap to
-  isolate into its own regeneration step for traceability. One panel
-  (`Fig5/scFig5a_sankey.R`) is a documented exception that reads the GRN
-  pipeline's output directly instead — see the note at the bottom.
+at the top of this folder. 
 
 ## One-time setup
 
@@ -61,10 +48,7 @@ and the exact output file(s) it writes.
 
 `Fig5/scFig5a_sankey.R` reads `lasso_network_with_randomization.rds` and
 `dataset.rds` directly (from `primary_data_folder`) and is not fed by any
-`Data_and_code/` subfolder — its custom Sankey ribbon geometry needs dozens of
-fine-grained per-modality-pair edge counts that don't decompose into a
-reusable summary table, so splitting counting from drawing would have been a
-leaky abstraction. It still sources `Data_and_code/config.R` for the data-root
+`Data_and_code/` subfolder. It still sources `Data_and_code/config.R` for the data-root
 path and `Data_and_code/network_loading/plot_theme_and_save.R` for the save
 helpers.
 
@@ -77,12 +61,6 @@ Designer from these panel files (`Fig5/scFig5.afdesign`,
 `Fig5/scexFig5.afdesign`, `Fig6/scFig6.afdesign`, `Fig6/scexFig6.afdesign`,
 `ExtFig7/scexFig7.afdesign`). The exported PDFs next to them
 (`*_obsolete.pdf`) predate the current panels.
-
-Panels written with base `pdf()` reference Helvetica without embedding it.
-Fig5a and Fig5b are written by the helpers in
-`network_loading/plot_theme_and_save.R`, which request Arial; where Arial is
-not installed, fontconfig substitutes a metric-compatible font (Nimbus Sans in
-the shipped files).
 
 ## Computational environment
 
