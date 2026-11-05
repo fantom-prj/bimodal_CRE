@@ -83,3 +83,14 @@ sum(data0$CTSSUMI_unG)/sum(data0$CTSSUMI_total) #0.5071975
 cluster=read.delim(paste0(SCAFE_path,"aggregate/run_full/out/annotate/sc5end.iPSC_NSC_Neuron/bed/sc5end.iPSC_NSC_Neuron.cluster.annot.bed.gz"), header=F, stringsAsFactors = F, check.names = F)
 sum(cluster$V5) #575969385
 # number of UMI in cluster = 575969385/841699059 = 0.6842937
+
+#===============================================================================
+#count valid CTSS from SCAFE into scATAC peak
+#use count function from SCAFE
+setwd(paste0(SCAFE_path,"count/"))
+system("perl 20230711.batch_run_scafe_interactome,scafe_count.pl")
+# this code count valid TSS into CRE region defined by scATAC-seq [aCRE] & CRE region defined from sc5nRNA-seq [tCRE] 
+
+
+
+

@@ -8,14 +8,9 @@
 * For bam files please refer to DDBJ pending (pending)
 
 # Related Methods
-* [Knockdown of transcription factors by siRNA](#siRNA)
 * [CAGE sequencing for TEAD2/4 knockdown samples](#CAGE)
 * [Differentially expressed CREs identification from knockdown samples](#edgeR)
 
-
-# <a name="siRNA"></a>Knockdown of transcription factors by siRNA
-
-The iPSCs sujbected to siRNA-mediated TEAD2/4 knockdown were harvested for CAGE sequencing. Six samples were collected, comprising two biological replicates each for each of three conditions including non-targeting control (NC1), and two independent TEAD2/4 siRNA combinations. Total RNA was purified as described above, and 5 μg RNA from each sample was used for library preparation according to the single-strand CAGE protocol.3 Libraries were sequenced on an Illumina NextSeq 2000 platform using paired-end 150-bp reads and a 8-bp index read.
 
 
 # <a name="CAGE"></a>CAGE sequencing for TEAD2/4 knockdown samples

@@ -1,4 +1,4 @@
-# gathering analyses related to TEAD4 and ONECUT2 for downstream analyses
+# Aggregate single cell signal into metacell & TF function curation
 
 * meta.cell.object.R -> main code describing all the steps
 * TF_function_curation.R -> code showing step wise assessment of TF function from literatures
