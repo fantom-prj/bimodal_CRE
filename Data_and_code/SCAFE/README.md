@@ -15,7 +15,7 @@
 
 # <a name="tCRE"></a>Identification of confident TSS cluster
 
-The output files generated from the Cell Ranger pipeline were applied to SCAFE (v1.0.1)12 to identify genuine transcription start sites (TSSs) and clusters. Briefly, TSSs were extracted to identify genuine TSS clusters from each replicate by running scafe.workflow.sc.solo. These clusters were then merged by running scafe.tool.cm.aggregate. Only the TSSs lying inside the genuine TSS clusters were used for quantification, which accounted for 68.4% of the total UMI. Transcribed CREs (tCREs) were indepednently identified from the three cell types using SCAFE. These tCRE regions were used as comparison (in Extended Fig. 2a) alone but not for final quantification.
+The output files generated from the Cell Ranger pipeline were applied to SCAFE (v1.0.1) to identify genuine transcription start sites (TSSs) and clusters. Briefly, TSSs were extracted to identify genuine TSS clusters from each replicate by running scafe.workflow.sc.solo. These clusters were then merged by running scafe.tool.cm.aggregate. Only the TSSs lying inside the genuine TSS clusters were used for quantification, which accounted for 68.4% of the total UMI. Transcribed CREs (tCREs) were indepednently identified from the three cell types using SCAFE. These tCRE regions were used as comparison (in Extended Fig. 2a) alone but not for final quantification.
 
 
 # <a name="count"></a>Establishment of CREs with bimodal signals

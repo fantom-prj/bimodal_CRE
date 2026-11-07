@@ -33,7 +33,7 @@ Transcription factors (TFs) establish cellular identity through coordinated regu
 | Chromatin accessibility of ChIP-seq peaks | [code](https://github.com/fantom-prj/bimodal_CRE/tree/main/Data_and_code/Fig4.TEAD_ONECUT) |
 | Pathway enrichment analysis | [code](https://github.com/fantom-prj/bimodal_CRE/tree/main/Data_and_code/Fig4.TEAD_ONECUT) |
 | Activity-by-Contact (ABC) model | [code](https://github.com/fantom-prj/bimodal_CRE/tree/main/Data_and_code/Fig4.ABC) |
-| eQTL | code |
+| eQTL | [code](https://github.com/fantom-prj/bimodal_CRE/tree/main/Data_and_code/eQTL) |
 | Network reconstruction | code |
 | Network variants and external validation | code |
 | Filtering according to significance and goodness of fit | code |
